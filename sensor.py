@@ -1,3 +1,5 @@
+# -*- coding: utf-8 -*
+
 """
 Module for reading a rain sensor hooked into the GPIO ports on a Rasberry Pi.
 """

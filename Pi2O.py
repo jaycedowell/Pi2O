@@ -1,3 +1,6 @@
+#!/usr/bin/env python
+# -*- coding: utf-8 -*
+
 import os
 import sys
 import time
@@ -389,3 +392,7 @@ if __name__ == "__main__":
 	
 	cherrypy.quickstart(Interface(), config=cpConfig)
 	bg.cancel()
+	
+	for zone in hardwareZone:
+		zone.off()
+		

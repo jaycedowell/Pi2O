@@ -1,3 +1,5 @@
+# -*- coding: utf-8 -*
+
 """
 Module for controlling a particular sprinkler zone and setting the schedule.
 """

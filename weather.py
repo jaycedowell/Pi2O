@@ -1,3 +1,5 @@
+# -*- coding: utf-8 -*
+
 """
 Module for reading in weather conditions from Weather Underground using their API.
 """

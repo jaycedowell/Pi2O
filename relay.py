@@ -1,3 +1,5 @@
+# -*- coding: utf-8 -*
+
 """
 Module for controlling relays hooked into the GPIO ports on a Rasberry Pi.
 """
