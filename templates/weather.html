@@ -1,0 +1,68 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01//EN">
+<html>
+<head>
+	<meta name="viewport" content="width=device-width, initial-scale=1">
+	<link rel="stylesheet" href="/css/jquery.mobile-1.4.3.min.css">
+	<script src="/js/jquery-1.11.1.min.js"></script>
+	<script src="/js/jquery.mobile-1.4.3.min.js"></script>
+</head>
+<body>
+	<div data-role="page">
+	<div data-role="header" role="banner" class="ui-header ui-bar-inherit">
+		<h1 class="ui-title" role="heading" aira-level="1">Weather Adjustment</h1>
+	</div>
+	<form method="post" action="weather">
+		<div data-role="main" class="ui-content">
+			<h3 class="ui-title" role="heading" aira-level="1">WUnderground API</h3>
+			<div class="ui-field-contain">
+				<label for="weather-key">API Key:</label>
+				<input type="text" name="weather-key" value="{{ kwds.get("weather-key") }}"/>
+				<label for="weather-enabled">Enabled:</label>
+				<select class="enabled" name="weather-enabled" data-role="slider">
+					<option value="off">Off</option>
+					<option value="on" {{ kwds.get("weather-enabled") }}>On</option>
+				</select> 
+			</div>
+			<h3 class="ui-title" role="heading" aira-level="1">Location</h3>
+			<div class="ui-field-contain">
+				<label for="weather-postal">Postal Code:</label>
+				<input type="text" name="weather-postal" value="{{ kwds.get("weather-postal") }}"/>
+				<label for="weather-pws">PWS ID:</label>
+				<input type="text" name="weather-pws" value="{{ kwds.get("weather-pws") }}"/>
+				<label for="weather-text">Test These Settings:</label>
+				<input class="test" type="checkbox" name="weather-test" data-role="flipswitch"/>
+			</div>
+			<script type="text/javascript">
+				$('.test').trigger('create');
+				
+				{% if kwds.get("weather-enabled") != 'selected' %}
+				$('.test').flipswitch('disable');
+				{% endif %}
+				
+				$('.enabled').trigger('create');
+				$('.enabled').bind('slidestop', function (e) {
+					if (this.value == 'on') {
+						$('.test').flipswitch('enable');
+					} else {
+						$('.test').flipswitch('disable');
+					}
+				});
+			</script>
+			<button type="submit">Save Configuration</button>
+		</div>
+	</form>
+	<br />
+	{% if kwds.get("weather-info") %}
+	{{ kwds.get("weather-info") }}
+	<br />
+	{% endif %}
+	<div data-role="footer" role="banner" class="ui-header ui-bar-inherit">
+		<a href="/">Home</a> &nbsp;|&nbsp;
+		<a href="/zones">Zones</a> &nbsp;|&nbsp;
+		<a href="/schedules">Schedules</a> &nbsp;|&nbsp;
+		<a href="/manual">Manual Control</a> &nbsp;|&nbsp;
+		<a href="/logs">Logs</a>
+	</div>
+	</div>
+</body>
+</html>

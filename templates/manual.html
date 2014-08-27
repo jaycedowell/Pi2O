@@ -1,0 +1,59 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01//EN">
+<html>
+<head>
+	<meta name="viewport" content="width=device-width, initial-scale=1">
+	<link rel="stylesheet" href="/css/jquery.mobile-1.4.3.min.css">
+	<script src="/js/jquery-1.11.1.min.js"></script>
+	<script src="/js/jquery.mobile-1.4.3.min.js"></script>
+</head>
+<body>
+	<div data-role="page">
+	<div data-role="header" role="banner" class="ui-header ui-bar-inherit">
+		<h1 class="ui-title" role="heading" aira-level="1">Manual Control</h1>
+	</div>
+	<form method="post" action="manual">
+		<div data-role="main" class="ui-content">
+			{% for zone in range(1, 5) %}
+			{% if kwds.get("zone%i-enabled"|format(zone)) == 'on' %}
+			<h3 class="ui-title" role="heading" aira-level="1">Zone {{ zone }}</h3>
+			<div class="ui-field-contain">
+				<label for="zone{{ zone }}">{{ kwds.get("zone%i-name"|format(zone)) }}:</label>
+				<select class="zones" name="zone{{ zone }}" data-role="slider">
+					<option value="off">Off</option>
+					<option value="on" {{ kwds.get("zone%i"|format(zone)) }}>On</option>
+				</select> 
+			</div>
+			{% endif %}
+			{% endfor %}
+			<script type="text/javascript">
+				$('#zones').empty();
+				$('#zones').appendTo($('.zones'));
+		
+				$('#zones').trigger('create');
+				$('.zones').bind('slidestop', function (e) {
+					if (this.value == 'on') {
+						$('.zones').val('off');
+						$('.zones').slider('refresh');
+						$(this).val('on');
+						$(this).slider('refresh');
+					}
+				});
+			</script>
+			<button type="submit">Submit</button>
+		</div>
+	</form>
+	<br />
+	{% if kwds.get("manual-info") %}
+	{{ kwds.get("manual-info") }}
+	<br />
+	{% endif %}
+	<div data-role="footer" role="banner" class="ui-header ui-bar-inherit">
+		<a href="/">Home</a> &nbsp;|&nbsp;
+		<a href="/zones">Zones</a> &nbsp;|&nbsp;
+		<a href="/schedules">Schedules</a> &nbsp;|&nbsp;
+		<a href="/manual">Manual Control</a> &nbsp;|&nbsp;
+		<a href="/logs">Logs</a>
+	</div>
+	</div>
+</body>
+</html>
