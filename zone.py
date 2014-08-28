@@ -6,6 +6,8 @@ Module for controlling a particular sprinkler zone.
 
 import time
 
+from weather import getCurrentConditions
+
 __version__ = '0.1'
 __all__ = ['GPIORelay', 'GPIORainSensor', 'NullRainSensor', 'SoftRainSensor', 'SprinklerZone', '__version__', '__all__']
 
@@ -167,7 +169,7 @@ class SoftRainSensor(object):
 	Class for using weather station data as a software rain sensor.
 	"""
 	
-	def __init__(self, precip, updateInterval=3600):
+	def __init__(self, precip, config, updateInterval=3600):
 		"""
 		Initialize the class with precipitation amount in inches.  Use
 		the 'updateInterval' keyword to set the polling interval in
@@ -177,7 +179,8 @@ class SoftRainSensor(object):
 		# Precipitation cutoff
 		self.precip = float(precip)
 		
-		# Update interval state
+		# Initialize the internal state
+		self.rainfall = 0.0
 		self.lastPoll = 0.0
 		self.updateInterval = float(updateInterval)
 		
@@ -189,10 +192,12 @@ class SoftRainSensor(object):
 		tNow = time.time()
 		if tNow-self.lastPoll >= self.updateInterval:
 			# Refresh
+			cNow = getCurrentConditions(apiKey, pws=pws, postal=postal)
+			
+			self.rainfall = float(cNow['current_observation']['precip_today_in'])
 			self.lastPoll = tNow
 			
-		rain = 0.0
-		if rain >= self.precip:
+		if self.rainfall >= self.precip:
 			return 1
 		else:
 			return 0

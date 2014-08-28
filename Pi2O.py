@@ -47,7 +47,7 @@ except:
 if config.get('RainSensor', 'type') == 'off':
 	rs = NullRainSensor()
 elif config.get('RainSensor', 'type') == 'software':
-	rs = SoftRainSensor(config.get('RainSensor', 'precip'))
+	rs = SoftRainSensor(config.get('RainSensor', 'precip'), config)
 else:
 	rs = GPIORainSensor( int(config.get('RainSensor', 'pin')) )
 	
