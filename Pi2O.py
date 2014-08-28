@@ -12,7 +12,7 @@ import jinja2
 import cherrypy
 
 import weather
-from zone import GPIORelay, GPIORainSensor, NullRainSensor, SprinklerZone
+from zone import GPIORelay, GPIORainSensor, NullRainSensor, SoftRainSensor, SprinklerZone
 
 # Initial configuration file
 config = ConfigParser.SafeConfigParser()
