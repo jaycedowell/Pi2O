@@ -17,11 +17,11 @@
 			<h3 class="ui-title" role="heading" aira-level="1">{{ mname.get(month) }}</h3>
 			<div class="ui-field-contain">
 				<label for="schedule{{ month }}-duration">Duration:</label>
-				<input type="range" name="schedule{{ month }}-duration" value="{{ kwds.get("schedule%i-duration"|format(month)) }}" min="0" max="60">
+				<input type="range" name="schedule{{ month }}-duration" value="{{ kwds.get("schedule%i-duration"|format(month)) }}" min="0" max="60" data-highlight="true">
 				<label for="schedule{{ month }}-start">Start:</label>
 				<input type="time" name="schedule{{ month }}-start" value="{{ kwds.get("schedule%i-start"|format(month)) }}" data-role="datebox" data-options='{"useInline": true, "useInlineHideInput": true}'/>
 				<label for="schedule{{ month }}-interval">Interval:</label>
-				<input type="range" name="schedule{{ month }}-interval" value="{{ kwds.get("schedule%i-interval"|format(month)) }}" min="1" max="30"/>
+				<input type="range" name="schedule{{ month }}-interval" value="{{ kwds.get("schedule%i-interval"|format(month)) }}" min="1" max="30" data-highlight="true"/>
 				<label for="schedule{{ month }}-enabled">Enabled:</label>
 				<input type="checkbox" name="schedule{{ month }}-enabled" {{ kwds.get("schedule%i-enabled"|format(month)) }} data-role="flipswitch"/>
 			</div>
@@ -31,11 +31,16 @@
 	</form>
 	<br />
 	<div data-role="footer" role="banner" class="ui-header ui-bar-inherit">
-		<a href="/">Home</a> &nbsp;|&nbsp;
-		<a href="/zones">Zones</a> &nbsp;|&nbsp;
-		<a href="/weather">Weather</a> &nbsp;|&nbsp;
-		<a href="/manual">Manual Control</a> &nbsp;|&nbsp;
-		<a href="/logs">Logs</a>
+		<div data-role="navbar">
+			<ul>
+				<li><a href="/">Home</a></li>
+				<li><a href="/zones">Zones</a></li>
+				<!--<li><a href="/schedules">Schedules</a></li>-->
+				<li><a href="/weather">Weather</a></li>
+				<li><a href="/manual">Manual Control</a></li>
+				<li><a href="/logs">Logs</a></li>
+			</ul>
+		</div>
 	</div>
 	</div>
 </body>

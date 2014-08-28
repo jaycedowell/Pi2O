@@ -12,8 +12,7 @@ import jinja2
 import cherrypy
 
 import weather
-from zone import SprinklerZone
-from relay import GPIORelay
+from zone import GPIORelay, GPIORainSensor, NullRainSensor, SprinklerZone
 
 # Initial configuration file
 config = ConfigParser.SafeConfigParser()
@@ -23,6 +22,10 @@ for zone in (1, 2, 3, 4):
 		config.set('Zone%i' % zone, keyword, '')
 		if keyword == 'enabled':
 			config.set('Zone%i' % zone, keyword, 'off')
+config.add_section('RainSensor')
+config.set('RainSensor', 'type', 'off')
+config.set('RainSensor', 'pin', '')
+config.set('RainSensor', 'precip', '')
 for month in xrange(1, 13):
 	config.add_section('Schedule%i' % month)
 	for keyword in ('start', 'duration', 'interval', 'enabled'):
@@ -41,13 +44,20 @@ except:
 
 
 # Initialize the zones based on this file
+if config.get('RainSensor', 'type') == 'off':
+	rs = NullRainSensor()
+elif config.get('RainSensor', 'type') == 'software':
+	rs = SoftRainSensor(config.get('RainSensor', 'precip'))
+else:
+	rs = GPIORainSensor( int(config.get('RainSensor', 'pin')) )
+	
 hardwareZones = []
 for zone in (1, 2, 3, 4):
 	if config.get('Zone%i' % zone, 'enabled') == 'on':
-		rl = GPIORelay( int(config.get('Zone%i' % zone, 'pin')) )
+		pin = int(config.get('Zone%i' % zone, 'pin'))
 	else:
-		rl = GPIORelay( -1 )
-	hardwareZones.append( SprinklerZone(rl) )
+		pin = -1
+	hardwareZones.append( SprinklerZone(pin, rainSensor=rs) )
 
 
 # Configure file access semaphore
@@ -217,7 +227,13 @@ class Interface(object):
 								kwds['zone%i-%s' % (zone, keyword)] = ''
 					except:
 						kwds['zone%i-%s' % (zone, keyword)] = ""
-						
+		for keyword in ('type', 'pin', 'precip'):
+			try:
+					config.set('RainSensor', keyword, kwds['rs-%s' % keyword])
+					configSet = True
+			except KeyError:
+				kwds['rs-%s' % keyword] = config.get('RainSensor', keyword)
+				
 		if configSet:
 			fh = open('Pi2O.config', 'w')
 			config.write(fh)

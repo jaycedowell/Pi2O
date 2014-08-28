@@ -20,6 +20,7 @@
 				<input class="name{{ zone }}" type="text" name="zone{{ zone }}-name" value="{{ kwds.get("zone%i-name"|format(zone)) }}"/>
 				<label for="zone{{ zone }}-pin">GPIO Pin:</label>
 				<select class="pin{{ zone }}" id="pin{{ zone }}" name="zone{{ zone }}-pin">
+					<option value="17" {{ 'selected' if kwds.get("zone%i-pin"|format(zone)) == '17' else '' }}>17</option>
 					<option value="18" {{ 'selected' if kwds.get("zone%i-pin"|format(zone)) == '18' else '' }}>18</option>
 					<option value="23" {{ 'selected' if kwds.get("zone%i-pin"|format(zone)) == '23' else '' }}>23</option>
 					<option value="24" {{ 'selected' if kwds.get("zone%i-pin"|format(zone)) == '24' else '' }}>24</option>
@@ -32,6 +33,29 @@
 				</select> 
 			</div>
 			{% endfor %}
+			
+			<h3 class="ui-title" role="heading" aira-level="1">Rain Sensor</h3>
+			<div class="ui-field-contain">
+				<fieldset data-role="controlgroup" data-type="horizontal">
+					<legend>Type:</legend>
+    				<input class="rtype" type="radio" name="rs-type" id="rs-choice-1" value="off" {{ 'checked' if kwds.get('rs-type') == 'off' else '' }}>
+    				<label for="rs-choice-1">Not Installed</label>
+    				<input class="rtype" type="radio" name="rs-type" id="rs-choice-2" value="software" {{ 'checked' if kwds.get('rs-type') == 'software' else '' }}>
+    				<label for="rs-choice-2">Software</label>
+    				<input class="rtype" type="radio" name="rs-type" id="rs-choice-3" value="hardware" {{ 'checked' if kwds.get('rs-type') == 'hardware' else '' }}>
+    				<label for="rs-choice-3">Hardware</label>
+				</fieldset>
+				<label for="rs-pin">GPIO Pin:</label>
+				<select class="pinr" id="pinr" name="rs-pin">
+					<option value="17" {{ 'selected' if kwds.get("rs-pin") == '17' else '' }}>17</option>
+					<option value="18" {{ 'selected' if kwds.get("rs-pin") == '18' else '' }}>18</option>
+					<option value="23" {{ 'selected' if kwds.get("rs-pin") == '23' else '' }}>23</option>
+					<option value="24" {{ 'selected' if kwds.get("rs-pin") == '24' else '' }}>24</option>
+					<option value="25" {{ 'selected' if kwds.get("rs-pin") == '25' else '' }}>25</option>
+				</select>
+				<label for="rs-precip">Rainfall:</label>
+				<input class="precip" type="range" name="rs-precip" value="{{ kwds.get("rs-precip") }}" min="0.04" max="0.52" step="0.04" data-highlight="true"/>
+			</div>
 			
 			<script type="text/javascript">
 				$(window).load( function() {
@@ -54,19 +78,54 @@
 					}
 				});
 				{% endfor %}
+				$('#pinr').selectmenu('refresh', true);
+				
+				{% if kwds.get('rs-type') == 'off' %}
+				$('.precip').slider('disable');
+				$('#pinr').selectmenu('disable');
+				{% endif %}
+				{% if kwds.get('rs-type') == 'software' %}
+				$('.precip').slider('enable');
+				$('#pinr').selectmenu('disable');
+				{% endif %}
+				{% if kwds.get('rs-type') == 'hardware' %}
+				$('.precip').slider('disable');
+				$('#pinr').selectmenu('enable');
+				{% endif %}
+				
+				$('.rtype').trigger('create');
+				$('.rtype').on('click', function(e) {
+					if (this.value == 'off') {
+						$('.precip').slider('disable');
+						$('#pinr').selectmenu('disable');
+					} else {
+						if (this.value == 'software') {
+							$('.precip').slider('enable');
+							$('#pinr').selectmenu('disable');
+						} else {
+							$('.precip').slider('disable');
+							$('#pinr').selectmenu('enable');
+						}
+					}
 				});
+			});
 			</script>
 			
 			<button type="submit">Save Configuration</button>
 		</div>
 	</form>
 	<br />
-	<div data-role="footer" role="banner" class="ui-header ui-bar-inherit">		
-		<a href="/">Home</a> &nbsp;|&nbsp;
-		<a href="/schedules">Schedules</a> &nbsp;|&nbsp;
-		<a href="/weather">Weather</a> &nbsp;|&nbsp;
-		<a href="/manual">Manual Control</a> &nbsp;|&nbsp;
-		<a href="/logs">Logs</a>
+	<div data-role="footer" role="banner" class="ui-header ui-bar-inherit">
+		<div data-role="navbar">
+			<ul>
+				<li><a href="/">Home</a></li>
+				<!--<li><a href="/zones">Zones</a></li>-->
+				<li><a href="/schedules">Schedules</a></li>
+				<li><a href="/weather">Weather</a></li>
+				<li><a href="/manual">Manual Control</a></li>
+				<li><a href="/logs">Logs</a></li>
+			</ul>
+		</div>
 	</div>
 	</div>
 </body>
