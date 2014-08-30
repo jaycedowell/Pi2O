@@ -175,9 +175,12 @@ class SoftRainSensor(object):
 		the 'updateInterval' keyword to set the polling interval in
 		seconds (default = 3600).
 		"""
-	
+		
 		# Precipitation cutoff
 		self.precip = float(precip)
+		
+		# Configuration link
+		self.config = config
 		
 		# Initialize the internal state
 		self.rainfall = 0.0
@@ -192,6 +195,9 @@ class SoftRainSensor(object):
 		tNow = time.time()
 		if tNow-self.lastPoll >= self.updateInterval:
 			# Refresh
+			apiKey = self.config.get('Weather', 'key')
+			postal = self.config.get('Weather', 'postal')
+			pws = self.config.get('Weather', 'pws')
 			cNow = getCurrentConditions(apiKey, pws=pws, postal=postal)
 			
 			self.rainfall = float(cNow['current_observation']['precip_today_in'])

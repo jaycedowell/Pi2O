@@ -20,7 +20,7 @@
 				<label for="weather-enabled">Enabled:</label>
 				<select class="enabled" name="weather-enabled" data-role="slider">
 					<option value="off">Off</option>
-					<option value="on" {{ kwds.get("weather-enabled") }}>On</option>
+					<option value="on" {{ 'selected' if kwds.get("weather-enabled") == 'on' else '' }}>On</option>
 				</select> 
 			</div>
 			<h3 class="ui-title" role="heading" aira-level="1">Location</h3>
@@ -30,12 +30,12 @@
 				<label for="weather-pws">PWS ID:</label>
 				<input type="text" name="weather-pws" value="{{ kwds.get("weather-pws") }}"/>
 				<label for="weather-text">Test These Settings:</label>
-				<input class="test" type="checkbox" name="weather-test" data-role="flipswitch"/>
+				<input class="test" type="checkbox" name="test-config" data-role="flipswitch"/>
 			</div>
 			<script type="text/javascript">
 				$('.test').trigger('create');
 				
-				{% if kwds.get("weather-enabled") != 'selected' %}
+				{% if kwds.get("weather-enabled") != 'on' %}
 				$('.test').flipswitch('disable');
 				{% endif %}
 				

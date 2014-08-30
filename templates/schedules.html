@@ -23,7 +23,10 @@
 				<label for="schedule{{ month }}-interval">Interval:</label>
 				<input type="range" name="schedule{{ month }}-interval" value="{{ kwds.get("schedule%i-interval"|format(month)) }}" min="1" max="30" data-highlight="true"/>
 				<label for="schedule{{ month }}-enabled">Enabled:</label>
-				<input type="checkbox" name="schedule{{ month }}-enabled" {{ kwds.get("schedule%i-enabled"|format(month)) }} data-role="flipswitch"/>
+				<select class="enabled{{ month }}" name="schedule{{ month }}-enabled" data-role="slider">
+					<option value="off">Off</option>
+					<option value="on" {{ 'selected' if kwds.get("schedule%i-enabled"|format(month)) == 'on' else '' }}>On</option>
+				</select>
 			</div>
 			{% endfor %}
 			<button type="submit">Save Configuration</button>

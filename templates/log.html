@@ -1,0 +1,70 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01//EN">
+<html>
+<head>
+	<meta name="viewport" content="width=device-width, initial-scale=1">
+	<link rel="stylesheet" href="/css/jquery.mobile-1.4.3.min.css">
+	<!--<link rel="stylesheet" href="/css/green.css">-->
+	<script src="/js/jquery-1.11.1.min.js"></script>
+	<script src="/js/jquery.mobile-1.4.3.min.js"></script>
+</head>
+<body>
+	<div data-role="page">
+	<div data-role="header" role="banner" class="ui-header ui-bar-inherit">
+		<h1 class="ui-title" role="heading" aira-level="1">Logs</h1>
+	</div>
+	
+	<div data-role="main" class="ui-content">
+		<div class="ui-field-contain">
+			<h3 class="ui-title" role="heading" aira-level="1">Local Query Time</h3>
+			{{ kwds.get("tNow").strftime("%Y/%m/%d %I:%M %p") }}<br />
+		</div>
+		
+		<div class="ui-field-contain">
+		<table data-role="table" id="history-table" data-mode="reflow" class="ui-responsive table-stroke">
+			<thead>
+			<tr>
+				<th>Zone</th>
+				<th>Start</th>
+				<th>Run time</th>
+				<th>Adjustment</th>
+			</tr>
+			</thead>
+			<tbody>
+			{% for row in kwds.get("history") %}
+			<tr>
+				<th>{{ row.get("zone") }}</th>
+				<td>{{ row.get("dateTimeStart") }}</td>
+				{% if row.get("dateTimeStop") >= row.get("dateTimeStart") %}
+				{% set rtime = row.get("dateTimeStop") - row.get("dateTimeStart") %}
+				{% set stime = rtime.days*86400 + rtime.seconds %}
+				<td>{{ "%i:%02i:%02i"|format(stime/3600, stime%3600/60, stime%60) }}</td>
+				{% else %}
+				{% set rtime = kwds.get("tNow") - row.get("dateTimeStart") %}
+				{% set stime = rtime.days*86400 + rtime.seconds %}
+				<td>{{ "%i:%02i:%02i"|format(stime/3600, stime%3600/60, stime%60) }} <i>(running)</i></td>
+				{% endif %}
+				{% set stime = rtime.days*86400 + rtime.seconds %}
+				<td>{{ row.get("wxAdjust") if row.get("wxAdjust") >=0 else 'Manual' }}</td>
+			</tr>
+			{% endfor %}
+			</tbody>
+		</table>
+		</div>
+	</div>
+	
+	<br />
+	<div data-role="footer" role="banner" class="ui-header ui-bar-inherit">
+		<div data-role="navbar">
+			<ul>
+				<li><a href="/">Home</a></li>
+				<li><a href="/zones">Zones</a></li>
+				<li><a href="/schedules">Schedules</a></li>
+				<li><a href="/weather">Weather</a></li>
+				<li><a href="/manual">Manual Control</a></li>
+				<!--<li><a href="/logs">Logs</a></li>-->
+			</ul>
+		</div>
+	</div>
+	</div>
+</body>
+</html>

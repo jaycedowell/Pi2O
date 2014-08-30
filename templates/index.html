@@ -59,7 +59,7 @@
 			<span id="ltClock" class="clock"></span><br />
 		</div>
 		{% for zone in range(1,5) %}
-		{% if kwds.get("zone%i-enabled"|format(zone)) == 'enabled' %}
+		{% if kwds.get("zone%i-enabled"|format(zone)) == 'on' %}
 		<div class="ui-field-contain">
 			<h3 class="ui-title" role="heading" aira-level="1">Zone {{ zone }}</h3>
 			{{ kwds.get("zone%i-name"|format(zone)) }} on GPIO pin {{ kwds.get("zone%i-pin"|format(zone)) }} is {{ kwds.get("zone%i-status"|format(zone)) }}
