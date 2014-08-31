@@ -15,7 +15,6 @@ from database import Archive
 from weather import getWeatherAdjustment
 
 # Load in the configuration
-print "Here"
 config = loadConfig(CONFIG_FILE)
 
 # Initialize the archive
@@ -27,18 +26,11 @@ for previousRun in history.getData():
 	if hardwareZones[previousRun['zone']-1].lastStart == 0:
 		hardwareZones[previousRun['zone']-1].lastStart = previousRun['dateTimeStart']
 		hardwareZones[previousRun['zone']-1].lastStop = previousRun['dateTimeStop']
-		
-print "Done"
 
 
-class BackgroundTask(threading.Thread):
-	"""A subclass of threading.Thread whose run() method repeats.
-
-	Use this class for most repeating tasks. It uses time.sleep() to wait
-	for each interval, which isn't very responsive; that is, even if you call
-	self.cancel(), you'll have to wait until the sleep() call finishes before
-	the thread stops. To compensate, it defaults to being daemonic, which means
-	it won't delay stopping the whole process.
+class ScheduleProcessor(threading.Thread):
+	"""
+	Class responsible to running the various zones according to the schedule.
 	"""
 
 	def __init__(self, interval, bus=None):
@@ -53,6 +45,7 @@ class BackgroundTask(threading.Thread):
 	def run(self):
 		self.running = True
 		self.wxAdjust = None
+		self.blockActive = False
 		
 		while self.running:
 			time.sleep(self.interval)
@@ -61,18 +54,18 @@ class BackgroundTask(threading.Thread):
 				
 			try:
 				tNow = datetime.now()
+				tNow = tNow.replace(second=0, microsecond=0)
 				
 				# Is the current schedule active?
 				if config.get('Schedule%i' % tNow.month, 'enabled') == 'on':
-					## If so, query the run interval, duration, and start time
+					## If so, query the run interval and start time for this block
 					interval = int(config.get('Schedule%i' % tNow.month, 'interval'))
-					duration = int(config.get('Schedule%i' % tNow.month, 'duration'))
 					h,m = [int(i) for i in config.get('Schedule%i' % tNow.month, 'start').split(':', 1)]
 					
-					## Figure out if the start time is in the future.  If not, see what
-					## we need to do
+					## Figure out if it is the start time or if we are inside a schedule 
+					## block.  If so, we need to turn things on.
 					tSchedule = tNow.replace(hour=int(h), minute=int(m))
-					if tSchedule <= tNow:
+					if tSchedule == tNow or self.blockActive:
 						### Load in the current weather adjustment, if needed
 						if self.wxAdjust is None:
 							key = config.get('Weather', 'key')
@@ -85,15 +78,16 @@ class BackgroundTask(threading.Thread):
 							else:
 								self.wxAdjust = 1.0
 								
-						### Convert the interval and duration value into timedeltas, folding in
-						### the weather adjustment factor
+						### Convert the interval into a timedeltas
 						interval = timedelta(days=interval)
-						duration = duration*self.wxAdjust
-						duration = timedelta(minutes=int(duration), seconds=int((duration*60) % 60))
 						
 						### Loop over the zones
-						zoneOn = False
 						for zone in (1, 2, 3, 4):
+							#### What duration do we use for this zone?
+							duration = int(config.get('Schedule%i' % tNow.month, 'duration%i' % zone))
+							duration = duration*self.wxAdjust
+							duration = timedelta(minutes=int(duration), seconds=int((duration*60) % 60))
+							
 							#### What is the last run time for this zone?
 							tLast = datetime.fromtimestamp( hardwareZones[zone-1].getLastRun() )
 							
@@ -105,7 +99,8 @@ class BackgroundTask(threading.Thread):
 									if self.bus is not None:
 										self.bus.log('Zone %i - off' % zone)
 								else:
-									break
+									self.blockActive = True
+									
 							else:
 								#### Otherwise, is it time to turn it on
 								if tSchedule - tLast >= interval:
@@ -113,7 +108,14 @@ class BackgroundTask(threading.Thread):
 									history.writeData(time.time(), zone, 'on', wxAdjustment=self.wxAdjust)
 									if self.bus is not None:
 										self.bus.log('Zone %i - on' % zone)
+									self.blockActive = True
 									break
+									
+							#### If this is the last zone to process and it is off, we
+							#### are done with this block
+							if zone == 4 and not hardwareZones[zone-1].isActive():
+								self.blockActive = False
+						
 									
 				else:
 					self.wxAdjust = None
@@ -140,7 +142,14 @@ class Interface(object):
 		for i,zone in enumerate(hardwareZones):
 			i += 1
 			kwds['zone%i-status' % i] = 'on' if zone.isActive() else 'off'
-			
+		for entry in history.getData():
+			try:
+				kwds['zone%i-lastStart' % entry['zone']]
+				kwds['zone%i-lastStop' % entry['zone']]
+			except KeyError:
+				kwds['zone%i-lastStart' % entry['zone']] = datetime.fromtimestamp(entry['dateTimeStart'])
+				kwds['zone%i-lastStop' % entry['zone']] = datetime.fromtimestamp(entry['dateTimeStop'])
+				
 		template = jinjaEnv.get_template('index.html')
 		return template.render({'kwds':kwds})
 		
@@ -231,7 +240,7 @@ class Interface(object):
 		kwds = {}
 		kwds['tNow'] = datetime.now()
 		kwds['tzOffset'] = int(datetime.now().strftime("%s")) - int(datetime.utcnow().strftime("%s"))
-		kwds['history'] = history.getData()
+		kwds['history'] = history.getData(age=7*24*3600)[:25]
 		for i in xrange(len(kwds['history'])):
 			kwds['history'][i]['dateTimeStart'] = datetime.fromtimestamp(kwds['history'][i]['dateTimeStart'])
 			kwds['history'][i]['dateTimeStop'] = datetime.fromtimestamp(kwds['history'][i]['dateTimeStop'])
@@ -247,12 +256,14 @@ if __name__ == "__main__":
           				 'tools.staticdir.dir': os.path.join(os.path.dirname(os.path.abspath(__file__)), 'js')}
           		}
 				
-	bg = BackgroundTask(60, bus=cherrypy.engine)
+	bg = ScheduleProcessor(60, bus=cherrypy.engine)
 	bg.start()
 	
 	cherrypy.quickstart(Interface(), config=cpConfig)
 	bg.cancel()
+	Achive.cancel()
 	
 	for zone in hardwareZones:
-		zone.off()
-		
+		if zone.isActive():
+			zone.off()
+			history.writeData(time.time(), i, 'off')

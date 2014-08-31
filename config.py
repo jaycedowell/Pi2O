@@ -72,18 +72,14 @@ class LockingConfigParser(SafeConfigParser):
 		Locked read() method.
 		"""
 		
-		#self._lock.acquire()
 		SafeConfigParser.read(self, *args, **kwds)
-		#self._lock.release()
 		
 	def write(self, *args, **kwds):
 		"""
 		Locked write() method.
 		"""
 		
-		#self._lock.acquire()
 		SafeConfigParser.write(self, *args, **kwds)
-		#self._lock.release()
 		
 	def asDict(self):
 		"""
@@ -157,7 +153,11 @@ def loadConfig(filename):
 	for month in xrange(1, 13):
 		config.add_section('Schedule%i' % month)
 		for keyword in ('start', 'duration', 'interval', 'enabled'):
-			config.set('Schedule%i' % month, keyword, '')
+			if keyword == 'duration':
+				for zone in (1, 2, 3, 4):
+					config.set('Schedule%i' % month, '%s%i' % (keyword, zone), '')
+			else:
+				config.set('Schedule%i' % month, keyword, '')
 			if keyword == 'enabled':
 				config.set('Schedule%i' % month, keyword, 'off')
 				
@@ -189,20 +189,17 @@ def initZones(config):
 	"""
 	
 	# Initialize the rain sensor
-	print "Z1"
 	if config.get('RainSensor', 'type') == 'off':
 		rainSensor = NullRainSensor()
 	elif config.get('RainSensor', 'type') == 'software':
 		rainSensor = SoftRainSensor( config.getfloat('RainSensor', 'precip'), config )
 	else:
 		rainSensor = GPIORainSensor( config.getint('RainSensor', 'pin') )
-	print "Z2"
 		
 	# Create the list of SprinklerZone instances
 	zones = []
 	zone = 1
 	while True:
-		print zone
 		try:
 			## Is the zone enabled?
 			zoneEnabled = config.get('Zone%i' % zone, 'enabled')

@@ -62,7 +62,13 @@
 		{% if kwds.get("zone%i-enabled"|format(zone)) == 'on' %}
 		<div class="ui-field-contain">
 			<h3 class="ui-title" role="heading" aira-level="1">Zone {{ zone }}</h3>
-			{{ kwds.get("zone%i-name"|format(zone)) }} on GPIO pin {{ kwds.get("zone%i-pin"|format(zone)) }} is {{ kwds.get("zone%i-status"|format(zone)) }}
+			{% if kwds.get("zone%i-status"|format(zone)) == 'on' %}
+			{{ kwds.get("zone%i-name"|format(zone)) }} is on
+			{% else %}
+			{% set rtime = kwds.get("zone%i-lastStop"|format(zone)) - kwds.get("zone%i-lastStart"|format(zone)) %}
+			{% set stime = rtime.days*86400 + rtime.seconds %}
+			{{ kwds.get("zone%i-name"|format(zone)) }} last ran on {{ kwds.get("zone%i-lastStart"|format(zone)).strftime("%m/%d/%Y") }} for {{ "%i:%02i:%02i"|format(stime/3600, stime%3600/60, stime%60) }}
+			{% endif %}
 		</div>
 		{% endif %}
 		{% endfor %}
