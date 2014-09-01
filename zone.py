@@ -55,9 +55,9 @@ class GPIORelay(object):
 		
 		if self.pin > 0:
 			pass
-			#fh = open('/sys/class/gpio/gpio%i/value' % self.pin, 'w')
-			#fh.write('1')
-			#fh.close()
+			fh = open('/sys/class/gpio/gpio%i/value' % self.pin, 'w')
+			fh.write('1')
+			fh.close()
 			
 	def off(self):
 		"""
@@ -66,9 +66,9 @@ class GPIORelay(object):
 	
 		if self.pin > 0:
 			pass
-			#fh = open('/sys/class/gpio/gpio%i/value' % self.pin, 'w')
-			#fh.write('0')
-			#fh.close()
+			fh = open('/sys/class/gpio/gpio%i/value' % self.pin, 'w')
+			fh.write('0')
+			fh.close()
 
 
 class GPIORainSensor(object):

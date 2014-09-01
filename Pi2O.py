@@ -9,10 +9,15 @@ from datetime import datetime, timedelta
 
 import jinja2
 import cherrypy
+from cherrypy.process.plugins import Daemonizer
 
 from config import *
 from database import Archive
 from weather import getWeatherAdjustment
+
+# Daemonize
+d = Daemonizer(cherrypy.engine, stderr='/tmp/Pi2O.stderr')
+d.subscribe()
 
 # Load in the configuration
 config = loadConfig(CONFIG_FILE)
