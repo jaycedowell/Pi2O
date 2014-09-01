@@ -56,6 +56,7 @@ class GPIORelay(object):
 		if self.pin > 0:
 			fh = open('/sys/class/gpio/gpio%i/value' % self.pin, 'w')
 			fh.write('1')
+			fh.flush()
 			fh.close()
 			
 	def off(self):
@@ -66,6 +67,7 @@ class GPIORelay(object):
 		if self.pin > 0:
 			fh = open('/sys/class/gpio/gpio%i/value' % self.pin, 'w')
 			fh.write('0')
+			fh.flush()
 			fh.close()
 
 
