@@ -15,34 +15,20 @@ from config import *
 from database import Archive
 from weather import getWeatherAdjustment
 
-# Daemonize
-d = Daemonizer(cherrypy.engine, stderr='/tmp/Pi2O.stderr')
-d.subscribe()
-
-# Load in the configuration
-config = loadConfig(CONFIG_FILE)
-
-# Initialize the archive
-history = Archive()
-
-# Initialize the hardware
-hardwareZones = initZones(config)
-for previousRun in history.getData():
-	if hardwareZones[previousRun['zone']-1].lastStart == 0:
-		hardwareZones[previousRun['zone']-1].lastStart = previousRun['dateTimeStart']
-		hardwareZones[previousRun['zone']-1].lastStop = previousRun['dateTimeStop']
-
 
 class ScheduleProcessor(threading.Thread):
 	"""
 	Class responsible to running the various zones according to the schedule.
 	"""
 
-	def __init__(self, interval, bus=None):
+	def __init__(self, hardwareZones, history, bus=None):
 		threading.Thread.__init__(self)
-		self.interval = interval
-		self.running = False
+		self.interval = 60
+		self.hardwareZones = hardwareZones
+		self.history = history
 		self.bus = bus
+		
+		self.running = False
 
 	def cancel(self):
 		self.running = False
@@ -94,13 +80,13 @@ class ScheduleProcessor(threading.Thread):
 							duration = timedelta(minutes=int(duration), seconds=int((duration*60) % 60))
 							
 							#### What is the last run time for this zone?
-							tLast = datetime.fromtimestamp( hardwareZones[zone-1].getLastRun() )
+							tLast = datetime.fromtimestamp( self.hardwareZones[zone-1].getLastRun() )
 							
-							if hardwareZones[zone-1].isActive():
+							if self.hardwareZones[zone-1].isActive():
 								#### If the zone is active, check how long it has been on
 								if tLast-tNow >= duration:
-									hardwareZones[zone-1].off()
-									history.writeData(time.time(), zone, 'off')
+									self.hardwareZones[zone-1].off()
+									self.history.writeData(time.time(), zone, 'off')
 									if self.bus is not None:
 										self.bus.log('Zone %i - off' % zone)
 								else:
@@ -109,8 +95,8 @@ class ScheduleProcessor(threading.Thread):
 							else:
 								#### Otherwise, is it time to turn it on
 								if tSchedule - tLast >= interval:
-									hardwareZones[zone-1].on()
-									history.writeData(time.time(), zone, 'on', wxAdjustment=self.wxAdjust)
+									self.hardwareZones[zone-1].on()
+									self.history.writeData(time.time(), zone, 'on', wxAdjustment=self.wxAdjust)
 									if self.bus is not None:
 										self.bus.log('Zone %i - on' % zone)
 									self.blockActive = True
@@ -118,7 +104,7 @@ class ScheduleProcessor(threading.Thread):
 									
 							#### If this is the last zone to process and it is off, we
 							#### are done with this block
-							if zone == 4 and not hardwareZones[zone-1].isActive():
+							if zone == 4 and not self.hardwareZones[zone-1].isActive():
 								self.blockActive = False
 						
 									
@@ -139,15 +125,19 @@ jinjaEnv = jinja2.Environment(loader=jinja2.FileSystemLoader(os.path.join(os.pat
 
 # Main web interface
 class Interface(object):
+	def __init__(self, hardwareZones, history):
+		self.hardwareZones = hardwareZones
+		self.history = history
+		
 	@cherrypy.expose
 	def index(self):
 		kwds = config.asDict()
 		kwds['tNow'] = datetime.now()
 		kwds['tzOffset'] = int(datetime.now().strftime("%s")) - int(datetime.utcnow().strftime("%s"))
-		for i,zone in enumerate(hardwareZones):
+		for i,zone in enumerate(self.hardwareZones):
 			i += 1
 			kwds['zone%i-status' % i] = 'on' if zone.isActive() else 'off'
-		for entry in history.getData():
+		for entry in self.history.getData():
 			try:
 				kwds['zone%i-lastStart' % entry['zone']]
 				kwds['zone%i-lastStop' % entry['zone']]
@@ -202,7 +192,6 @@ class Interface(object):
 		else:
 			kwds['weather-info'] = ''
 			
-		print "Finally"
 		template = jinjaEnv.get_template('weather.html')
 		return template.render({'kwds':kwds})
 	
@@ -219,15 +208,15 @@ class Interface(object):
 		for keyword,value in kwds.iteritems():
 			if keyword[:4] == 'zone' and keyword.find('-') == -1:
 				i = int(keyword[4:])
-				if value == 'on' and not hardwareZones[i-1].isActive():
-					hardwareZones[i-1].on()
-					history.writeData(time.time(), i, 'on', wxAdjustment=-1.0)
-				if value == 'off' and hardwareZones[i-1].isActive():
-					hardwareZones[i-1].off()
-					history.writeData(time.time(), i, 'off')
+				if value == 'on' and not self.hardwareZones[i-1].isActive():
+					self.hardwareZones[i-1].on()
+					self.history.writeData(time.time(), i, 'on', wxAdjustment=-1.0)
+				if value == 'off' and self.hardwareZones[i-1].isActive():
+					self.hardwareZones[i-1].off()
+					self.history.writeData(time.time(), i, 'off')
 					
 		kwds['manual-info'] = ''
-		for i,zone in enumerate(hardwareZones):
+		for i,zone in enumerate(self.hardwareZones):
 			i = i + 1
 			if kwds['zone%i-enabled' % i] == 'on':
 				if zone.isActive():
@@ -245,7 +234,7 @@ class Interface(object):
 		kwds = {}
 		kwds['tNow'] = datetime.now()
 		kwds['tzOffset'] = int(datetime.now().strftime("%s")) - int(datetime.utcnow().strftime("%s"))
-		kwds['history'] = history.getData(age=7*24*3600)[:25]
+		kwds['history'] = self.history.getData(age=7*24*3600)[:25]
 		for i in xrange(len(kwds['history'])):
 			kwds['history'][i]['dateTimeStart'] = datetime.fromtimestamp(kwds['history'][i]['dateTimeStart'])
 			kwds['history'][i]['dateTimeStop'] = datetime.fromtimestamp(kwds['history'][i]['dateTimeStop'])
@@ -255,20 +244,48 @@ class Interface(object):
 
 
 if __name__ == "__main__":
+	# CherryPy configuration
 	cpConfig = {'/css': {'tools.staticdir.on': True,
 						 'tools.staticdir.dir': os.path.join(os.path.dirname(os.path.abspath(__file__)), 'css')},
           		'/js':  {'tools.staticdir.on': True,
           				 'tools.staticdir.dir': os.path.join(os.path.dirname(os.path.abspath(__file__)), 'js')}
           		}
 				
-	bg = ScheduleProcessor(60, bus=cherrypy.engine)
+	# Daemonize
+	d = Daemonizer(cherrypy.engine, stderr='/tmp/Pi2O.stderr')
+	d.subscribe()
+	
+	# Load in the configuration
+	config = loadConfig(CONFIG_FILE)
+	
+	# Initialize the archive
+	history = Archive()
+	history.start()
+	
+	# Initialize the hardware
+	hardwareZones = initZones(config)
+	for previousRun in history.getData():
+		if hardwareZones[previousRun['zone']-1].lastStart == 0:
+			hardwareZones[previousRun['zone']-1].lastStart = previousRun['dateTimeStart']
+			hardwareZones[previousRun['zone']-1].lastStop = previousRun['dateTimeStop']
+			
+	# Initialize the scheduler
+	bg = ScheduleProcessor(hardwareZones, history, bus=cherrypy.engine)
 	bg.start()
 	
-	cherrypy.quickstart(Interface(), config=cpConfig)
-	bg.cancel()
-	Archive.cancel()
+	# Initialize the web interface
+	ws = Interface(hardwareZones, history)
+	cherrypy.quickstart(ws, config=cpConfig)
 	
+	# Stop the scheduler thread
+	bg.cancel()
+	
+	# Make sure the sprinkler zones are off
 	for zone in hardwareZones:
 		if zone.isActive():
 			zone.off()
 			history.writeData(time.time(), i, 'off')
+			
+	# Shutdown the archive
+	history.cancel()
+	

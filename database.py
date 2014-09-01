@@ -154,7 +154,6 @@ class Archive(object):
 			rid = self._backend.appendRequest('SELECT dateTimeStart FROM pi2o WHERE zone == %i AND dateTimeStop == 0 ORDER BY dateTimeStart DESC' % zone)
 			output = self._backend.getResponse(rid)
 			row = output[0]
-			print status, row
 			rid = self._backend.appendRequest('UPDATE pi2o SET dateTimeStop = %i WHERE dateTimeStart == %i AND zone == %i' % (timestamp, row['dateTimeStart'], zone))
 			output = self._backend.getResponse(rid)
 			
