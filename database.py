@@ -1,3 +1,5 @@
+# -*- coding: utf-8 -*
+
 """
 Module for interfacing with the sqlite3 database.
 """
@@ -8,6 +10,7 @@ import uuid
 import Queue
 import sqlite3
 import threading
+from ConfigParser import NoSectionError
 
 __version__ = "0.1"
 __all__ = ["Archive", "__version__", "__all__"]
@@ -89,14 +92,37 @@ class Archive(object):
 	_dbConn = None
 	_cursor = None
 	
-	def __init__(self, bus=None):
+	def __init__(self, config, bus=None):
+		self.config = config
 		self._dbName = os.path.join(os.path.dirname(__file__), 'archive', 'pi2o-data.db')
 		if not os.path.exists(self._dbName):
 			raise RuntimeError("Archive database not found")
 		self.bus = bus
 		self._backend = None
 		
-		self.start()
+		# Figure out how many zones there are
+		zones = []
+		zone = 1
+		while True:
+			try:
+				## Is the zone enabled?
+				zoneEnabled = config.get('Zone%i' % zone, 'enabled')
+				if zoneEnabled == 'on':
+					### If so, use the real GPIO pin
+					zonePin = config.getint('Zone%i' % zone, 'pin')
+					### If not, use a dummy pin
+				else:
+					zonePin = -1
+				
+				## Create the SprinklerZone instance
+				zones.append( zonePin )
+			
+				## Update the counter
+				zone += 1
+			
+			except NoSectionError:
+				break
+		self.nZones = len(zones)
     	
 	def start(self):
 		"""
@@ -122,7 +148,7 @@ class Archive(object):
 	
 		# Fetch the entries that match
 		if age <= 0:
-			rid = self._backend.appendRequest('SELECT * FROM pi2o ORDER BY dateTimeStart DESC LIMIT 4')
+			rid = self._backend.appendRequest('SELECT * FROM pi2o ORDER BY dateTimeStart DESC LIMIT %i' % self.nZones)
 		else:
 			# Figure out how far to look back into the database
 			tNow = time.time()

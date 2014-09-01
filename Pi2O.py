@@ -1,5 +1,4 @@
 #!/usr/bin/env python
-# -*- coding: utf-8 -*
 
 import os
 import sys
@@ -13,110 +12,8 @@ from cherrypy.process.plugins import Daemonizer
 
 from config import *
 from database import Archive
+from scheduler import ScheduleProcessor
 from weather import getWeatherAdjustment
-
-
-class ScheduleProcessor(threading.Thread):
-	"""
-	Class responsible to running the various zones according to the schedule.
-	"""
-
-	def __init__(self, hardwareZones, history, bus=None):
-		threading.Thread.__init__(self)
-		self.interval = 60
-		self.hardwareZones = hardwareZones
-		self.history = history
-		self.bus = bus
-		
-		self.running = False
-
-	def cancel(self):
-		self.running = False
-
-	def run(self):
-		self.running = True
-		self.wxAdjust = None
-		self.blockActive = False
-		
-		while self.running:
-			time.sleep(self.interval)
-			if not self.running:
-				return True
-				
-			try:
-				tNow = datetime.now()
-				tNow = tNow.replace(second=0, microsecond=0)
-				
-				# Is the current schedule active?
-				if config.get('Schedule%i' % tNow.month, 'enabled') == 'on':
-					## If so, query the run interval and start time for this block
-					interval = int(config.get('Schedule%i' % tNow.month, 'interval'))
-					h,m = [int(i) for i in config.get('Schedule%i' % tNow.month, 'start').split(':', 1)]
-					
-					## Figure out if it is the start time or if we are inside a schedule 
-					## block.  If so, we need to turn things on.
-					tSchedule = tNow.replace(hour=int(h), minute=int(m))
-					if tSchedule == tNow or self.blockActive:
-						### Load in the current weather adjustment, if needed
-						if self.wxAdjust is None:
-							key = config.get('Weather', 'key')
-							pws = config.get('Weather', 'pws')
-							pos = config.get('Weather', 'postal')
-							if key != '' and pws != '' and pos != '':
-								self.wxAdjust = getWeatherAdjustment(key, pws=pws, postal=pos)
-								if self.bus is not None:
-									self.bus.log('Setting weather adjustment factor to %.3f' % self.wxAdjust)
-							else:
-								self.wxAdjust = 1.0
-								
-						### Convert the interval into a timedeltas
-						interval = timedelta(days=interval)
-						
-						### Loop over the zones
-						for zone in (1, 2, 3, 4):
-							#### What duration do we use for this zone?
-							duration = int(config.get('Schedule%i' % tNow.month, 'duration%i' % zone))
-							duration = duration*self.wxAdjust
-							duration = timedelta(minutes=int(duration), seconds=int((duration*60) % 60))
-							
-							#### What is the last run time for this zone?
-							tLast = datetime.fromtimestamp( self.hardwareZones[zone-1].getLastRun() )
-							
-							if self.hardwareZones[zone-1].isActive():
-								#### If the zone is active, check how long it has been on
-								if tLast-tNow >= duration:
-									self.hardwareZones[zone-1].off()
-									self.history.writeData(time.time(), zone, 'off')
-									if self.bus is not None:
-										self.bus.log('Zone %i - off' % zone)
-								else:
-									self.blockActive = True
-									
-							else:
-								#### Otherwise, is it time to turn it on
-								if tSchedule - tLast >= interval:
-									self.hardwareZones[zone-1].on()
-									self.history.writeData(time.time(), zone, 'on', wxAdjustment=self.wxAdjust)
-									if self.bus is not None:
-										self.bus.log('Zone %i - on' % zone)
-									self.blockActive = True
-									break
-									
-							#### If this is the last zone to process and it is off, we
-							#### are done with this block
-							if zone == 4 and not self.hardwareZones[zone-1].isActive():
-								self.blockActive = False
-						
-									
-				else:
-					self.wxAdjust = None
-					
-			except Exception:
-				if self.bus is not None:
-					self.bus.log("Error in background task thread function.", level=40, traceback=True)
-					
-	def _set_daemon(self):
-		return True
 
 
 # Jinja configuration
@@ -125,13 +22,14 @@ jinjaEnv = jinja2.Environment(loader=jinja2.FileSystemLoader(os.path.join(os.pat
 
 # Main web interface
 class Interface(object):
-	def __init__(self, hardwareZones, history):
+	def __init__(self, config, hardwareZones, history):
+		self.config = config
 		self.hardwareZones = hardwareZones
 		self.history = history
 		
 	@cherrypy.expose
 	def index(self):
-		kwds = config.asDict()
+		kwds = self.config.asDict()
 		kwds['tNow'] = datetime.now()
 		kwds['tzOffset'] = int(datetime.now().strftime("%s")) - int(datetime.utcnow().strftime("%s"))
 		for i,zone in enumerate(self.hardwareZones):
@@ -151,10 +49,10 @@ class Interface(object):
 	@cherrypy.expose
 	def zones(self, **kwds):
 		if len(kwds) == 0:
-			kwds = config.asDict()
+			kwds = self.config.asDict()
 		else:
-			config.fromDict(kwds)
-			saveConfig(CONFIG_FILE, config)
+			self.config.fromDict(kwds)
+			saveConfig(CONFIG_FILE, self.config)
 			
 		template = jinjaEnv.get_template('zones.html')
 		return template.render({'kwds':kwds})
@@ -162,10 +60,10 @@ class Interface(object):
 	@cherrypy.expose
 	def schedules(self, **kwds):
 		if len(kwds) == 0:
-			kwds = config.asDict()
+			kwds = self.config.asDict()
 		else:
-			config.fromDict(kwds)
-			saveConfig(CONFIG_FILE, config)
+			self.config.fromDict(kwds)
+			saveConfig(CONFIG_FILE, self.config)
 			
 		mname = {1:'January', 2:'February', 3:'March', 4:'April', 5:'May', 6:'June', 
 				 7:'July', 8:'August', 9:'September', 10:'October', 11:'November', 12:'December'}
@@ -176,10 +74,10 @@ class Interface(object):
 	@cherrypy.expose
 	def weather(self, **kwds):
 		if len(kwds) == 0:
-			kwds = config.asDict()
+			kwds = self.config.asDict()
 		else:
-			config.fromDict(kwds)
-			saveConfig(CONFIG_FILE, config)
+			self.config.fromDict(kwds)
+			saveConfig(CONFIG_FILE, self.config)
 			
 		if 'test-config' in kwds.keys():
 			if kwds['weather-key'] == '':
@@ -198,9 +96,9 @@ class Interface(object):
 	@cherrypy.expose
 	def manual(self, **kwds):
 		if len(kwds) == 0:
-			kwds = config.asDict()
+			kwds = self.config.asDict()
 		else:
-			configDict = config.asDict()
+			self.configDict = self.config.asDict()
 			for keyword,value in configDict.iteritems():
 				if keyword not in kwds.keys():
 					kwds[keyword] = value
@@ -245,7 +143,8 @@ class Interface(object):
 
 if __name__ == "__main__":
 	# CherryPy configuration
-	cpConfig = {'/css': {'tools.staticdir.on': True,
+	cpConfig = {'environment': 'production',
+				'/css': {'tools.staticdir.on': True,
 						 'tools.staticdir.dir': os.path.join(os.path.dirname(os.path.abspath(__file__)), 'css')},
           		'/js':  {'tools.staticdir.on': True,
           				 'tools.staticdir.dir': os.path.join(os.path.dirname(os.path.abspath(__file__)), 'js')}
@@ -259,7 +158,7 @@ if __name__ == "__main__":
 	config = loadConfig(CONFIG_FILE)
 	
 	# Initialize the archive
-	history = Archive()
+	history = Archive(config, bus=cherrypy.engine)
 	history.start()
 	
 	# Initialize the hardware
@@ -270,11 +169,11 @@ if __name__ == "__main__":
 			hardwareZones[previousRun['zone']-1].lastStop = previousRun['dateTimeStop']
 			
 	# Initialize the scheduler
-	bg = ScheduleProcessor(hardwareZones, history, bus=cherrypy.engine)
+	bg = ScheduleProcessor(config, hardwareZones, history, bus=cherrypy.engine)
 	bg.start()
 	
 	# Initialize the web interface
-	ws = Interface(hardwareZones, history)
+	ws = Interface(config, hardwareZones, history)
 	cherrypy.quickstart(ws, config=cpConfig)
 	
 	# Stop the scheduler thread
@@ -288,4 +187,8 @@ if __name__ == "__main__":
 			
 	# Shutdown the archive
 	history.cancel()
+	
+	# Save the final configuration
+	saveConfig(CONFIG_FILE, config)
+	
 	
