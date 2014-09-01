@@ -174,7 +174,7 @@ def loadConfig(filename):
 			
 	# Try to read in the actual configuration file
 	try:
-		config.read(CONFIG_FILE)
+		config.read(filename)
 	except:
 		pass
 		
