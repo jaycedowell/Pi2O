@@ -266,7 +266,7 @@ if __name__ == "__main__":
 	
 	cherrypy.quickstart(Interface(), config=cpConfig)
 	bg.cancel()
-	Achive.cancel()
+	Archive.cancel()
 	
 	for zone in hardwareZones:
 		if zone.isActive():
