@@ -13,7 +13,10 @@
 		<h1 class="ui-title" role="heading" aira-level="1">Schedules</h1>
 	</div>
 	<form method="post" action="schedules">
-		{% for zone in range(1, 5) %}
+		{% for zone in range(1, 33) %}
+		{% if not kwds.get("zone{{ zone }}-enabled"|format(zone)) %}
+		{% break %}
+		{% endif %}
 		<input type="hidden" name="zone{{ zone }}-name" value="{{ kwds.get("zone%i-name"|format(zone)) }}">
 		<input type="hidden" name="zone{{ zone }}-enabled" value="{{ kwds.get("zone%i-enabled"|format(zone)) }}">
 		{% endfor %}
@@ -21,7 +24,10 @@
 			{% for month in range(1, 13) %}
 			<h3 class="ui-title" role="heading" aira-level="1">{{ mname.get(month) }}</h3>
 			<div class="ui-field-contain">
-				{% for zone in range(1, 5) %}
+				{% for zone in range(1, 33) %}
+				{% if not kwds.get("zone{{ zone }}-enabled"|format(zone)) %}
+				{% break %}
+				{% endif %}
 				{% if kwds.get("zone%i-enabled"|format(zone)) == 'on' %}
 				<label for="schedule{{ month }}-duration">Duration - {{ kwds.get("zone%i-name"|format(zone)) }}:</label>
 				<input type="range" name="schedule{{ month }}-duration{{ zone }}" value="{{ kwds.get("schedule%i-duration%s"|format(month,zone)) }}" min="0" max="60" data-highlight="true">

@@ -71,6 +71,9 @@ class ScheduleProcessor(threading.Thread):
 						### Convert the interval into a timedeltas
 						interval = timedelta(days=interval)
 						
+						### Load in the last schedule run times
+						previousRuns = self.history.getData(scheduledOnly=True)
+						
 						### Loop over the zones
 						for zone in range(1, len(self.hardwareZones)+1):
 							#### What duration do we use for this zone?
@@ -80,7 +83,11 @@ class ScheduleProcessor(threading.Thread):
 							
 							#### What is the last run time for this zone?
 							tLast = datetime.fromtimestamp( self.hardwareZones[zone-1].getLastRun() )
-							
+							for entry in previousRuns:
+								if entry['zone'] == zone:
+									tLast = datetime.fromtimestamp( entry['dateTimeStart'] )
+									break
+									
 							if self.hardwareZones[zone-1].isActive():
 								#### If the zone is active, check how long it has been on
 								if tLast-tNow >= duration:

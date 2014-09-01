@@ -25,7 +25,8 @@ TEMPLATE_PATH = os.path.join(_BASE_PATH, 'templates')
 
 
 # Jinja configuration
-jinjaEnv = jinja2.Environment(loader=jinja2.FileSystemLoader(TEMPLATE_PATH))
+jinjaEnv = jinja2.Environment(loader=jinja2.FileSystemLoader(TEMPLATE_PATH), 
+							  extensions=['jinja2.ext.loopcontrols',])
 
 
 """
