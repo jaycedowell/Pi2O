@@ -11,7 +11,7 @@
 
 . /lib/lsb/init-functions
 
-PI2O_PATH = your_path_here
+PI2O_PATH=your_path_here
 DAEMON=$PI2O_PATH/Pi2O.py
 PIDFILE=/var/run/Pi2O.pid
 
