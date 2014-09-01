@@ -60,7 +60,7 @@
 			<span id="ltClock" class="clock"></span><br />
 		</div>
 		{% for zone in range(1, 33) %}
-		{% if not kwds.get("zone{{ zone }}-enabled"|format(zone)) %}
+		{% if not kwds.get("zone%i-enabled"|format(zone)) %}
 		{% break %}
 		{% endif %}
 		{% if kwds.get("zone%i-enabled"|format(zone)) == 'on' %}
