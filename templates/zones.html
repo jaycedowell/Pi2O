@@ -15,7 +15,7 @@
 	<form method="post" action="zones">
 		<div data-role="main" class="ui-content">
 			{% for zone in range(1, 33) %}
-			{% if not kwds.get("zone{{ zone }}-enabled"|format(zone)) %}
+			{% if not kwds.get("zone%i-enabled"|format(zone)) %}
 			{% break %}
 			{% endif %}
 			<h3 class="ui-title" role="heading" aira-level="1">Zone {{ zone }}</h3>
@@ -64,7 +64,7 @@
 			<script type="text/javascript">
 				$(window).load( function() {
 				{% for zone in range(1, 33) %}
-				{% if not kwds.get("zone{{ zone }}-enabled"|format(zone)) %}
+				{% if not kwds.get("zone%i-enabled"|format(zone)) %}
 				{% break %}
 				{% endif %}
 				$('#pin{{ zone }}').selectmenu('refresh', true);
