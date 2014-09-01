@@ -3,6 +3,7 @@
 <head>
 	<meta name="viewport" content="width=device-width, initial-scale=1">
 	<link rel="stylesheet" href="/css/jquery.mobile-1.4.3.min.css">
+	<link href="/css/images/favicon.ico" rel="shortcut icon" type="image/x-icon" />
 	<script src="/js/jquery-1.11.1.min.js"></script>
 	<script src="/js/jquery.mobile-1.4.3.min.js"></script>
 	<script type="text/javascript">
@@ -67,7 +68,7 @@
 			{% else %}
 			{% set rtime = kwds.get("zone%i-lastStop"|format(zone)) - kwds.get("zone%i-lastStart"|format(zone)) %}
 			{% set stime = rtime.days*86400 + rtime.seconds %}
-			{{ kwds.get("zone%i-name"|format(zone)) }} last ran on {{ kwds.get("zone%i-lastStart"|format(zone)).strftime("%m/%d/%Y") }} for {{ "%i:%02i:%02i"|format(stime/3600, stime%3600/60, stime%60) }}
+			{{ kwds.get("zone%i-name"|format(zone)) }} last ran on {{ kwds.get("zone%i-lastStart"|format(zone)).strftime("%m/%d/%Y") }} for {{ "%i:%02i:%02i"|format(stime/3600, stime%3600/60, stime%60) }} <i>({{ 'manual' if kwds.get("zone%i-adjust"|format(zone)) < 0 else "weather adjustment %i%%"|format(100.0*kwds.get("zone%i-adjust"|format(zone))) }})</i>
 			{% endif %}
 		</div>
 		{% endif %}
