@@ -143,16 +143,16 @@ class Interface(object):
 
 if __name__ == "__main__":
 	# CherryPy configuration
-	cpConfig = {'environment': 'production',
-				'/css': {'tools.staticdir.on': True,
+	cherrypy.config.update({'server.socket_host': '0.0.0.0',})#'environment': 'production'})
+	cpConfig = {'/css': {'tools.staticdir.on': True,
 						 'tools.staticdir.dir': os.path.join(os.path.dirname(os.path.abspath(__file__)), 'css')},
           		'/js':  {'tools.staticdir.on': True,
           				 'tools.staticdir.dir': os.path.join(os.path.dirname(os.path.abspath(__file__)), 'js')}
           		}
 				
-	# Daemonize
-	d = Daemonizer(cherrypy.engine, stderr='/tmp/Pi2O.stderr')
-	d.subscribe()
+	## Daemonize
+	#d = Daemonizer(cherrypy.engine, stdout='/tmp/Pi2O.stdout', stderr='/tmp/Pi2O.stderr')
+	#d.subscribe()
 	
 	# Load in the configuration
 	config = loadConfig(CONFIG_FILE)
@@ -174,7 +174,10 @@ if __name__ == "__main__":
 	
 	# Initialize the web interface
 	ws = Interface(config, hardwareZones, history)
-	cherrypy.quickstart(ws, config=cpConfig)
+	#cherrypy.quickstart(ws, config=cpConfig)
+	cherrypy.tree.mount(ws, "/", config=cpConfig)
+	cherrypy.engine.start()
+	cherrypy.engine.block()
 	
 	# Stop the scheduler thread
 	bg.cancel()
