@@ -17,8 +17,15 @@ from scheduler import ScheduleProcessor
 from weather import getWeatherAdjustment
 
 
+# Path configuration
+_BASE_PATH = os.path.dirname(os.path.abspath(__file__))
+CSS_PATH = os.path.join(_BASE_PATH, 'css')
+JS_PATH = os.path.join(_BASE_PATH, 'js')
+TEMPLATE_PATH = os.path.join(_BASE_PATH, 'templates')
+
+
 # Jinja configuration
-jinjaEnv = jinja2.Environment(loader=jinja2.FileSystemLoader(os.path.join(os.path.dirname(__file__),'templates')))
+jinjaEnv = jinja2.Environment(loader=jinja2.FileSystemLoader(TEMPLATE_PATH))
 
 
 """
@@ -154,9 +161,11 @@ class Interface(object):
 			try:
 				kwds['zone%i-lastStart' % entry['zone']]
 				kwds['zone%i-lastStop' % entry['zone']]
+				kwds['zone%i-adjust' % entry['zone']]
 			except KeyError:
 				kwds['zone%i-lastStart' % entry['zone']] = datetime.fromtimestamp(entry['dateTimeStart'])
 				kwds['zone%i-lastStop' % entry['zone']] = datetime.fromtimestamp(entry['dateTimeStop'])
+				kwds['zone%i-adjust' % entry['zone']] = entry['wxAdjust']
 				
 		template = jinjaEnv.get_template('index.html')
 		return template.render({'kwds':kwds})
@@ -213,7 +222,7 @@ class Interface(object):
 		if len(kwds) == 0:
 			kwds = self.config.asDict()
 		else:
-			self.configDict = self.config.asDict()
+			configDict = self.config.asDict()
 			for keyword,value in configDict.iteritems():
 				if keyword not in kwds.keys():
 					kwds[keyword] = value
@@ -267,11 +276,11 @@ def main(args):
 		fh.close()
 		
 	# CherryPy configuration
-	cherrypy.config.update({'server.socket_host': '0.0.0.0', 'environment': 'production'})
+	cherrypy.config.update({'server.socket_host': '0.0.0.0'})#, 'environment': 'production'})
 	cpConfig = {'/css': {'tools.staticdir.on': True,
-						 'tools.staticdir.dir': os.path.join(os.path.dirname(os.path.abspath(__file__)), 'css')},
+						 'tools.staticdir.dir': CSS_PATH},
           		'/js':  {'tools.staticdir.on': True,
-          				 'tools.staticdir.dir': os.path.join(os.path.dirname(os.path.abspath(__file__)), 'js')}
+          				 'tools.staticdir.dir': JS_PATH}
           		}
 				
 	# Load in the configuration
@@ -283,7 +292,7 @@ def main(args):
 	
 	# Initialize the hardware
 	hardwareZones = initZones(config)
-	for previousRun in history.getData():
+	for previousRun in history.getData(scheduledOnly=True):
 		if hardwareZones[previousRun['zone']-1].lastStart == 0:
 			hardwareZones[previousRun['zone']-1].lastStart = previousRun['dateTimeStart']
 			hardwareZones[previousRun['zone']-1].lastStop = previousRun['dateTimeStop']

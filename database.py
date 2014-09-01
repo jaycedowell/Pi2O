@@ -141,19 +141,27 @@ class Archive(object):
 		if self._backend is not None:
 			self._backend.cancel()
 			
-	def getData(self, age=0):
+	def getData(self, age=0, scheduledOnly=False):
 		"""
 		Return a collection of data a certain number of seconds into the past.
 		"""
 	
 		# Fetch the entries that match
 		if age <= 0:
-			rid = self._backend.appendRequest('SELECT * FROM pi2o ORDER BY dateTimeStart DESC LIMIT %i' % self.nZones)
+			if scheduledOnly:
+				sqlCmd = 'SELECT * FROM pi2o WHERE wxAdjust >=0.0 GROUP BY zone ORDER BY dateTimeStart DESC LIMIT %i' % self.nZones
+			else:
+				sqlCmd = 'SELECT * FROM pi2o GROUP BY zone ORDER BY dateTimeStart DESC LIMIT %i' % self.nZones
+			rid = self._backend.appendRequest(sqlCmd)
 		else:
 			# Figure out how far to look back into the database
 			tNow = time.time()
 			tLookback = tNow - age
-			rid = self._backend.appendRequest('SELECT * FROM pi2o WHERE dateTimeStart >= %i ORDER BY dateTimeStart DESC' % tLookback)
+			if scheduledOnly:
+				sqlCmd = 'SELECT * FROM pi2o WHERE dateTimeStart >= %i AND wxAdjust >= 0.0 ORDER BY dateTimeStart DESC' % tLookback
+			else:
+				sqlCmd = 'SELECT * FROM pi2o WHERE dateTimeStart >= %i ORDER BY dateTimeStart DESC' % tLookback
+			rid = self._backend.appendRequest(sqlCmd)
 			
 		# Fetch the output
 		output = self._backend.getResponse(rid)
