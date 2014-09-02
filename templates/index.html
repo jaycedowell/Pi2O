@@ -7,9 +7,10 @@
 	<script src="/js/jquery-1.11.1.min.js"></script>
 	<script src="/js/jquery.mobile-1.4.3.min.js"></script>
 	<script type="text/javascript">
-		function updateClock(refTime) { 
+		function updateClock() { 
 			// get local time
-			var lt = new Date( refTime*1000 + {{ kwds.get('tzOffset') }}*1000 );
+			var date = new Date();
+			var lt = new Date( date.getTime() + {{ kwds.get('tzOffset') }}*1000 );
 			var year = lt.getUTCFullYear();
 			var month = lt.getUTCMonth() + 1;
 			var day = lt.getUTCDate();
@@ -44,12 +45,11 @@
 			var span = document.getElementById('ltClock');
 			span.innerHTML = lts;
 			
-			refTime += 1.0;
-			setTimeout("updateClock("+refTime.toFixed(2)+")", 1000); 
+			setTimeout("updateClock()", 1000); 
 		}
 	</script>
 </head>
-<body onload="updateClock({{ kwds.get("tNow").strftime("%s.%f") }});">
+<body onload="updateClock();">
 	<div data-role="page">
 	<div data-role="header" role="banner" class="ui-header ui-bar-inherit">
 		<h1 class="ui-title" role="heading" aira-level="1">Pi<sub>2</sub>O</h1>

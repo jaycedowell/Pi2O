@@ -110,7 +110,7 @@ class ScheduleProcessor(threading.Thread):
 									
 							#### If this is the last zone to process and it is off, we
 							#### are done with this block
-							if zone == len(hardwareZones) and not self.hardwareZones[zone-1].isActive():
+							if zone == len(self.hardwareZones) and not self.hardwareZones[zone-1].isActive():
 								self.blockActive = False
 								
 				else:
