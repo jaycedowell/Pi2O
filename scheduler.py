@@ -97,6 +97,7 @@ class ScheduleProcessor(threading.Thread):
 										self.bus.log('Zone %i - off' % zone)
 								else:
 									self.blockActive = True
+									break
 									
 							else:
 								#### Otherwise, is it time to turn it on
