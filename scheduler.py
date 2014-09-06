@@ -76,6 +76,7 @@ class ScheduleProcessor(threading.Thread):
 						
 						### Loop over the zones and work only on those that are enabled
 						for zone in range(1, len(self.hardwareZones)+1):
+							print 'II', zone
 							if self.config.get('Zone%i' % zone, 'enabled') == 'on':
 								#### What duration do we use for this zone?
 								duration = int(self.config.get('Schedule%i' % tNow.month, 'duration%i' % zone))
@@ -91,7 +92,7 @@ class ScheduleProcessor(threading.Thread):
 									
 								if self.hardwareZones[zone-1].isActive():
 									#### If the zone is active, check how long it has been on
-									if tLast-tNow >= duration:
+									if tNow-tLast >= duration:
 										self.hardwareZones[zone-1].off()
 										self.history.writeData(time.time(), zone, 'off')
 										if self.bus is not None:
