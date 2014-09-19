@@ -8,7 +8,7 @@ import time
 import threading
 from datetime import datetime, timedelta
 
-from weather import getWeatherAdjustment
+from weather import getCurrentTemperature, getWeatherAdjustment
 
 __version__ = "0.1"
 __all__ = ["ScheduleProcessor", "__version__", "__all__"]
@@ -37,6 +37,8 @@ class ScheduleProcessor(threading.Thread):
 		self.wxAdjust = None
 		self.blockActive = False
 		
+		self.tDelay = timedelta(0)
+		
 		while self.running:
 			time.sleep(self.interval)
 			if not self.running:
@@ -45,6 +47,7 @@ class ScheduleProcessor(threading.Thread):
 			try:
 				tNow = datetime.now()
 				tNow = tNow.replace(second=0, microsecond=0)
+				tNowDB = int(tNow.strftime("%s"))
 				
 				# Is the current schedule active?
 				if self.config.get('Schedule%i' % tNow.month, 'enabled') == 'on':
@@ -54,14 +57,43 @@ class ScheduleProcessor(threading.Thread):
 					
 					## Figure out if it is the start time or if we are inside a schedule 
 					## block.  If so, we need to turn things on.
+					##
+					## Note:  This needs to include the 'delay' value so that we can 
+					##        resume things that have been delayed due to weather.
 					tSchedule = tNow.replace(hour=int(h), minute=int(m))
+					tSchedule += self.tDelay
 					if tSchedule == tNow or self.blockActive:
+						### Load in the WUnderground API information
+						key = self.config.get('Weather', 'key')
+						pws = self.config.get('Weather', 'pws')
+						pos = self.config.get('Weather', 'postal')
+						enb = self.confgi.get('Weather', 'enabled')
+						
+						### Check the temperature to see if it is safe to run
+						if key != '' and (pws != '' or pos != '') and enb == 'on':
+							temp = getCurrentTemperature(key, pws=pws, postal=pos)
+							if temp > 35.0:
+								#### Everything is good to go, reset the delay
+								if self.bus is not None:
+									if self.tDelay > timedelta(0):
+										self.bus.log('Resuming schedule after %i hour delay' % self.tDelay.seconds/3600)
+										
+								self.tDelay = timedelta(0)
+								
+							else:
+								#### Wait for an hour an try again...
+								self.tDelay += timedelta(3600)
+								if self.tDelay >= timedelta(86400):
+									self.tDelay = timedelta(0)
+									
+								if self.bus is not None:
+									self.bus.log('Temperature of %.1f is below 35, delaying for one hour' % temp)
+									
+								continue
+								
 						### Load in the current weather adjustment, if needed
 						if self.wxAdjust is None:
-							key = self.config.get('Weather', 'key')
-							pws = self.config.get('Weather', 'pws')
-							pos = self.config.get('Weather', 'postal')
-							if key != '' and pws != '' and pos != '':
+							if key != '' and (pws != '' or pos != '') and enb == 'on':
 								self.wxAdjust = getWeatherAdjustment(key, pws=pws, postal=pos)
 								if self.bus is not None:
 									self.bus.log('Setting weather adjustment factor to %.3f' % self.wxAdjust)
@@ -76,7 +108,6 @@ class ScheduleProcessor(threading.Thread):
 						
 						### Loop over the zones and work only on those that are enabled
 						for zone in range(1, len(self.hardwareZones)+1):
-							print 'II', zone
 							if self.config.get('Zone%i' % zone, 'enabled') == 'on':
 								#### What duration do we use for this zone?
 								duration = int(self.config.get('Schedule%i' % tNow.month, 'duration%i' % zone))
@@ -94,7 +125,7 @@ class ScheduleProcessor(threading.Thread):
 									#### If the zone is active, check how long it has been on
 									if tNow-tLast >= duration:
 										self.hardwareZones[zone-1].off()
-										self.history.writeData(time.time(), zone, 'off')
+										self.history.writeData(tNowDB, zone, 'off')
 										if self.bus is not None:
 											self.bus.log('Zone %i - off' % zone)
 									else:
@@ -105,7 +136,7 @@ class ScheduleProcessor(threading.Thread):
 									#### Otherwise, is it time to turn it on
 									if tSchedule - tLast >= interval:
 										self.hardwareZones[zone-1].on()
-										self.history.writeData(time.time(), zone, 'on', wxAdjustment=self.wxAdjust)
+										self.history.writeData(tNowDB, zone, 'on', wxAdjustment=self.wxAdjust)
 										if self.bus is not None:
 											self.bus.log('Zone %i - on' % zone)
 										self.blockActive = True
