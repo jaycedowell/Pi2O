@@ -4,6 +4,7 @@ import os
 import sys
 import time
 import getopt
+import calendar
 import threading
 from datetime import datetime, timedelta
 
@@ -143,12 +144,95 @@ def parseOptions(args):
 	return config
 
 
+# AJAX interface
+class AJAX(object):
+	def __init__(self, config, hardwareZones, history):
+		self.config = config
+		self.hardwareZones = hardwareZones
+		self.history = history
+		
+	def serialize(self, dt):
+		if isinstance(dt, datetime):
+			if dt.utcoffset() is not None:
+				dt = dt - dt.utcoffset()
+		millis = int(calendar.timegm(dt.timetuple()) * 1000 + dt.microsecond / 1000)
+		return millis
+    	
+	@cherrypy.expose
+	@cherrypy.tools.json_out()
+	def summary(self):
+		output = {}
+
+		output['zones'] = []
+		for i,zone in enumerate(self.hardwareZones):
+			i += 1
+			output['status%i' % i] = 'on' if zone.isActive() else 'off'
+			output['name%i' % i] = self.config.get('Zone%i' % i, 'name')
+			output['zones'].append(i)
+		for entry in self.history.getData():
+			lStart = datetime.fromtimestamp(entry['dateTimeStart'])
+			if entry['dateTimeStop'] > 0:
+				lStop = datetime.fromtimestamp(entry['dateTimeStop'])
+			else:
+				lStop = datetime.now()
+			output['start%i' % entry['zone']] = self.serialize(lStart)
+			output['run%i' % entry['zone']] = self.serialize(lStop)-self.serialize(lStart)
+			output['adjust%i' % entry['zone']] = entry['wxAdjust']
+
+		return output
+    
+	@cherrypy.expose
+	@cherrypy.tools.json_out()
+	def zone(self, id):
+		output = {}
+		
+		try:
+			id = int(id)
+			output['status'] = 'on' if self.hardwareZones[id-1].isActive() else 'off'
+			for entry in self.history.getData():
+				if entry['zone'] == id:
+					output['lastStart'] = self.serialize(datetime.fromtimestamp(entry['dateTimeStart']))
+					output['lastStop'] = self.serialize(datetime.fromtimestamp(entry['dateTimeStop']))
+					output['adjust'] = entry['wxAdjust']
+					
+		except Exception, e:
+			print str(e)
+			
+		return output
+		
+	@cherrypy.expose
+	@cherrypy.tools.json_out()
+	def control(self, **kwds):
+		if len(kwds.keys()) > 0:
+			for keyword,value in kwds.iteritems():
+				if keyword[:4] == 'zone' and keyword.find('-') == -1:
+					i = int(keyword[4:])
+					if value == 'on' and not self.hardwareZones[i-1].isActive():
+						self.hardwareZones[i-1].on()
+						self.history.writeData(time.time(), i, 'on', wxAdjustment=-1.0)
+					if value == 'off' and self.hardwareZones[i-1].isActive():
+						self.hardwareZones[i-1].off()
+						self.history.writeData(time.time(), i, 'off')
+									
+		output = {}
+		output['zones'] = []
+		for i,zone in enumerate(self.hardwareZones):
+			i += 1
+			output['status%i' % i] = 'on' if zone.isActive() else 'off'
+			output['name%i' % i] = self.config.get('Zone%i' % i, 'name')
+			output['zones'].append(i)
+			
+		return output
+
+
 # Main web interface
 class Interface(object):
 	def __init__(self, config, hardwareZones, history):
 		self.config = config
 		self.hardwareZones = hardwareZones
 		self.history = history
+		
+		self.query = AJAX(config, hardwareZones, history)
 		
 	@cherrypy.expose
 	def index(self):

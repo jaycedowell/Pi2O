@@ -47,9 +47,54 @@
 			
 			setTimeout("updateClock()", 1000); 
 		}
+		
+		function setSummary(data) {
+			for( var zone in data['zones']) {
+				var name = data['name'+zone];
+				var stat = data['status'+zone];
+				var start = new Date(data['start'+zone]);
+				var run = data['run'+zone] / 1000.0;
+				var adjust = data['adjust'+zone];
+				
+				var startStr = (start.getMonth()+1)+"/"+start.getDate()+"/"+start.getFullYear();
+				
+				var runH = (run / 3600) | 0;
+				var runM = (run % 3600 / 60) | 0;
+				if( runM < 10 ) {
+					runM = "0"+runM;
+				}
+				var runS = (run % 60) | 0;
+				if( runS < 10 ) {
+					runS = "0"+runS;
+				}
+				var runStr = runH+":"+runM+":"+runS;
+				
+				if( stat == 'on' ) {
+					$('#zone'+zone+'Info').html(name+" is on");
+				} else {
+					if( adjust >= 0 ) {
+						$('#zone'+zone+'Info').html(name+" last ran on "+startStr+" for "+runStr+" <i>(weather adjustment "+(adjust*100).toFixed()+"%)</i>");
+					} else {
+						$('#zone'+zone+'Info').html(name+" last ran on "+startStr+" for "+runStr+" <i>(manual)</li>");
+					}
+				}
+			}
+		}
+		
+		function pollSummary() {
+			$.ajax({url: "/query/summary",
+				    type: "GET",
+					success: setSummary,
+			dataType: "json",
+			complete: setTimeout(function() {
+											 pollSummary()
+											 }, 60000),
+			timeout: 2000
+			});
+		}
 	</script>
 </head>
-<body onload="updateClock();">
+<body onload="updateClock(); pollSummary();">
 	<div data-role="page">
 	<div data-role="header" role="banner" class="ui-header ui-bar-inherit">
 		<h1 class="ui-title" role="heading" aira-level="1">Pi<sub>2</sub>O</h1>
@@ -66,6 +111,8 @@
 		{% if kwds.get("zone%i-enabled"|format(zone)) == 'on' %}
 		<div class="ui-field-contain">
 			<h3 class="ui-title" role="heading" aira-level="1">Zone {{ zone }}</h3>
+			<span id="zone{{zone}}Info"></span>
+			<!--
 			{% if kwds.get("zone%i-status"|format(zone)) == 'on' %}
 			{{ kwds.get("zone%i-name"|format(zone)) }} is on
 			{% else %}
@@ -73,6 +120,7 @@
 			{% set stime = rtime.days*86400 + rtime.seconds %}
 			{{ kwds.get("zone%i-name"|format(zone)) }} last ran on {{ kwds.get("zone%i-lastStart"|format(zone)).strftime("%m/%d/%Y") }} for {{ "%i:%02i:%02i"|format(stime/3600, stime%3600/60, stime%60) }} <i>({{ 'manual' if kwds.get("zone%i-adjust"|format(zone)) < 0 else "weather adjustment %i%%"|format(100.0*kwds.get("zone%i-adjust"|format(zone))) }})</i>
 			{% endif %}
+			-->
 		</div>
 		{% endif %}
 		{% endfor %}

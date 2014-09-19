@@ -6,13 +6,40 @@
 	<link href="/css/images/favicon.ico" rel="shortcut icon" type="image/x-icon" />
 	<script src="/js/jquery-1.11.1.min.js"></script>
 	<script src="/js/jquery.mobile-1.4.3.min.js"></script>
+	<script type="text/javascript">
+	function setControl(data) {
+			for( var zone in data['zones']) {
+				var name = data['name'+zone];
+				var stat = data['status'+zone];
+				
+				if( status == 'on' ) {
+					$('.zone'+zone).val('on');
+				} else {
+					$('.zone'+zone).val('off');
+				}
+			}
+			$('.zones').slider('refresh');
+		}
+		
+		function pollControl() {
+			$.ajax({url: "/query/control",
+				    type: "GET",
+					success: setControl,
+			dataType: "json",
+			complete: setTimeout(function() {
+											 pollControl()
+											 }, 60000),
+			timeout: 2000
+			});
+		}
+	</script>
 </head>
-<body>
+<body onload="pollControl();">
 	<div data-role="page">
 	<div data-role="header" role="banner" class="ui-header ui-bar-inherit">
 		<h1 class="ui-title" role="heading" aira-level="1">Manual Control</h1>
 	</div>
-	<form method="post" action="manual">
+	<form id="theform" method="post" action="manual">
 		<div data-role="main" class="ui-content">
 			{% for zone in range(1, 33) %}
 			{% if not kwds.get("zone%i-enabled"|format(zone)) %}
@@ -22,7 +49,7 @@
 			<h3 class="ui-title" role="heading" aira-level="1">Zone {{ zone }}</h3>
 			<div class="ui-field-contain">
 				<label for="zone{{ zone }}">{{ kwds.get("zone%i-name"|format(zone)) }}:</label>
-				<select class="zones" name="zone{{ zone }}" data-role="slider">
+				<select class="zones" id="zone{{ zone }}" name="zone{{ zone }}" data-role="slider">
 					<option value="off">Off</option>
 					<option value="on" {{ kwds.get("zone%i"|format(zone)) }}>On</option>
 				</select> 
@@ -41,6 +68,7 @@
 						$(this).val('on');
 						$(this).slider('refresh');
 					}
+					$.post('/query/control', $('#theform').serialize());
 				});
 			</script>
 			<button type="submit">Submit</button>
