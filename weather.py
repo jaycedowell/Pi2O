@@ -8,7 +8,8 @@ import json
 import urllib
 
 __version__ = "0.1"
-__all__ = ["getCurrentConditions", "getYesterdaysConditions", "__version__", "__all__"]
+__all__ = ["getCurrentConditions", "getYesterdaysConditions", "getCurrentTemperature", 
+		   "getWeatherAdjustment", "__version__", "__all__"]
 
 
 # Base URL for all queries
@@ -59,6 +60,19 @@ def getYesterdaysConditions(apiKey, pws=None, postal=None):
 	uh.close()
 	
 	return data
+
+
+def getCurrentTemperature(apiKey, pws=None, postal=None):
+	"""
+	Get the current temperature in degrees Fahrenheit using the WUnderground 
+	API.
+	"""
+	
+	cNow = getCurrentConditions(apiKey, pws=pws, postal=postal)
+	
+	tNow = float(cNow['current_observation']['temp_f'])
+	
+	return tNow
 
 
 def getWeatherAdjustment(apiKey, pws=None, postal=None):
