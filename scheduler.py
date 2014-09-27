@@ -67,7 +67,7 @@ class ScheduleProcessor(threading.Thread):
 						key = self.config.get('Weather', 'key')
 						pws = self.config.get('Weather', 'pws')
 						pos = self.config.get('Weather', 'postal')
-						enb = self.confgi.get('Weather', 'enabled')
+						enb = self.config.get('Weather', 'enabled')
 						
 						### Check the temperature to see if it is safe to run
 						if key != '' and (pws != '' or pos != '') and enb == 'on':
