@@ -62,6 +62,11 @@ class ScheduleProcessor(threading.Thread):
 					##        resume things that have been delayed due to weather.
 					tSchedule = tNow.replace(hour=int(h), minute=int(m))
 					tSchedule += self.tDelay
+					if self.bus is not None:
+						self.bus.log('Current Time:  %s' % tNow)
+						self.bus.log('Schedule Time: %s' % tSchedule)
+						self.bus.log('Schedule Block Active: %s' % self.blockActive)
+						self.bus.log('Start Block?   %s' % (tSchedule == tNow or self.blockActive,))
 					if tSchedule == tNow or self.blockActive:
 						### Load in the WUnderground API information
 						key = self.config.get('Weather', 'key')
@@ -120,6 +125,14 @@ class ScheduleProcessor(threading.Thread):
 									if entry['zone'] == zone:
 										tLast = datetime.fromtimestamp( entry['dateTimeStart'] )
 										break
+										
+								if self.bus is not None:
+									self.bus.log('Zone #%i of %i' % (zone, len(self.hardwareZones)))
+									self.bus.log('  Last Run Time: %s' % tLast)
+									self.bus.log('  Zone Interval: %s' % interval)
+									self.bus.log('  Zone Duration: %s' % duration)
+									self.bus.log('  Current Interval: %s' % (tSchedule-tLast))
+									self.bus.log('  Current Run Time: %s' % (tNow-tLast))
 									
 								if self.hardwareZones[zone-1].isActive():
 									#### If the zone is active, check how long it has been on
@@ -134,7 +147,7 @@ class ScheduleProcessor(threading.Thread):
 									
 								else:
 									#### Otherwise, is it time to turn it on
-									if tSchedule - tLast >= interval:
+									if tSchedule - tLast >= interval - timedelta(3660):
 										self.hardwareZones[zone-1].on()
 										self.history.writeData(tNowDB, zone, 'on', wxAdjustment=self.wxAdjust)
 										if self.bus is not None:
@@ -146,6 +159,9 @@ class ScheduleProcessor(threading.Thread):
 							#### are done with this block
 							if zone == len(self.hardwareZones) and not self.hardwareZones[zone-1].isActive():
 								self.blockActive = False
+								
+					else:
+							self.wxAdjust = None
 								
 				else:
 					self.wxAdjust = None
