@@ -131,7 +131,7 @@ class ScheduleProcessor(threading.Thread):
 									self.bus.log('  Last Run Time: %s' % tLast)
 									self.bus.log('  Zone Interval: %s' % interval)
 									self.bus.log('  Zone Duration: %s' % duration)
-									self.bus.log('  Current Interval: %s' % (tSchedule-tLast))
+									self.bus.log('  Current Interval: %s' % (tNow-tLast))
 									self.bus.log('  Current Run Time: %s' % (tNow-tLast))
 									
 								if self.hardwareZones[zone-1].isActive():
@@ -147,7 +147,7 @@ class ScheduleProcessor(threading.Thread):
 									
 								else:
 									#### Otherwise, is it time to turn it on
-									if tSchedule - tLast >= interval - timedelta(3660):
+									if tNow - tLast >= interval:
 										self.hardwareZones[zone-1].on()
 										self.history.writeData(tNowDB, zone, 'on', wxAdjustment=self.wxAdjust)
 										if self.bus is not None:

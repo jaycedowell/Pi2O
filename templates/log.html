@@ -46,7 +46,7 @@
 				<td>{{ "%i:%02i:%02i"|format(stime/3600, stime%3600/60, stime%60) }} <i>(running)</i></td>
 				{% endif %}
 				{% set stime = rtime.days*86400 + rtime.seconds %}
-				<td>{{ row.get("wxAdjust") if row.get("wxAdjust") >=0 else 'Manual' }}</td>
+				<td>{{ "%i%%"|format(100.0*row.get("wxAdjust")) if row.get("wxAdjust") >=0 else 'Manual' }}</td>
 			</tr>
 			{% endfor %}
 			</tbody>
