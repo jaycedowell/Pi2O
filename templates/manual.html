@@ -16,10 +16,10 @@
 				
 				if( status == 'on' ) {
 					$('.zone'+zone).val('on');
-					$('#zone'+zone+'Info').html("Zone "+zone+" is on");
+					$('#zone'+zone+'Info').html("Zone "+zone+" is on<br />");
 				} else {
 					$('.zone'+zone).val('off');
-					$('#zone'+zone+'Info').html("Zone "+zone+" is off");
+					$('#zone'+zone+'Info').html("Zone "+zone+" is off<br />");
 				}
 			}
 			$('.zones').slider('refresh');
@@ -29,17 +29,23 @@
 			$.ajax({url: "/query/control",
 				    type: "GET",
 					success: setControl,
-			dataType: "json",
-			complete: setTimeout(function() {
+					dataType: "json",
+					complete: setTimeout(function() {
 											 pollControl()
 											 }, 60000),
-			timeout: 2000
+					timeout: 2000
 			});
 		}
+		
+		function onload() {
+			pollControl();
+		}
+		
+		$(document).on("pageload", "#manual", onload);
 	</script>
 </head>
-<body onload="pollControl();">
-	<div data-role="page">
+<body>
+	<div id="manual" data-role="page">
 	<div data-role="header" role="banner" class="ui-header ui-bar-inherit">
 		<h1 class="ui-title" role="heading" aira-level="1">Manual Control</h1>
 	</div>
@@ -76,8 +82,9 @@
 					$.ajax({url: "/query/control",
 				    		type: "GET",
 							success: setControl,
-					dataType: "json",
-					timeout: 2000});
+							dataType: "json",
+							timeout: 2000
+					});
 				});
 			</script>
 		</div>

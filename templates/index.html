@@ -94,10 +94,17 @@
 			timeout: 2000
 			});
 		}
+		
+		function onload() {
+			updateClock();
+			pollSummary();
+		}
+		
+		$(document).on("pageload", "#index", onload);
 	</script>
 </head>
 <body onload="updateClock(); pollSummary();">
-	<div data-role="page">
+	<div id="index" data-role="page">
 	<div data-role="header" role="banner" class="ui-header ui-bar-inherit">
 		<h1 class="ui-title" role="heading" aira-level="1">Pi<sub>2</sub>O</h1>
 	</div>
