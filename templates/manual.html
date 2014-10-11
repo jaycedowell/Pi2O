@@ -11,6 +11,12 @@
 	<script type="text/javascript">
 		var request = null;
 		
+		$(document).on("pagecreate", "#manual", onload);
+		$(document).on("pageremove", "#manual", onunload);
+	</script>
+</head>
+<body>
+	<script type="text/javascript">
 		function setControl(data) {
 			for( var zone in data['zones']) {
 				var name = data['name'+zone];
@@ -48,13 +54,9 @@
 			alert("Unload");
 			request.abort();
 		}
-		
-		$(document).on("pageinit", "#manual", onload);
-		$(document).on("pageremove", "#manual", onunload);
 	</script>
-</head>
-<body>
-	<div id="manual" data-role="page">
+	
+	<div id="index" data-role="page">
 	<div data-role="header" role="banner" class="ui-header ui-bar-inherit">
 		<h1 class="ui-title" role="heading" aira-level="1">Manual Control</h1>
 	</div>

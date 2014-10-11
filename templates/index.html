@@ -11,6 +11,12 @@
 	<script type="text/javascript">
 		var request = null;
 		
+		$(document).on("pagecreate", "#index", onload);
+		$(document).on("pageremove", "#index", onunload);
+	</script>
+</head>
+<body>
+	<script type="text/javascript">
 		function updateClock() { 
 			// get local time
 			var date = new Date();
@@ -109,12 +115,8 @@
 				request.abort();
 			}
 		}
-		
-		$(document).on("pageinit", "#index", onload);
-		$(document).on("pageremove", "#index", onunload);
 	</script>
-</head>
-<body>
+	
 	<div id="index" data-role="page">
 	<div data-role="header" role="banner" class="ui-header ui-bar-inherit">
 		<h1 class="ui-title" role="heading" aira-level="1">Pi<sub>2</sub>O</h1>
