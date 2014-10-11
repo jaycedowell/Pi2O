@@ -9,7 +9,9 @@
 	<script src="/js/jquery-1.11.1.min.js"></script>
 	<script src="/js/jquery.mobile-1.4.3.min.js"></script>
 	<script type="text/javascript">
-	function setControl(data) {
+		var request = null;
+		
+		function setControl(data) {
 			for( var zone in data['zones']) {
 				var name = data['name'+zone];
 				var stat = data['status'+zone];
@@ -26,7 +28,7 @@
 		}
 		
 		function pollControl() {
-			$.ajax({url: "/query/control",
+			request = $.ajax({url: "/query/control",
 				    type: "GET",
 					success: setControl,
 					dataType: "json",
@@ -38,10 +40,17 @@
 		}
 		
 		function onload() {
+			alert("Load");
 			pollControl();
 		}
 		
+		function onunload() {
+			alert("Unload");
+			request.abort();
+		}
+		
 		$(document).on("pageinit", "#manual", onload);
+		$(document).on("pageremove", "#manual", onunload);
 	</script>
 </head>
 <body>

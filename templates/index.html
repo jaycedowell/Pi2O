@@ -9,6 +9,8 @@
 	<script src="/js/jquery-1.11.1.min.js"></script>
 	<script src="/js/jquery.mobile-1.4.3.min.js"></script>
 	<script type="text/javascript">
+		var request = null;
+		
 		function updateClock() { 
 			// get local time
 			var date = new Date();
@@ -84,7 +86,7 @@
 		}
 		
 		function pollSummary() {
-			$.ajax({url: "/query/summary",
+			request = $.ajax({url: "/query/summary",
 				    type: "GET",
 					success: setSummary,
 			dataType: "json",
@@ -96,11 +98,20 @@
 		}
 		
 		function onload() {
+			alert("Load");
 			updateClock();
 			pollSummary();
 		}
 		
+		function onunload() {
+			alert("Unload");
+			if( request != null ) {
+				request.abort();
+			}
+		}
+		
 		$(document).on("pageinit", "#index", onload);
+		$(document).on("pageremove", "#index", onunload);
 	</script>
 </head>
 <body>
