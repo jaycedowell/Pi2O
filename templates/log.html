@@ -13,6 +13,41 @@
 	<div id="log" data-role="page">
 	<script type="text/javascript">
 		function setLog(data) {
+			var lt = new Date(data['tNow']);
+			var year = lt.getUTCFullYear();
+			var month = lt.getUTCMonth() + 1;
+			var day = lt.getUTCDate();
+			var hours = lt.getUTCHours();
+			var minutes = lt.getUTCMinutes();
+			var seconds = lt.getUTCSeconds();
+			if (day < 10) {
+				day = "0" + day;
+			}
+			if (month < 10) {
+				month = "0" + month;
+			}
+			if (hours < 10) {
+				hours = "0" + hours;
+			}
+			if (hours > 12) {
+				hours = hours - 12;
+				ampm = "PM";
+			} else {
+				ampm = "AM";
+			}
+			if (minutes < 10) {
+				minutes = "0" + minutes;
+			}
+			if (seconds < 10) {
+				seconds = "0" + seconds;
+			}
+			var lts = year + "/" + month + "/" + day;
+			lts = lts + " " + hours + ":" + minutes + ":" + seconds + " " + ampm;
+
+			// update text fields
+			var query = document.getElementById('queryTime');
+			query.innerHTML = lts;
+			
 			for( var entry in data['entries']) {
 				entry = parseInt(entry) + 1;
 				var zone = data['entry'+entry+'Zone'];
@@ -59,7 +94,7 @@
 	<div data-role="main" class="ui-content">
 		<div class="ui-field-contain">
 			<h3 class="ui-title" role="heading" aira-level="1">Local Query Time</h3>
-			{{ kwds.get("tNow").strftime("%Y/%m/%d %I:%M %p") }}<br />
+			<span id="queryTime">{{ kwds.get("tNow").strftime("%Y/%m/%d %I:%M %p") }}</span><br />
 		</div>
 		
 		<div class="ui-field-contain">

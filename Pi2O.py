@@ -215,6 +215,7 @@ class AJAX(object):
 						self.history.writeData(time.time(), i, 'off')
 									
 		output = {}
+		output['tNow'] = self.serialize(tNow)
 		output['zones'] = []
 		for i,zone in enumerate(self.hardwareZones):
 			i += 1
@@ -243,7 +244,7 @@ class AJAX(object):
 				runtime = tNow - entry['dateTimeStart']
 			output['entry%iRun' % i] = "%i:%02i:%02i" % (runtime/3600, runtime%3600/60, runtime%60)
 			if entry['wxAdjust'] >= 0:
-				output['entry%iAdjust' % i] = "%i%%" % entry['wxAdjust']
+				output['entry%iAdjust' % i] = "%i%%" % (100.0*entry['wxAdjust'],)
 			else:
 				output['entry%iAdjust' % i] = 'Manual'
 			output['entries'].append(i)
