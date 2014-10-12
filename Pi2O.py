@@ -215,7 +215,6 @@ class AJAX(object):
 						self.history.writeData(time.time(), i, 'off')
 									
 		output = {}
-		output['tNow'] = self.serialize(tNow)
 		output['zones'] = []
 		for i,zone in enumerate(self.hardwareZones):
 			i += 1
@@ -233,6 +232,7 @@ class AJAX(object):
 		tNow = datetime.now()
 		history = self.history.getData(age=14*24*3600)[:25]
 		
+		output['tNow'] = self.serialize(tNow)
 		output['entries'] = []
 		for i,entry in enumerate(history):
 			i += 1
