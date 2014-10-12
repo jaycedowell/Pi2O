@@ -246,7 +246,8 @@ class AJAX(object):
 				output['entry%iAdjust' % i] = "%i%%" % entry['wxAdjust']
 			else:
 				output['entry%iAdjust' % i] = 'Manual'
-				
+			output['entries'].append(i)
+			
 		return output
 
 
