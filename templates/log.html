@@ -4,13 +4,53 @@
 	<meta name="viewport" content="width=device-width, initial-scale=1">
 	<link rel="stylesheet" href="/css/jquery.mobile-1.4.3.min.css">
 	<link rel="stylesheet" href="/css/themes/Pi2O.css" />
-        <link rel="stylesheet" href="/css/themes/jquery.mobile.icons.min.css" />
+	<link rel="stylesheet" href="/css/themes/jquery.mobile.icons.min.css" />
 	<link href="/css/images/favicon.ico" rel="shortcut icon" type="image/x-icon" />
 	<script src="/js/jquery-1.11.1.min.js"></script>
 	<script src="/js/jquery.mobile-1.4.3.min.js"></script>
 </head>
 <body>
-	<div data-role="page">
+	<div id="log" data-role="page">
+	<script type="text/javascript">
+		function setLog(data) {
+			for( var row in data['entries']) {
+				var zone = data['entry'+row+'Zone'];
+				var start = data['entry'+row+'Start'];
+				var runt = data['entry'+row+'Run'];
+				var adjust = data['entry'+row+'Adjust'];
+				
+				var row = $("#logTable").rows[int(row)-1];
+				if( row != null ) {
+					row.innerHTML = "<th>"+zone+"</th><td>"+start+"</td><td>"+runt+"</td><td>"+adjust+"</td>";
+				} else {
+					$('#logTable > tbody:last').append("<tr><th>"+zone+"</th><td>"+start+"</td><td>"+runt+"</td><td>"+adjust+"</td></tr>");
+				}
+			}
+		}
+		
+		function pollLog() {
+			$.ajax({url: "/query/log",
+				    type: "GET",
+					success: setLog,
+					dataType: "json",
+					complete: setTimeout(function() {
+										if( document.getElementById('logPage') != null ) {
+											pollLog();
+										}
+									}, 10000),
+					timeout: 2000
+			});
+		}
+		
+		function onload() {
+			pollLog();
+		}
+		
+		$(document).on("pagecreate", "#log", onload);
+	</script>
+	
+	<div id="logPage"></div>
+	
 	<div data-role="header" role="banner" class="ui-header ui-bar-inherit">
 		<h1 class="ui-title" role="heading" aira-level="1">Logs</h1>
 	</div>
@@ -22,7 +62,7 @@
 		</div>
 		
 		<div class="ui-field-contain">
-		<table data-role="table" id="history-table" data-mode="reflow" class="ui-responsive table-stroke">
+		<table id="logTable" data-role="table" id="history-table" data-mode="reflow" class="ui-responsive table-stroke">
 			<thead>
 			<tr>
 				<th>Zone</th>

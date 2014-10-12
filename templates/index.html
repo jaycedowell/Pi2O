@@ -8,9 +8,6 @@
 	<link href="/css/images/favicon.ico" rel="shortcut icon" type="image/x-icon" />
 	<script src="/js/jquery-1.11.1.min.js"></script>
 	<script src="/js/jquery.mobile-1.4.3.min.js"></script>
-	<script type="text/javascript">
-		var request = null;
-	</script>
 </head>
 <body>
 	<div id="index" data-role="page">
@@ -90,28 +87,28 @@
 		}
 		
 		function pollSummary() {
-			request = $.ajax({url: "/query/summary",
+			$.ajax({url: "/query/summary",
 				    type: "GET",
 					success: setSummary,
-			dataType: "json",
-			complete: setTimeout(function() {
-											 pollSummary()
-											 }, 60000),
-			timeout: 2000
+					dataType: "json",
+					complete: setTimeout(function() {
+										if( document.getElementById('indexPage') != null ) {
+											pollSummary();
+										}
+									}, 10000),
+					timeout: 2000
 			});
 		}
 		
 		function onload() {
-			alert("Load");
-			if( request != null ) {
-				request.abort();
-			}
 			updateClock();
 			pollSummary();
 		}
 		
-		$(document).on("pagecreate", "#index", onload);
+		$(document).on("pageshow", "#index", onload);
 	</script>
+	
+	<div id="indexpage"></div>
 	
 	<div data-role="header" role="banner" class="ui-header ui-bar-inherit">
 		<h1 class="ui-title" role="heading" aira-level="1">Pi<sub>2</sub>O</h1>

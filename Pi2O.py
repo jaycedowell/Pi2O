@@ -223,6 +223,32 @@ class AJAX(object):
 			output['zones'].append(i)
 			
 		return output
+		
+	@cherrypy.expose
+	@cherrypy.tools.json_out()
+	def log(self):
+		output = {}
+		
+		tNow = datetime.now()
+		history = self.history.getData(age=7*24*3600)[:25]
+		
+		output['entries'] = []
+		for i,entry in xrange(len(kwds['history'])):
+			i += 1
+			output['entry%iZone' % i] = entry['zone']
+			output['entry%iStart' %i ] = entry['dateTimeStart'].strftime("%Y-%m-%d %H:%M:%S")
+			if entry['dateTimeStop'] >= entry['dateTimeStart']:
+				runtime = entry['dateTimeStop'] - entry['dateTimeStart']
+			else:
+				runtime = tNow - entry['dateTimeStart']
+			runtime = runtime.days*86400 + runtime.seconds
+			output['entry%iRun' % i] = "%i:%02i:%02i" % (runtime/3600, runtime%3600/60, runtime%60)
+			if entry['wxAdjust'] >= 0:
+				output['entry%iAdjust' % i] = "%i%%" % entry['wxAdjust']
+			else:
+				output['entry%iAdjust' % i] = 'Manual'
+				
+		return output
 
 
 # Main web interface

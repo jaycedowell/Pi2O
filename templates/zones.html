@@ -4,13 +4,21 @@
 	<meta name="viewport" content="width=device-width, initial-scale=1">
 	<link rel="stylesheet" href="/css/jquery.mobile-1.4.3.min.css">
 	<link rel="stylesheet" href="/css/themes/Pi2O.css" />
-        <link rel="stylesheet" href="/css/themes/jquery.mobile.icons.min.css" />
+    <link rel="stylesheet" href="/css/themes/jquery.mobile.icons.min.css" />
 	<link href="/css/images/favicon.ico" rel="shortcut icon" type="image/x-icon" />
 	<script src="/js/jquery-1.11.1.min.js"></script>
 	<script src="/js/jquery.mobile-1.4.3.min.js"></script>
 </head>
 <body>
-	<div data-role="page">
+	<div id="zones" data-role="page">
+	<script type="text/javascript">
+		function onload() {
+			// Nothing yet
+		}
+		
+		$(document).on("pagecreate", "#zones", onload);
+	</script>
+	
 	<div data-role="header" role="banner" class="ui-header ui-bar-inherit">
 		<h1 class="ui-title" role="heading" aira-level="1">Zones</h1>
 	</div>
@@ -20,47 +28,51 @@
 			{% if not kwds.get("zone%i-enabled"|format(zone)) %}
 			{% break %}
 			{% endif %}
-			<h3 class="ui-title" role="heading" aira-level="1">Zone {{ zone }}</h3>
-			<div class="ui-field-contain">
-				<label for="zone{{ zone }}-name">Name:</label>
-				<input class="name{{ zone }}" type="text" name="zone{{ zone }}-name" value="{{ kwds.get("zone%i-name"|format(zone)) }}"/>
-				<label for="zone{{ zone }}-pin">GPIO Pin:</label>
-				<select class="pin{{ zone }}" id="pin{{ zone }}" name="zone{{ zone }}-pin">
-					<option value="17" {{ 'selected' if kwds.get("zone%i-pin"|format(zone)) == '17' else '' }}>17</option>
-					<option value="18" {{ 'selected' if kwds.get("zone%i-pin"|format(zone)) == '18' else '' }}>18</option>
-					<option value="23" {{ 'selected' if kwds.get("zone%i-pin"|format(zone)) == '23' else '' }}>23</option>
-					<option value="24" {{ 'selected' if kwds.get("zone%i-pin"|format(zone)) == '24' else '' }}>24</option>
-					<option value="25" {{ 'selected' if kwds.get("zone%i-pin"|format(zone)) == '25' else '' }}>25</option>
-				</select>
-				<label for="zone{{ zone }}-enabled">Enabled:</label>
-				<select class="enabled{{ zone }}" name="zone{{ zone }}-enabled" data-role="slider">
-					<option value="off">Off</option>
-					<option value="on" {{ 'selected' if kwds.get("zone%i-enabled"|format(zone)) == 'on' else '' }}>On</option>
-				</select> 
+			<div data-role="collapsible">
+				<h3 class="ui-title" role="heading" aira-level="1">Zone {{ zone }}</h3>
+				<div class="ui-field-contain">
+					<label for="zone{{ zone }}-name">Name:</label>
+					<input class="name{{ zone }}" type="text" name="zone{{ zone }}-name" value="{{ kwds.get("zone%i-name"|format(zone)) }}"/>
+					<label for="zone{{ zone }}-pin">GPIO Pin:</label>
+					<select class="pin{{ zone }}" id="pin{{ zone }}" name="zone{{ zone }}-pin">
+						<option value="17" {{ 'selected' if kwds.get("zone%i-pin"|format(zone)) == '17' else '' }}>17</option>
+						<option value="18" {{ 'selected' if kwds.get("zone%i-pin"|format(zone)) == '18' else '' }}>18</option>
+						<option value="23" {{ 'selected' if kwds.get("zone%i-pin"|format(zone)) == '23' else '' }}>23</option>
+						<option value="24" {{ 'selected' if kwds.get("zone%i-pin"|format(zone)) == '24' else '' }}>24</option>
+						<option value="25" {{ 'selected' if kwds.get("zone%i-pin"|format(zone)) == '25' else '' }}>25</option>
+					</select>
+					<label for="zone{{ zone }}-enabled">Enabled:</label>
+					<select class="enabled{{ zone }}" name="zone{{ zone }}-enabled" data-role="slider">
+						<option value="off">Off</option>
+						<option value="on" {{ 'selected' if kwds.get("zone%i-enabled"|format(zone)) == 'on' else '' }}>On</option>
+					</select> 
+				</div>
 			</div>
 			{% endfor %}
 			
-			<h3 class="ui-title" role="heading" aira-level="1">Rain Sensor</h3>
-			<div class="ui-field-contain">
-				<fieldset data-role="controlgroup" data-type="horizontal">
-					<legend>Type:</legend>
-    				<input class="rtype" type="radio" name="rainsensor-type" id="rainsensor-choice-1" value="off" {{ 'checked' if kwds.get('rainsensor-type') == 'off' else '' }}>
-    				<label for="rainsensor-choice-1">Not Installed</label>
-    				<input class="rtype" type="radio" name="rainsensor-type" id="rainsensor-choice-2" value="software" {{ 'checked' if kwds.get('rainsensor-type') == 'software' else '' }}>
-    				<label for="rainsensor-choice-2">Software</label>
-    				<input class="rtype" type="radio" name="rainsensor-type" id="rainsensor-choice-3" value="hardware" {{ 'checked' if kwds.get('rainsensor-type') == 'hardware' else '' }}>
-    				<label for="rainsensor-choice-3">Hardware</label>
-				</fieldset>
-				<label for="rainsensor-pin">GPIO Pin:</label>
-				<select class="pinr" id="pinr" name="rainsensor-pin">
-					<option value="17" {{ 'selected' if kwds.get("rainsensor-pin") == '17' else '' }}>17</option>
-					<option value="18" {{ 'selected' if kwds.get("rainsensor-pin") == '18' else '' }}>18</option>
-					<option value="23" {{ 'selected' if kwds.get("rainsensor-pin") == '23' else '' }}>23</option>
-					<option value="24" {{ 'selected' if kwds.get("rainsensor-pin") == '24' else '' }}>24</option>
-					<option value="25" {{ 'selected' if kwds.get("rainsensor-pin") == '25' else '' }}>25</option>
-				</select>
-				<label for="rainsensor-precip">Rainfall:</label>
-				<input class="precip" type="range" name="rainsensor-precip" value="{{ kwds.get("rainsensor-precip") }}" min="0.04" max="0.52" step="0.04" data-highlight="true"/>
+			<div data-role="collapsible">
+				<h3 class="ui-title" role="heading" aira-level="1">Rain Sensor</h3>
+				<div class="ui-field-contain">
+					<fieldset data-role="controlgroup" data-type="horizontal">
+						<legend>Type:</legend>
+						<input class="rtype" type="radio" name="rainsensor-type" id="rainsensor-choice-1" value="off" {{ 'checked' if kwds.get('rainsensor-type') == 'off' else '' }}>
+						<label for="rainsensor-choice-1">Not Installed</label>
+						<input class="rtype" type="radio" name="rainsensor-type" id="rainsensor-choice-2" value="software" {{ 'checked' if kwds.get('rainsensor-type') == 'software' else '' }}>
+						<label for="rainsensor-choice-2">Software</label>
+						<input class="rtype" type="radio" name="rainsensor-type" id="rainsensor-choice-3" value="hardware" {{ 'checked' if kwds.get('rainsensor-type') == 'hardware' else '' }}>
+						<label for="rainsensor-choice-3">Hardware</label>
+					</fieldset>
+					<label for="rainsensor-pin">GPIO Pin:</label>
+					<select class="pinr" id="pinr" name="rainsensor-pin">
+						<option value="17" {{ 'selected' if kwds.get("rainsensor-pin") == '17' else '' }}>17</option>
+						<option value="18" {{ 'selected' if kwds.get("rainsensor-pin") == '18' else '' }}>18</option>
+						<option value="23" {{ 'selected' if kwds.get("rainsensor-pin") == '23' else '' }}>23</option>
+						<option value="24" {{ 'selected' if kwds.get("rainsensor-pin") == '24' else '' }}>24</option>
+						<option value="25" {{ 'selected' if kwds.get("rainsensor-pin") == '25' else '' }}>25</option>
+					</select>
+					<label for="rainsensor-precip">Rainfall:</label>
+					<input class="precip" type="range" name="rainsensor-precip" value="{{ kwds.get("rainsensor-precip") }}" min="0.04" max="0.52" step="0.04" data-highlight="true"/>
+				</div>
 			</div>
 			
 			<script type="text/javascript">
