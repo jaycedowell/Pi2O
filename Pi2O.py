@@ -236,12 +236,11 @@ class AJAX(object):
 		for i,entry in enumerate(history):
 			i += 1
 			output['entry%iZone' % i] = entry['zone']
-			output['entry%iStart' %i ] = entry['dateTimeStart'].strftime("%Y-%m-%d %H:%M:%S")
+			output['entry%iStart' %i ] = datetime.fromtimestamp(entry['dateTimeStart']).strftime("%Y-%m-%d %H:%M:%S")
 			if entry['dateTimeStop'] >= entry['dateTimeStart']:
 				runtime = entry['dateTimeStop'] - entry['dateTimeStart']
 			else:
 				runtime = tNow - entry['dateTimeStart']
-			runtime = runtime.days*86400 + runtime.seconds
 			output['entry%iRun' % i] = "%i:%02i:%02i" % (runtime/3600, runtime%3600/60, runtime%60)
 			if entry['wxAdjust'] >= 0:
 				output['entry%iAdjust' % i] = "%i%%" % entry['wxAdjust']
