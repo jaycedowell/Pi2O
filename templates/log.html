@@ -13,13 +13,14 @@
 	<div id="log" data-role="page">
 	<script type="text/javascript">
 		function setLog(data) {
-			for( var row in data['entries']) {
-				var zone = data['entry'+row+'Zone'];
-				var start = data['entry'+row+'Start'];
-				var runt = data['entry'+row+'Run'];
-				var adjust = data['entry'+row+'Adjust'];
+			for( var entry in data['entries']) {
+				entry = parseInt(entry) + 1;
+				var zone = data['entry'+entry+'Zone'];
+				var start = data['entry'+entry+'Start'];
+				var runt = data['entry'+entry+'Run'];
+				var adjust = data['entry'+entry+'Adjust'];
 				
-				var row = $("#logTable").rows[int(row)-1];
+				var row = document.getElementById('logTable').rows[entry];
 				if( row != null ) {
 					row.innerHTML = "<th>"+zone+"</th><td>"+start+"</td><td>"+runt+"</td><td>"+adjust+"</td>";
 				} else {
