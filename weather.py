@@ -31,7 +31,7 @@ class _rateLimiter(object):
 		
 		self._requests = []
 		
-	def clearToRequest(self, block=True):
+	def clearToSend(self, block=True):
 		"""
 		Find out if sending a request now would be allowable.  Return True
 		if it is, False otherwise.  If 'block' is set to True, the function
@@ -66,7 +66,7 @@ class _rateLimiter(object):
 			if block:
 				## Sleep for a bit and try again
 				time.sleep(5)
-				while not self.clearToRequest(block=False):
+				while not self.clearToSend(block=False):
 					time.sleep(5)
 					
 				clear = True
