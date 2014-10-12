@@ -230,10 +230,10 @@ class AJAX(object):
 		output = {}
 		
 		tNow = datetime.now()
-		history = self.history.getData(age=7*24*3600)[:25]
+		history = self.history.getData(age=14*24*3600)[:25]
 		
 		output['entries'] = []
-		for i,entry in xrange(len(kwds['history'])):
+		for i,entry in enumerate(history):
 			i += 1
 			output['entry%iZone' % i] = entry['zone']
 			output['entry%iStart' %i ] = entry['dateTimeStart'].strftime("%Y-%m-%d %H:%M:%S")
