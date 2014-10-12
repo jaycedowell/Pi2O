@@ -10,12 +10,10 @@
 	<script src="/js/jquery.mobile-1.4.3.min.js"></script>
 	<script type="text/javascript">
 		var request = null;
-		
-		$(document).on("pagecreate", "#index", onload);
-		$(document).on("pageremove", "#index", onunload);
 	</script>
 </head>
 <body>
+	<div id="index" data-role="page">
 	<script type="text/javascript">
 		function updateClock() { 
 			// get local time
@@ -105,19 +103,16 @@
 		
 		function onload() {
 			alert("Load");
+			if( request != null ) {
+				request.abort();
+			}
 			updateClock();
 			pollSummary();
 		}
 		
-		function onunload() {
-			alert("Unload");
-			if( request != null ) {
-				request.abort();
-			}
-		}
+		$(document).on("pagecreate", "#index", onload);
 	</script>
 	
-	<div id="index" data-role="page">
 	<div data-role="header" role="banner" class="ui-header ui-bar-inherit">
 		<h1 class="ui-title" role="heading" aira-level="1">Pi<sub>2</sub>O</h1>
 	</div>
