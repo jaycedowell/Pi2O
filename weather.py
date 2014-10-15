@@ -189,18 +189,28 @@ def getWeatherAdjustment(apiKey, pws=None, postal=None):
 	"""
 	
 	# Today
-	tNow = datetime.now()
-	cNow = getHistroy(apiKey, tNow, pws=pws, postal=postal)
-	tNow = float(cNow['dailysummary']['meantempi'])
-	hNow = float(cNow['dailysummary']['humidity'])
-	pNow = float(cNow['dailysummary']['precipi'])
+	dtNow = datetime.now()
+	cNow = getHistory(apiKey, dtNow, pws=pws, postal=postal)
+	tNow = float(cNow['history']['dailysummary'][0]['meantempi'])
+	try:
+		hNow = float(cNow['history']['dailysummary'][0]['humidity'])
+	except ValueError:
+		hNow  = float(cNow['history']['dailysummary'][0]['minhumidity'])
+		hNow += float(cNow['history']['dailysummary'][0]['maxhumidity'])
+		hNow /= 2.0
+	pNow = float(cNow['history']['dailysummary'][0]['precipi'])
 	
 	# Yesterday
-	tPast  = tNow - timedelta(days=1)
-	cPast = getHistory(apiKey, tYesterday, pws=pws, postal=postal)
-	tPast = float(cPast['dailysummary']['meantempi'])
-	hPast = float(cPast['dailysummary']['humidity'])
-	pPast = float(cPast['dailysummary']['precipi'])
+	dtPast  = dtNow - timedelta(days=1)
+	cPast = getHistory(apiKey, dtPast, pws=pws, postal=postal)
+	tPast = float(cPast['history']['dailysummary'][0]['meantempi'])
+	try:
+		hPast = float(cPast['history']['dailysummary'][0]['humidity'])
+	except ValueError:
+		hPast  = float(cPast['history']['dailysummary'][0]['minhumidity'])
+		hPast += float(cPast['history']['dailysummary'][0]['maxhumidity'])
+		hPast /= 2.0
+	pPast = float(cPast['history']['dailysummary'][0]['precipi'])
 	
 	# The various bits of the scaling relation
 	tFactor = 4.0*((0.5*tNow + 0.5*tPast) - 70.0)	# percent
