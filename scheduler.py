@@ -115,57 +115,55 @@ class ScheduleProcessor(threading.Thread):
 						### Loop over the zones and work only on those that are enabled
 						for zone in range(1, len(self.hardwareZones)+1):
 							#### Is the current zone even active?
-							if self.config.get('Zone%i' % zone, 'enabled') != 'on':
-								continue
-								
-							#### What duration do we use for this zone?
-							duration = int(self.config.get('Schedule%i' % tNow.month, 'duration%i' % zone))
-							duration = duration*self.wxAdjust
-							duration = timedelta(minutes=int(duration), seconds=int((duration*60) % 60))
+							if self.config.get('Zone%i' % zone, 'enabled') == 'on':
+								#### What duration do we use for this zone?
+								duration = int(self.config.get('Schedule%i' % tNow.month, 'duration%i' % zone))
+								duration = duration*self.wxAdjust
+								duration = timedelta(minutes=int(duration), seconds=int((duration*60) % 60))
 						
-							#### What is the last run time for this zone?
-							tLast = datetime.fromtimestamp( self.hardwareZones[zone-1].getLastRun() )
-							for entry in previousRuns:
-								if entry['zone'] == zone:
-									tLast = datetime.fromtimestamp( entry['dateTimeStart'] )
-									break
+								#### What is the last run time for this zone?
+								tLast = datetime.fromtimestamp( self.hardwareZones[zone-1].getLastRun() )
+								for entry in previousRuns:
+									if entry['zone'] == zone:
+										tLast = datetime.fromtimestamp( entry['dateTimeStart'] )
+										break
 									
-							if self.bus is not None:
-								self.bus.log('Zone #%i of %i' % (zone, len(self.hardwareZones)))
-								self.bus.log('  Last Run Time: %s' % tLast)
-								self.bus.log('  Zone Interval: %s' % interval)
-								self.bus.log('  Zone Duration: %s' % duration)
-								self.bus.log('  Current Interval: %s' % (tNow-tLast))
-								self.bus.log('  Current Run Time: %s' % (tNow-tLast))
-								self.bus.log('  Processed in Current Block?: %s' % (zone in self.processedInBlock,))
+								if self.bus is not None:
+									self.bus.log('Zone #%i of %i' % (zone, len(self.hardwareZones)))
+									self.bus.log('  Last Run Time: %s' % tLast)
+									self.bus.log('  Zone Interval: %s' % interval)
+									self.bus.log('  Zone Duration: %s' % duration)
+									self.bus.log('  Current Interval: %s' % (tNow-tLast))
+									self.bus.log('  Current Run Time: %s' % (tNow-tLast))
+									self.bus.log('  Processed in Current Block?: %s' % (zone in self.processedInBlock,))
 								
-							if self.hardwareZones[zone-1].isActive():
-								#### If the zone is active, check how long it has been on
-								if tNow-tLast >= duration:
-									self.hardwareZones[zone-1].off()
-									self.history.writeData(tNowDB, zone, 'off')
-									if self.bus is not None:
-										self.bus.log('Zone %i - off' % zone)
+								if self.hardwareZones[zone-1].isActive():
+									#### If the zone is active, check how long it has been on
+									if tNow-tLast >= duration:
+										self.hardwareZones[zone-1].off()
+										self.history.writeData(tNowDB, zone, 'off')
+										if self.bus is not None:
+											self.bus.log('Zone %i - off' % zone)
+									else:
+										self.blockActive = True
+										break
+									
 								else:
-									self.blockActive = True
-									break
-									
-							else:
-								#### Otherwise, it might be time to turn it on
-								if self.blockActive:
-									#### Have we already tried?
-									if zone in self.processedInBlock:
-										continue
+									#### Otherwise, it might be time to turn it on
+									if self.blockActive:
+										#### Have we already tried?
+										if zone in self.processedInBlock:
+											continue
 										
-								if tNow - tLast >= interval - timedelta(hours=3):
-									self.hardwareZones[zone-1].on()
-									self.history.writeData(tNowDB, zone, 'on', wxAdjustment=self.wxAdjust)
-									if self.bus is not None:
-										self.bus.log('Zone %i - on' % zone)
-									self.blockActive = True
-									self.processedInBlock.append( zone )
-									break
-									
+									if tNow - tLast >= interval - timedelta(hours=3):
+										self.hardwareZones[zone-1].on()
+										self.history.writeData(tNowDB, zone, 'on', wxAdjustment=self.wxAdjust)
+										if self.bus is not None:
+											self.bus.log('Zone %i - on' % zone)
+										self.blockActive = True
+										self.processedInBlock.append( zone )
+										break
+										
 							#### If this is the last zone to process and it is off, we
 							#### are done with this block
 							if zone == len(self.hardwareZones) and not self.hardwareZones[zone-1].isActive():
