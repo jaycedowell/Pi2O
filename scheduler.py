@@ -63,11 +63,6 @@ class ScheduleProcessor(threading.Thread):
 					##        resume things that have been delayed due to weather.
 					tSchedule = tNow.replace(hour=int(h), minute=int(m))
 					tSchedule += self.tDelay
-					if self.bus is not None:
-						self.bus.log('Current Time:  %s' % tNow)
-						self.bus.log('Schedule Time: %s' % tSchedule)
-						self.bus.log('Schedule Block Active: %s' % self.blockActive)
-						self.bus.log('Start Block?   %s' % (tSchedule == tNow or self.blockActive,))
 					if tSchedule == tNow or self.blockActive:
 						### Load in the WUnderground API information
 						key = self.config.get('Weather', 'key')
@@ -127,16 +122,7 @@ class ScheduleProcessor(threading.Thread):
 									if entry['zone'] == zone:
 										tLast = datetime.fromtimestamp( entry['dateTimeStart'] )
 										break
-									
-								if self.bus is not None:
-									self.bus.log('Zone #%i of %i' % (zone, len(self.hardwareZones)))
-									self.bus.log('  Last Run Time: %s' % tLast)
-									self.bus.log('  Zone Interval: %s' % interval)
-									self.bus.log('  Zone Duration: %s' % duration)
-									self.bus.log('  Current Interval: %s' % (tNow-tLast))
-									self.bus.log('  Current Run Time: %s' % (tNow-tLast))
-									self.bus.log('  Processed in Current Block?: %s' % (zone in self.processedInBlock,))
-								
+										
 								if self.hardwareZones[zone-1].isActive():
 									#### If the zone is active, check how long it has been on
 									if tNow-tLast >= duration:
@@ -144,22 +130,25 @@ class ScheduleProcessor(threading.Thread):
 										self.history.writeData(tNowDB, zone, 'off')
 										if self.bus is not None:
 											self.bus.log('Zone %i - off' % zone)
+											self.bus.log('  Run Time: %s' % (tNow-tLast))
 									else:
 										self.blockActive = True
 										break
-									
+										
 								else:
 									#### Otherwise, it might be time to turn it on
 									if self.blockActive:
 										#### Have we already tried?
 										if zone in self.processedInBlock:
 											continue
-										
+											
 									if tNow - tLast >= interval - timedelta(hours=3):
 										self.hardwareZones[zone-1].on()
 										self.history.writeData(tNowDB, zone, 'on', wxAdjustment=self.wxAdjust)
 										if self.bus is not None:
 											self.bus.log('Zone %i - on' % zone)
+											self.bus.log('  Interval: %s' % interval)
+											self.bus.log('  Duration: %s' % duration)
 										self.blockActive = True
 										self.processedInBlock.append( zone )
 										break
