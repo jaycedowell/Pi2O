@@ -247,8 +247,10 @@ class AJAX(object):
 			output['entry%iRun' % i] = "%i:%02i:%02i%s" % (runtime/3600, runtime%3600/60, runtime%60, " <i>(running)</i>" if active else "")
 			if entry['wxAdjust'] >= 0:
 				output['entry%iAdjust' % i] = "%i%%" % (100.0*entry['wxAdjust'],)
-			else:
+			elif entry['wxAdjust'] == -1:
 				output['entry%iAdjust' % i] = 'Manual'
+			else:
+				output['entry%iAdjust' % i] = 'Disabled'
 			output['entries'].append(i)
 			
 		return output

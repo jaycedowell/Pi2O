@@ -79,8 +79,10 @@
 				} else {
 					if( adjust >= 0 ) {
 						$('#zone'+zone+'Info').html(name+" last ran on "+startStr+" for "+runStr+" <i>(weather adjustment "+(adjust*100).toFixed()+"%)</i>");
-					} else {
+					} else if( adjust == -1 ) {
 						$('#zone'+zone+'Info').html(name+" last ran on "+startStr+" for "+runStr+" <i>(manual)</li>");
+					} else {
+						$('#zone'+zone+'Info').html(name+" last ran on "+startStr+" for "+runStr+"</li>");
 					}
 				}
 			}
