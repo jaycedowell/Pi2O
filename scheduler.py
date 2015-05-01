@@ -10,7 +10,7 @@ from datetime import datetime, timedelta
 
 from weather import getCurrentTemperature, getWeatherAdjustment
 
-__version__ = "0.1"
+__version__ = "0.2"
 __all__ = ["ScheduleProcessor", "__version__", "__all__"]
 
 
@@ -113,9 +113,10 @@ class ScheduleProcessor(threading.Thread):
 							if self.config.get('Zone%i' % zone, 'enabled') == 'on':
 								#### What duration do we use for this zone?
 								duration = int(self.config.get('Schedule%i' % tNow.month, 'duration%i' % zone))
-								duration = duration*self.wxAdjust
-								duration = timedelta(minutes=int(duration), seconds=int((duration*60) % 60))
-						
+								if self.config.get('Schedule%i' % tNow.month, 'wxadjust') == 'on':
+									duration = duration*self.wxAdjust
+									duration = timedelta(minutes=int(duration), seconds=int((duration*60) % 60))
+									
 								#### What is the last run time for this zone?
 								tLast = datetime.fromtimestamp( self.hardwareZones[zone-1].getLastRun() )
 								for entry in previousRuns:

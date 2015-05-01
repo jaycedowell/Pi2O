@@ -10,7 +10,7 @@ from ConfigParser import SafeConfigParser, NoSectionError
 
 from zone import GPIORelay, GPIORainSensor, NullRainSensor, SoftRainSensor, SprinklerZone
 
-__version__ = '0.1'
+__version__ = '0.2'
 __all__ = ['CONFIG_FILE', 'LockingConfigParser', 'loadConfig', 'initZones', 'saveConfig', '__version__', '__all__']
 
 
@@ -154,15 +154,16 @@ def loadConfig(filename):
 	##  2) duration - duration in minutes
 	##  3) interval - run interval in days
 	##  4) enabled - whether or not the schedule is active
+	##  5) wxadjust - whether or not weather adjustments should be applied
 	for month in xrange(1, 13):
 		config.add_section('Schedule%i' % month)
-		for keyword in ('start', 'duration', 'interval', 'enabled'):
+		for keyword in ('start', 'duration', 'interval', 'enabled', 'wxadjust'):
 			if keyword == 'duration':
 				for zone in xrange(1, MAX_ZONES+1):
 					config.set('Schedule%i' % month, '%s%i' % (keyword, zone), '')
 			else:
 				config.set('Schedule%i' % month, keyword, '')
-			if keyword == 'enabled':
+			if keyword in ('enabled', 'wxadjust'):
 				config.set('Schedule%i' % month, keyword, 'off')
 				
 	## Dummy weather station information

@@ -74,6 +74,13 @@
 					<input type="range" id="schedule{{ month }}-interval" name="schedule{{ month }}-interval" value="{{ kwds.get("schedule%i-interval"|format(month)) }}" min="1" max="30" data-highlight="true"/>
 				</div>
 				
+				<div class="ui-field-contain">
+					<label for="schedule{{ month }}-wxadjust">Weather Adjustment:</label>
+					<select class="wxadjust{{ month }}" id="schedule{{ month }}-wxadjust" name="schedule{{ month }}-wxadjust" data-role="flipswitch">
+						<option value="off">Off</option>
+						<option value="on" {{ 'selected' if kwds.get("schedule%i-wxadjust"|format(month)) == 'on' else '' }}>On</option>
+					</select>
+				</div>
 			</div>
 			{% endfor %}
 			<button type="submit">Save Configuration</button>
