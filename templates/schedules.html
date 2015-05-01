@@ -2,12 +2,21 @@
 <html>
 <head>
 	<meta name="viewport" content="width=device-width, initial-scale=1">
-	<link rel="stylesheet" href="/css/jquery.mobile-1.4.3.min.css">
+	<link rel="stylesheet" href="/css/jquery.mobile-1.4.5.min.css">
 	<link rel="stylesheet" href="/css/themes/Pi2O.css" />
-    <link rel="stylesheet" href="/css/themes/jquery.mobile.icons.min.css" />
+	<link rel="stylesheet" href="/css/themes/jquery.mobile.icons.min.css" />
 	<link href="/css/images/favicon.ico" rel="shortcut icon" type="image/x-icon" />
 	<script src="/js/jquery-1.11.1.min.js"></script>
-	<script src="/js/jquery.mobile-1.4.3.min.js"></script>
+	<script src="/js/jquery.mobile-1.4.5.min.js"></script>
+	<style>
+	.ui-hide-label.ui-br, .no-field-separator {
+		border-bottom-width: 0;
+	}
+	.ui-field-contain.ui-hide-label, .no-field-separator {
+		margin: 1em 0;
+		padding: 0;
+	}
+	</style>
 </head>
 <body>
 	<div id="schedules" data-role="page">
@@ -32,28 +41,39 @@
 		{% endfor %}
 		<div data-role="main" class="ui-content">
 			{% for month in range(1, 13) %}
-			<div data-role="collapsible">
+			<div data-role="collapsible" {{ 'data-collapsed="false"' if month == kwds.get("tNow").month }}>
 				<h3 class="ui-title" role="heading" aira-level="1">{{ mname.get(month) }}</h3>
-				<div class="ui-field-contain">
+				
+				<div class="ui-field-contain no-field-separator">
+					<label for="schedule{{ month }}-enabled">Schedule Enabled:</label>
+					<select class="enabled{{ month }}" id="schedule{{ month }}-enabled" name="schedule{{ month }}-enabled" data-role="flipswitch">
+						<option value="off">Off</option>
+						<option value="on" {{ 'selected' if kwds.get("schedule%i-enabled"|format(month)) == 'on' else '' }}>On</option>
+					</select>
+				</div>
+				
+				<div class="ui-field-contain no-field-separator">
 					{% for zone in range(1, 33) %}
 					{% if not kwds.get("zone%i-enabled"|format(zone)) %}
 					{% break %}
 					{% endif %}
 					{% if kwds.get("zone%i-enabled"|format(zone)) == 'on' %}
 					<label for="schedule{{ month }}-duration">Duration - {{ kwds.get("zone%i-name"|format(zone)) }}:</label>
-					<input type="range" name="schedule{{ month }}-duration{{ zone }}" value="{{ kwds.get("schedule%i-duration%s"|format(month,zone)) }}" min="0" max="60" data-highlight="true">
+					<input type="range" id="schedule{{ month }}-duration{{ zone }}" name="schedule{{ month }}-duration{{ zone }}" value="{{ kwds.get("schedule%i-duration%s"|format(month,zone)) }}" min="0" max="60" data-highlight="true">
 					{% endif %}
 					{% endfor %}
-					<label for="schedule{{ month }}-start">Start:</label>
-					<input type="time" name="schedule{{ month }}-start" value="{{ kwds.get("schedule%i-start"|format(month)) }}" data-role="datebox" data-options='{"useInline": true, "useInlineHideInput": true}'/>
-					<label for="schedule{{ month }}-interval">Interval:</label>
-					<input type="range" name="schedule{{ month }}-interval" value="{{ kwds.get("schedule%i-interval"|format(month)) }}" min="1" max="30" data-highlight="true"/>
-					<label for="schedule{{ month }}-enabled">Enabled:</label>
-					<select class="enabled{{ month }}" name="schedule{{ month }}-enabled" data-role="slider">
-						<option value="off">Off</option>
-						<option value="on" {{ 'selected' if kwds.get("schedule%i-enabled"|format(month)) == 'on' else '' }}>On</option>
-					</select>
 				</div>
+				
+				<div class="ui-field-contain no-field-separator">
+					<label for="schedule{{ month }}-start">Start:</label>
+					<input type="time" id="schedule{{ month }}-start" name="schedule{{ month }}-start" value="{{ kwds.get("schedule%i-start"|format(month)) }}" data-role="datebox" data-options='{"useInline": true, "useInlineHideInput": true}'/>
+				</div>
+				
+				<div class="ui-field-contain no-field-separator">
+					<label for="schedule{{ month }}-interval">Interval:</label>
+					<input type="range" id="schedule{{ month }}-interval" name="schedule{{ month }}-interval" value="{{ kwds.get("schedule%i-interval"|format(month)) }}" min="1" max="30" data-highlight="true"/>
+				</div>
+				
 			</div>
 			{% endfor %}
 			<button type="submit">Save Configuration</button>
