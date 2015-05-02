@@ -115,6 +115,9 @@ class ScheduleProcessor(threading.Thread):
 								duration = int(self.config.get('Schedule%i' % tNow.month, 'duration%i' % zone))
 								if self.config.get('Schedule%i' % tNow.month, 'wxadjust') == 'on':
 									duration = duration*self.wxAdjust
+									adjustmentUsed = self.wxAdjust*1.0
+								else:
+									adjustmentUsed = -2.0
 								duration = timedelta(minutes=int(duration), seconds=int((duration*60) % 60))
 								
 								#### What is the last run time for this zone?
@@ -145,7 +148,7 @@ class ScheduleProcessor(threading.Thread):
 											
 									if tNow - tLast >= interval - timedelta(hours=3):
 										self.hardwareZones[zone-1].on()
-										self.history.writeData(tNowDB, zone, 'on', wxAdjustment=self.wxAdjust if self.config.get('Schedule%i' % tNow.month, 'wxadjust') == 'on' else -2.0)
+										self.history.writeData(tNowDB, zone, 'on', wxAdjustment=adjustmentUsed)
 										if self.bus is not None:
 											self.bus.log('Zone %i - on' % zone)
 											self.bus.log('  Interval: %s' % interval)
