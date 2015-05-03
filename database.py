@@ -149,7 +149,7 @@ class Archive(object):
 		# Fetch the entries that match
 		if age <= 0:
 			if scheduledOnly:
-				sqlCmd = 'SELECT * FROM pi2o WHERE wxAdjust >= 0.0 OR wxAdjust == -2.0 GROUP BY zone ORDER BY dateTimeStart DESC LIMIT %i' % self.nZones
+				sqlCmd = 'SELECT * FROM pi2o WHERE wxAdjust >= 0.0 OR wxAdjust <= -1.5 GROUP BY zone ORDER BY dateTimeStart DESC LIMIT %i' % self.nZones
 			else:
 				sqlCmd = 'SELECT * FROM pi2o GROUP BY zone ORDER BY dateTimeStart DESC LIMIT %i' % self.nZones
 			rid = self._backend.appendRequest(sqlCmd)
@@ -158,7 +158,7 @@ class Archive(object):
 			tNow = time.time()
 			tLookback = tNow - age
 			if scheduledOnly:
-				sqlCmd = 'SELECT * FROM pi2o WHERE dateTimeStart >= %i AND (wxAdjust >= 0.0 OR wxAdjust == -2.0) ORDER BY dateTimeStart DESC' % tLookback
+				sqlCmd = 'SELECT * FROM pi2o WHERE dateTimeStart >= %i AND (wxAdjust >= 0.0 OR wxAdjust <= -1.5) ORDER BY dateTimeStart DESC' % tLookback
 			else:
 				sqlCmd = 'SELECT * FROM pi2o WHERE dateTimeStart >= %i ORDER BY dateTimeStart DESC' % tLookback
 			rid = self._backend.appendRequest(sqlCmd)
