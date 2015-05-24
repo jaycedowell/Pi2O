@@ -48,7 +48,7 @@
 										if( document.getElementById('manualPage') != null ) {
 											pollControl();
 										}
-									}, 10000),
+									}, 1000),
 					timeout: 2000
 			});
 		}
@@ -106,6 +106,7 @@
 		</div>
 	</form>
 	<br />
+	<!--
 	<div class="ui-field-contain">
 	{% for zone in range(1, 33) %}
 			{% if not kwds.get("zone%i-enabled"|format(zone)) %}
@@ -117,6 +118,7 @@
 	{% endfor %}
 	</div>
 	<br />
+	-->
 	<div data-role="footer" role="banner" class="ui-header ui-bar-inherit">
 		<div data-role="navbar">
 			<ul>
