@@ -88,7 +88,7 @@ class ScheduleProcessor(threading.Thread):
 									self.tDelay = timedelta(0)
 									
 								if self.bus is not None:
-									self.bus.log('Temperature of %.1f is below 35, delaying for one hour' % temp)
+									self.bus.log('Temperature of %.1f is below 35 F, delaying for one hour' % temp)
 									
 								continue
 								
@@ -117,6 +117,7 @@ class ScheduleProcessor(threading.Thread):
 									duration = duration*self.wxAdjust
 									adjustmentUsed = self.wxAdjust*1.0
 								else:
+									duration = duration*1.0
 									adjustmentUsed = -2.0
 								duration = timedelta(minutes=int(duration), seconds=int((duration*60) % 60))
 								
@@ -151,8 +152,10 @@ class ScheduleProcessor(threading.Thread):
 										self.history.writeData(tNowDB, zone, 'on', wxAdjustment=adjustmentUsed)
 										if self.bus is not None:
 											self.bus.log('Zone %i - on' % zone)
+											self.bus.log('  Last Ran: %s' % tLast)
 											self.bus.log('  Interval: %s' % interval)
 											self.bus.log('  Duration: %s' % duration)
+											self.bus.log('  Adjustment Used: %.3f' % adjustmentUsed)
 										self.blockActive = True
 										self.processedInBlock.append( zone )
 										break
@@ -165,7 +168,7 @@ class ScheduleProcessor(threading.Thread):
 								
 					else:
 							self.wxAdjust = None
-								
+							
 				else:
 					self.wxAdjust = None
 					

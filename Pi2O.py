@@ -170,15 +170,20 @@ class AJAX(object):
 			output['name%i' % i] = self.config.get('Zone%i' % i, 'name')
 			output['zones'].append(i)
 		for entry in self.history.getData():
-			lStart = datetime.fromtimestamp(entry['dateTimeStart'])
-			if entry['dateTimeStop'] > 0:
-				lStop = datetime.fromtimestamp(entry['dateTimeStop'])
-			else:
-				lStop = datetime.now()
-			output['start%i' % entry['zone']] = self.serialize(lStart)
-			output['run%i' % entry['zone']] = self.serialize(lStop)-self.serialize(lStart)
-			output['adjust%i' % entry['zone']] = entry['wxAdjust']
-
+			try:
+				output['start%i' % entry['zone']]
+				output['run%i' % entry['zone']]
+				output['adjust%i' % entry['zone']]
+			except KeyError:
+				lStart = datetime.fromtimestamp(entry['dateTimeStart'])
+				if entry['dateTimeStop'] > 0:
+					lStop = datetime.fromtimestamp(entry['dateTimeStop'])
+				else:
+					lStop = datetime.now()
+				output['start%i' % entry['zone']] = self.serialize(lStart)
+				output['run%i' % entry['zone']] = self.serialize(lStop)-self.serialize(lStart)
+				output['adjust%i' % entry['zone']] = entry['wxAdjust']
+				
 		return output
     
 	@cherrypy.expose
