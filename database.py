@@ -8,12 +8,22 @@ import os
 import time
 import uuid
 import Queue
+import logging
 import sqlite3
 import threading
+import traceback
 from ConfigParser import NoSectionError
-
-__version__ = "0.1"
+try:
+	import cStringIO as StringIO
+except ImportError:
+	import StringIO
+	
+__version__ = "0.2"
 __all__ = ["Archive", "__version__", "__all__"]
+
+
+# Logger instance
+dbLogger = logging.getLogger('__main__')
 
 
 class DatabaseProcessor(threading.Thread):
@@ -21,12 +31,11 @@ class DatabaseProcessor(threading.Thread):
 	Class responsible for providing access to the database from a single thread.
 	"""
 	
-	def __init__(self, dbName, bus=None):
+	def __init__(self, dbName):
 		self._dbName = dbName
 		self.running = False
 		self.input = Queue.Queue()
 		self.output = Queue.Queue()
-		self.bus = bus
 		
 		self.thread = None
 		self.alive = threading.Event()
@@ -40,10 +49,14 @@ class DatabaseProcessor(threading.Thread):
 		self.alive.set()
 		self.thread.start()
 		
+		dbLogger.info('Started the DatabaseProcessor background thread')
+		
 	def cancel(self):
 		if self.thread is not None:
 			self.alive.clear()          # clear alive event for thread
 			self.thread.join()
+			
+		dbLogger.info('Stopped the DatabaseProcessor background thread')
 			
 	def appendRequest(self, cmd):
 		rid = str(uuid.uuid4())
@@ -82,8 +95,16 @@ class DatabaseProcessor(threading.Thread):
 				self.output.put( (rid,output) )
 				
 			except Exception, e:
-				if self.bus is not None:
-					self.bus.log("Error in data access thread.", level=40, traceback=True)
+				exc_type, exc_value, exc_traceback = sys.exc_info()
+				dbLogger.error("DatabaseProcessor: %s at line %i", e, traceback.tb_lineno(exc_traceback))
+				## Grab the full traceback and save it to a string via StringIO
+                fileObject = StringIO.StringIO()
+                traceback.print_tb(exc_traceback, file=fileObject)
+                tbString = fileObject.getvalue()
+                fileObject.close()
+                ## Print the traceback to the logger as a series of DEBUG messages
+                for line in tbString.split('\n'):
+                	dbLogger.debug("%s", line)
 					
 		self._dbConn.close()
 
@@ -92,12 +113,11 @@ class Archive(object):
 	_dbConn = None
 	_cursor = None
 	
-	def __init__(self, config, bus=None):
+	def __init__(self, config):
 		self.config = config
 		self._dbName = os.path.join(os.path.dirname(__file__), 'archive', 'pi2o-data.db')
 		if not os.path.exists(self._dbName):
 			raise RuntimeError("Archive database not found")
-		self.bus = bus
 		self._backend = None
 		
 		# Figure out how many zones there are
@@ -130,7 +150,7 @@ class Archive(object):
 		"""
 		
 		if self._backend is None:
-			self._backend = DatabaseProcessor(self._dbName, bus=self.bus)
+			self._backend = DatabaseProcessor(self._dbName)
 		self._backend.start()
 		
 	def cancel(self):

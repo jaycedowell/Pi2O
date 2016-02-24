@@ -7,11 +7,16 @@ Module for reading in weather conditions from Weather Underground using their AP
 import json
 import time
 import urllib
+import logging
 from datetime import datetime, timedelta
 
 __version__ = "0.2"
 __all__ = ["getCurrentConditions", "getYesterdaysConditions", "getHistory", "getCurrentTemperature", 
 		   "getWeatherAdjustment", "__version__", "__all__"]
+
+
+# Logger instance
+wxLogger = logging.getLogger('__main__')
 
 
 # Base URL for all queries
@@ -65,10 +70,12 @@ class _rateLimiter(object):
 		else:
 			if block:
 				## Sleep for a bit and try again
+				wxLogger.warning('WUnderground rate limiter in effect')
 				time.sleep(5)
 				while not self.clearToSend(block=False):
 					time.sleep(5)
 					
+				wxLogger.info('WUnderground rate limiter cleared')
 				clear = True
 			else:
 				## Nope
@@ -179,6 +186,7 @@ def getCurrentTemperature(apiKey, pws=None, postal=None):
 	cNow = getCurrentConditions(apiKey, pws=pws, postal=postal)
 	
 	tNow = float(cNow['current_observation']['temp_f'])
+	wxLogger.debug('Current temperature is %.1f F for %s/%s', tNow, pws, postal)
 	
 	return tNow
 
@@ -219,5 +227,7 @@ def getWeatherAdjustment(apiKey, pws=None, postal=None):
 	factor = 100.0 + tFactor + rFactor + pFactor
 	factor = min([factor, 200])
 	factor = max([0, factor])
+	
+	wxLogger.debug('Current weather adjustment is %.1f%% for %s/%s', factor, pws, postal)
 	
 	return factor/100.0

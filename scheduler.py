@@ -5,13 +5,23 @@ Module for processing the sprinkler schedules.
 """
 
 import time
+import logging
 import threading
+import traceback
+try:
+	import cStringIO as StringIO
+except ImportError:
+	import StringIO
 from datetime import datetime, timedelta
 
 from weather import getCurrentTemperature, getWeatherAdjustment
 
-__version__ = "0.2"
+__version__ = "0.3"
 __all__ = ["ScheduleProcessor", "__version__", "__all__"]
+
+
+# Logger instance
+schLogger = logging.getLogger('__main__')
 
 
 class ScheduleProcessor(threading.Thread):
@@ -19,19 +29,34 @@ class ScheduleProcessor(threading.Thread):
 	Class responsible to running the various zones according to the schedule.
 	"""
 
-	def __init__(self, config, hardwareZones, history, bus=None):
+	def __init__(self, config, hardwareZones, history):
 		threading.Thread.__init__(self)
-		self.interval = 60
+		self.interval = 5
 		self.config = config
 		self.hardwareZones = hardwareZones
 		self.history = history
-		self.bus = bus
 		
-		self.running = False
-
+		self.thread = None
+		self.alive = threading.Event()
+		
+	def start(self):
+		if self.thread is not None:
+			self.cancel()
+        	       
+		self.thread = threading.Thread(target=self.run, name='scheduler')
+		self.thread.setDaemon(1)
+		self.alive.set()
+		self.thread.start()
+		
+		schLogger.info('Started the ScheduleProcessor background thread')
+		
 	def cancel(self):
-		self.running = False
-
+		if self.thread is not None:
+			self.alive.clear()          # clear alive event for thread
+			self.thread.join()
+			
+		schLogger.info('Stopped the ScheduleProcessor background thread')
+		
 	def run(self):
 		self.running = True
 		self.wxAdjust = None
@@ -40,30 +65,35 @@ class ScheduleProcessor(threading.Thread):
 		
 		self.tDelay = timedelta(0)
 		
-		while self.running:
+		while self.alive.isSet():
 			time.sleep(self.interval)
 			if not self.running:
 				return True
 				
 			try:
 				tNow = datetime.now()
-				tNow = tNow.replace(second=0, microsecond=0)
+				tNow = tNow.replace(microsecond=0)
 				tNowDB = int(tNow.strftime("%s"))
+				schLogger.debug('Starting scheduler polling at %s LT', tNow)
 				
 				# Is the current schedule active?
 				if self.config.get('Schedule%i' % tNow.month, 'enabled') == 'on':
 					## If so, query the run interval and start time for this block
 					interval = int(self.config.get('Schedule%i' % tNow.month, 'interval'))
 					h,m = [int(i) for i in self.config.get('Schedule%i' % tNow.month, 'start').split(':', 1)]
+					s = 0
+					schLogger.debug('Current month of %s is enabled with a start time of %i:%02i:%02i LT', tNow.strftime("%B"), h, m, s)
 					
 					## Figure out if it is the start time or if we are inside a schedule 
 					## block.  If so, we need to turn things on.
 					##
 					## Note:  This needs to include the 'delay' value so that we can 
 					##        resume things that have been delayed due to weather.
-					tSchedule = tNow.replace(hour=int(h), minute=int(m))
+					tSchedule = tNow.replace(hour=int(h), minute=int(m), second=int(s))
 					tSchedule += self.tDelay
-					if tSchedule == tNow or self.blockActive:
+					if (tNow >= tSchedule and tNow-tSchedule < timedelta(seconds=60)) or self.blockActive:
+						schLogger.debug('Scheduling block appears to be starting or active')
+						
 						### Load in the WUnderground API information
 						key = self.config.get('Weather', 'key')
 						pws = self.config.get('Weather', 'pws')
@@ -75,10 +105,9 @@ class ScheduleProcessor(threading.Thread):
 							temp = getCurrentTemperature(key, pws=pws, postal=pos)
 							if temp > 35.0:
 								#### Everything is good to go, reset the delay
-								if self.bus is not None:
-									if self.tDelay > timedelta(0):
-										self.bus.log('Resuming schedule after %i hour delay' % self.tDelay.seconds/3600)
-										
+								if self.tDelay > timedelta(0):
+									schLogger.info('Resuming schedule after %i hour delay', self.tDelay.seconds/3600)
+									
 								self.tDelay = timedelta(0)
 								
 							else:
@@ -87,22 +116,23 @@ class ScheduleProcessor(threading.Thread):
 								if self.tDelay >= timedelta(86400):
 									self.tDelay = timedelta(0)
 									
-								if self.bus is not None:
-									self.bus.log('Temperature of %.1f is below 35 F, delaying for one hour' % temp)
-									
+								schLogger.info('Temperature of %.1f F is below 35 F, delaying schedule for one hour', temp)
+								schLogger.info('New schedule start time will be %s LT', tSchedule+self.tDelay)
+								
 								continue
+						schLogger.debug('Cleared all weather constraints')
 								
 						### Load in the current weather adjustment, if needed
 						if self.wxAdjust is None:
 							if key != '' and (pws != '' or pos != '') and enb == 'on':
 								self.wxAdjust = getWeatherAdjustment(key, pws=pws, postal=pos)
-								if self.bus is not None:
-									self.bus.log('Setting weather adjustment factor to %.3f' % self.wxAdjust)
 							else:
 								self.wxAdjust = 1.0
-								
+						schLogger.info('Set weather adjustment to %.1f%%', self.wxAdjust*100.0)
+						
 						### Convert the interval into a timedeltas
 						interval = timedelta(days=interval)
+						schLogger.debug('Run interval for this schedule set to %s', interval)
 						
 						### Load in the last schedule run times
 						previousRuns = self.history.getData(scheduledOnly=True)
@@ -119,6 +149,8 @@ class ScheduleProcessor(threading.Thread):
 								else:
 									duration = duration*1.0
 									adjustmentUsed = -2.0
+									schLogger.info('Weather adjustment is not enabled for this schedule, ignoring previous value')
+									
 								duration = timedelta(minutes=int(duration), seconds=int((duration*60) % 60))
 								
 								#### What is the last run time for this zone?
@@ -133,9 +165,8 @@ class ScheduleProcessor(threading.Thread):
 									if tNow-tLast >= duration:
 										self.hardwareZones[zone-1].off()
 										self.history.writeData(tNowDB, zone, 'off')
-										if self.bus is not None:
-											self.bus.log('Zone %i - off' % zone)
-											self.bus.log('  Run Time: %s' % (tNow-tLast))
+										schLogger.info('Zone %i - off', zone)
+										schLogger.info('  Run Time: %s', (tNow-tLast))
 									else:
 										self.blockActive = True
 										break
@@ -150,12 +181,9 @@ class ScheduleProcessor(threading.Thread):
 									if tNow - tLast >= interval - timedelta(hours=3):
 										self.hardwareZones[zone-1].on()
 										self.history.writeData(tNowDB, zone, 'on', wxAdjustment=adjustmentUsed)
-										if self.bus is not None:
-											self.bus.log('Zone %i - on' % zone)
-											self.bus.log('  Last Ran: %s' % tLast)
-											self.bus.log('  Interval: %s' % interval)
-											self.bus.log('  Duration: %s' % duration)
-											self.bus.log('  Adjustment Used: %.3f' % adjustmentUsed)
+										schLogger.info('Zone %i - on', zone)
+										schLogger.info('  Last Ran: %s LT (%s ago)', tLast, tNow-tLast)
+										schLogger.info('  Duration: %s', duration)
 										self.blockActive = True
 										self.processedInBlock.append( zone )
 										break
@@ -172,9 +200,17 @@ class ScheduleProcessor(threading.Thread):
 				else:
 					self.wxAdjust = None
 					
-			except Exception:
-				if self.bus is not None:
-					self.bus.log("Error in background task thread function.", level=40, traceback=True)
+			except Exception, e:
+				exc_type, exc_value, exc_traceback = sys.exc_info()
+				schLogger.error("ScheduleProcessor: %s at line %i", e, traceback.tb_lineno(exc_traceback))
+				## Grab the full traceback and save it to a string via StringIO
+				fileObject = StringIO.StringIO()
+				traceback.print_tb(exc_traceback, file=fileObject)
+				tbString = fileObject.getvalue()
+				fileObject.close()
+				## Print the traceback to the logger as a series of DEBUG messages
+				for line in tbString.split('\n'):
+					schLogger.debug("%s", line)
 					
 	def _set_daemon(self):
 		return True

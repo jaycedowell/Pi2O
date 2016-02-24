@@ -1,0 +1,10 @@
+# Keep four weeks worth of Pi20 logs
+/var/log/pi2o {
+	daily
+	rotate 28
+        compress
+        delaycompress
+        copytruncate
+	ifempty
+}
+

@@ -5,13 +5,18 @@ File for dealing with the configuration of Pi2O.py.
 """
 
 import os
+import logging
 import threading
 from ConfigParser import SafeConfigParser, NoSectionError
 
 from zone import GPIORelay, GPIORainSensor, NullRainSensor, SoftRainSensor, SprinklerZone
 
-__version__ = '0.2'
+__version__ = '0.3'
 __all__ = ['CONFIG_FILE', 'LockingConfigParser', 'loadConfig', 'initZones', 'saveConfig', '__version__', '__all__']
+
+
+# Logger instance
+confLogger = logging.getLogger('__main__')
 
 
 # Maximum number of zones to configure
@@ -180,6 +185,8 @@ def loadConfig(filename):
 	# Try to read in the actual configuration file
 	try:
 		config.read(filename)
+		confLogger.info('Loaded configuration from \'%s\'', os.path.basename(filename))
+		
 	except:
 		pass
 		
@@ -237,3 +244,5 @@ def saveConfig(filename, config):
 	fh = open(filename, 'w')
 	config.write(fh)
 	fh.close()
+	
+	confLogger.info('Saved configuration to \'%s\'', os.path.basename(filename))

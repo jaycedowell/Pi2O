@@ -5,11 +5,22 @@ Module for controlling a particular sprinkler zone.
 """
 
 import time
-
+import logging
+import threading
+import traceback
+try:
+	import cStringIO as StringIO
+except ImportError:
+	import StringIO
+	
 from weather import getCurrentConditions
 
 __version__ = '0.1'
 __all__ = ['GPIORelay', 'GPIORainSensor', 'NullRainSensor', 'SoftRainSensor', 'SprinklerZone', '__version__', '__all__']
+
+
+# Logger instance
+zoneLogger = logging.getLogger('__main__')
 
 
 class GPIORelay(object):
@@ -246,13 +257,17 @@ class SprinklerZone(object):
 				
 			if not rain:
 				self.relay.on()
-			
+				zoneLogger.info('Turned on GPIO pin %i', self.relay.pin)
+			else:
+				zoneLogger.warning('Rain sensor is active, not activating relay')
+				
 			self.state = 1
 			self.lastStart = time.time()
 			
 	def off(self):
 		if self.state == 1:
 			self.relay.off()
+			zoneLogger.info('Turned off GPIO pin %i', self.relay.pin)
 			
 			self.state = 0
 			self.lastStop = time.time()

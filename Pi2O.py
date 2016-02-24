@@ -12,6 +12,12 @@ import jinja2
 import cherrypy
 from cherrypy.process.plugins import Daemonizer
 
+import logging
+try:
+	from logging.handlers import WatchedFileHandler
+except ImportError:
+	from logging import FileHandler as WatchedFileHandler
+	
 from config import *
 from database import Archive
 from scheduler import ScheduleProcessor
@@ -105,6 +111,7 @@ Options:
 -h, --help                  Display this help information
 -p, --pid-file              File to write the current PID to
 -d, --debug                 Set the logging to 'debug' level
+-l, --logfile               Set the logfile (default = /var/log/pi2o)
 """
 
 	if exitCode is not None:
@@ -118,9 +125,10 @@ def parseOptions(args):
 	config['configFile'] = CONFIG_FILE
 	config['pidFile'] = None
 	config['debug'] = False
+	config['logfile'] = '/var/log/pi2o'
 
 	try:
-		opts, args = getopt.getopt(args, "hp:d", ["help", "pid-file=", "debug"])
+		opts, args = getopt.getopt(args, "hp:dl:", ["help", "pid-file=", "debug", "logfile="])
 	except getopt.GetoptError, err:
 		# Print help information and exit:
 		print str(err) # will print something like "option -a not recognized"
@@ -134,6 +142,8 @@ def parseOptions(args):
 			config['pidFile'] = str(value)
 		elif opt in ('-d', '--debug'):
 			config['debug'] = True
+		elif opt in ('-l', '--logfile'):
+			config['logfile'] = value
 		else:
 			assert False
 	
@@ -391,6 +401,18 @@ def main(args):
 	# Parse the command line and read in the configuration file
 	cmdConfig = parseOptions(args)
 	
+	# Setup logging
+	logger = logging.getLogger(__name__)
+	logFormat = logging.Formatter('%(asctime)s [%(levelname)-8s] %(message)s', datefmt='%Y-%m-%d %H:%M:%S')
+	logFormat.converter = time.gmtime
+	logHandler = WatchedFileHandler(cmdConfig['logfile'])
+	logHandler.setFormatter(logFormat)
+	logger.addHandler(logHandler)
+	if cmdConfig['debug']:
+		logger.setLevel(logging.DEBUG)
+	else:
+		logger.setLevel(logging.INFO)
+		
 	# PID file
 	if cmdConfig['pidFile'] is not None:
 		fh = open(cmdConfig['pidFile'], 'w')
@@ -405,22 +427,28 @@ def main(args):
           				 'tools.staticdir.dir': JS_PATH}
           		}
 				
+	# Report on who we are
+	logger.info('Starting Pi2O.py with PID %i', os.getpid())
+	logger.info('All dates and times are in UTC except where noted')
+	 
 	# Load in the configuration
 	config = loadConfig(cmdConfig['configFile'])
 	
 	# Initialize the archive
-	history = Archive(config, bus=cherrypy.engine)
+	history = Archive(config)
 	history.start()
 	
 	# Initialize the hardware
 	hardwareZones = initZones(config)
 	for previousRun in history.getData(scheduledOnly=True):
+		logger.info('Previous run of zone %i was on %s LT', previousRun['zone'], datetime.fromtimestamp(previousRun['dateTimeStart']))
+		
 		if hardwareZones[previousRun['zone']-1].lastStart == 0:
 			hardwareZones[previousRun['zone']-1].lastStart = previousRun['dateTimeStart']
 			hardwareZones[previousRun['zone']-1].lastStop = previousRun['dateTimeStop']
 			
 	# Initialize the scheduler
-	bg = ScheduleProcessor(config, hardwareZones, history, bus=cherrypy.engine)
+	bg = ScheduleProcessor(config, hardwareZones, history)
 	bg.start()
 	
 	# Initialize the web interface
@@ -429,6 +457,9 @@ def main(args):
 	cherrypy.tree.mount(ws, "/", config=cpConfig)
 	cherrypy.engine.start()
 	cherrypy.engine.block()
+	
+	# Shutdown process
+	logger.info('Shutting down Pi2O, please wait...')
 	
 	# Stop the scheduler thread
 	bg.cancel()
@@ -447,5 +478,15 @@ def main(args):
 
 
 if __name__ == "__main__":
+	try:
+		os.unlink('/tmp/Pi2O.stdout')
+	except OSError:
+		pass
+	try:
+		os.unlink('/tmp/Pi2O.stderr')
+	except OSError:
+		pass
+		
 	daemonize('/dev/null', '/tmp/Pi2O.stdout', '/tmp/Pi2O.stderr')
 	main(sys.argv[1:])
+	
