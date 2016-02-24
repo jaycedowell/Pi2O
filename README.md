@@ -7,6 +7,8 @@ via the WUnderground API and both software and hardware rain sensors.
 Requirements
 ------------
  * Python >=2.7 and <3.0
+ * cherrypy >= 3.0
+ * jinja2
  * sqlite3
  * a relay board that activates on high
  * a WUnderground API key if you want to use a software rain sensor or automatic
@@ -22,7 +24,9 @@ Usage
   
   3) Create the sqlite3 database using the 'archive/initDB.sh' script
   
-  4) Run the script via './Pi2O.py'
+  4) Install the pi2o logrotate configuration file in /etc/logrotate.d/
+  
+  5) Run the script via './Pi2O.py'
   
 Weather Adjustments
 -------------------

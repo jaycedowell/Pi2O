@@ -5,6 +5,7 @@ Module for interfacing with the sqlite3 database.
 """
 
 import os
+import sys
 import time
 import uuid
 import Queue

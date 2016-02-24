@@ -4,6 +4,7 @@
 Module for processing the sprinkler schedules.
 """
 
+import sys
 import time
 import logging
 import threading
@@ -193,9 +194,11 @@ class ScheduleProcessor(threading.Thread):
 							if zone == len(self.hardwareZones) and not self.hardwareZones[zone-1].isActive():
 								self.blockActive = False
 								self.processedInBlock = []
+								self.wxAdjust = None
 								
 					else:
-							self.wxAdjust = None
+							#self.wxAdjust = None
+							pass
 							
 				else:
 					self.wxAdjust = None
