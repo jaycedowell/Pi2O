@@ -113,8 +113,8 @@ class ScheduleProcessor(threading.Thread):
 								
 							else:
 								#### Wait for an hour an try again...
-								self.tDelay += timedelta(3600)
-								if self.tDelay >= timedelta(86400):
+								self.tDelay += timedelta(seconds=3600)
+								if self.tDelay >= timedelta(seconds=86400):
 									self.tDelay = timedelta(0)
 									
 								schLogger.info('Temperature of %.1f F is below 35 F, delaying schedule for one hour', temp)
