@@ -103,30 +103,38 @@ class ScheduleProcessor(threading.Thread):
 						
 						### Check the temperature to see if it is safe to run
 						if key != '' and (pws != '' or pos != '') and enb == 'on':
-							temp = getCurrentTemperature(key, pws=pws, postal=pos)
-							if temp > 35.0:
-								#### Everything is good to go, reset the delay
-								if self.tDelay > timedelta(0):
-									schLogger.info('Resuming schedule after %i hour delay', self.tDelay.seconds/3600)
-									
-								self.tDelay = timedelta(0)
-								
+							try:
+								temp = getCurrentTemperature(key, pws=pws, postal=pos)
+							except RuntimeError:
+								schLogger.warning('Cannot connect to WUnderground for temperature information, skipping check')
 							else:
-								#### Wait for an hour an try again...
-								self.tDelay += timedelta(3600)
-								if self.tDelay >= timedelta(86400):
-									self.tDelay = timedelta(0)
+								if temp > 35.0:
+									#### Everything is good to go, reset the delay
+									if self.tDelay > timedelta(0):
+										schLogger.info('Resuming schedule after %i hour delay', self.tDelay.seconds/3600)
 									
-								schLogger.info('Temperature of %.1f F is below 35 F, delaying schedule for one hour', temp)
-								schLogger.info('New schedule start time will be %s LT', tSchedule+self.tDelay)
+									self.tDelay = timedelta(0)
 								
-								continue
+								else:
+									#### Wait for an hour an try again...
+									self.tDelay += timedelta(3600)
+									if self.tDelay >= timedelta(86400):
+										self.tDelay = timedelta(0)
+									
+									schLogger.info('Temperature of %.1f F is below 35 F, delaying schedule for one hour', temp)
+									schLogger.info('New schedule start time will be %s LT', tSchedule+self.tDelay)
+								
+									continue
 						schLogger.debug('Cleared all weather constraints')
 								
 						### Load in the current weather adjustment, if needed
 						if self.wxAdjust is None:
 							if key != '' and (pws != '' or pos != '') and enb == 'on':
-								self.wxAdjust = getWeatherAdjustment(key, pws=pws, postal=pos)
+								try:
+									self.wxAdjust = getWeatherAdjustment(key, pws=pws, postal=pos)
+								except RuntimeError:
+									schLogger.warning('Cannot connect to WUnderground for weather adjustment, setting to 100%')
+									self.wxAdjust = 1.0
 							else:
 								self.wxAdjust = 1.0
 						schLogger.info('Set weather adjustment to %.1f%%', self.wxAdjust*100.0)

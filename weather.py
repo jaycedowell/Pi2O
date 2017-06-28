@@ -6,11 +6,11 @@ Module for reading in weather conditions from Weather Underground using their AP
 
 import json
 import time
-import urllib
 import logging
+import urllib2
 from datetime import datetime, timedelta
 
-__version__ = "0.2"
+__version__ = "0.3"
 __all__ = ["getCurrentConditions", "getYesterdaysConditions", "getHistory", "getCurrentTemperature", 
 		   "getWeatherAdjustment", "__version__", "__all__"]
 
@@ -88,7 +88,7 @@ class _rateLimiter(object):
 _rl = _rateLimiter()
 
 
-def getCurrentConditions(apiKey, pws=None, postal=None):
+def getCurrentConditions(apiKey, pws=None, postal=None, timeout=5):
 	"""
 	Get the current conditions of the personal weather station or postal 
 	code using the WUnderground API.
@@ -107,14 +107,20 @@ def getCurrentConditions(apiKey, pws=None, postal=None):
 	# Check the rate limiter
 	_rl.clearToSend()
 	
-	uh = urllib.urlopen(url)
-	data = json.loads(uh.read())
-	uh.close()
-	
+	try:
+		uh = urllib2.urlopen(url, None, timeout)
+	except Exception as e:
+		raise RuntimeError("Failed to connect to WUnderground: %s" % str(e))
+	else:
+		data = json.loads(uh.read())
+		uh.close()
+		if 'error' in data['response']:
+			raise RuntimeError("An error occured connecting to WUnderground: %s" % data['response']['error'])
+       		
 	return data
 
 
-def getYesterdaysConditions(apiKey, pws=None, postal=None):
+def getYesterdaysConditions(apiKey, pws=None, postal=None, timeout=5):
 	"""
 	Get yesterday's conditions of the personal weather station or postal 
 	code using the WUnderground API.
@@ -133,14 +139,20 @@ def getYesterdaysConditions(apiKey, pws=None, postal=None):
 	# Check the rate limiter
 	_rl.clearToSend()
 	
-	uh = urllib.urlopen(url)
-	data = json.loads(uh.read())
-	uh.close()
-	
+	try:
+		uh = urllib2.urlopen(url, None, timeout)
+	except Exception as e:
+		raise RuntimeError("Failed to connect to WUnderground: %s" % str(e))
+	else:
+		data = json.loads(uh.read())
+		uh.close()
+		if 'error' in data['response']:
+			raise RuntimeError("An error occured connecting to WUnderground: %s" % data['response']['error'])
+       		
 	return data
 
 
-def getHistory(apiKey, date, pws=None, postal=None):
+def getHistory(apiKey, date, pws=None, postal=None, timeout=5):
 	"""
 	Get the weather history for the specified date/YYYYMMDD date string 
 	of the personal weather station or postal code using the 
@@ -170,20 +182,26 @@ def getHistory(apiKey, date, pws=None, postal=None):
 	# Check the rate limiter
 	_rl.clearToSend()
 	
-	uh = urllib.urlopen(url)
-	data = json.loads(uh.read())
-	uh.close()
-	
+	try:
+		uh = urllib2.urlopen(url, None, timeout)
+	except Exception as e:
+		raise RuntimeError("Failed to connect to WUnderground: %s" % str(e))
+	else:
+		data = json.loads(uh.read())
+		uh.close()
+		if 'error' in data['response']:
+			raise RuntimeError("An error occured connecting to WUnderground: %s" % data['response']['error'])
+       		
 	return data
 
 
-def getCurrentTemperature(apiKey, pws=None, postal=None):
+def getCurrentTemperature(apiKey, pws=None, postal=None, timeout=5):
 	"""
 	Get the current temperature in degrees Fahrenheit using the WUnderground 
 	API.
 	"""
 	
-	cNow = getCurrentConditions(apiKey, pws=pws, postal=postal)
+	cNow = getCurrentConditions(apiKey, pws=pws, postal=postal, timeout=timeout)
 	
 	tNow = float(cNow['current_observation']['temp_f'])
 	wxLogger.debug('Current temperature is %.1f F for %s/%s', tNow, pws, postal)
@@ -191,14 +209,14 @@ def getCurrentTemperature(apiKey, pws=None, postal=None):
 	return tNow
 
 
-def getWeatherAdjustment(apiKey, pws=None, postal=None):
+def getWeatherAdjustment(apiKey, pws=None, postal=None, timeout=5):
 	"""
 	Compute a watering time scale factor using the WUnderground conditions.
 	"""
 	
 	# Today
 	dtNow = datetime.now()
-	cNow = getHistory(apiKey, dtNow, pws=pws, postal=postal)
+	cNow = getHistory(apiKey, dtNow, pws=pws, postal=postal, timeout=timeout)
 	tNow = float(cNow['history']['dailysummary'][0]['meantempi'])
 	try:
 		hNow = float(cNow['history']['dailysummary'][0]['humidity'])
@@ -210,7 +228,7 @@ def getWeatherAdjustment(apiKey, pws=None, postal=None):
 	
 	# Yesterday
 	dtPast  = dtNow - timedelta(days=1)
-	cPast = getHistory(apiKey, dtPast, pws=pws, postal=postal)
+	cPast = getHistory(apiKey, dtPast, pws=pws, postal=postal, timeout=timeout)
 	tPast = float(cPast['history']['dailysummary'][0]['meantempi'])
 	try:
 		hPast = float(cPast['history']['dailysummary'][0]['humidity'])
