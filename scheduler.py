@@ -125,7 +125,7 @@ class ScheduleProcessor(threading.Thread):
 										schLogger.info('New schedule start time will be %s LT', tSchedule+self.tDelay)
 										
 										continue
-						schLogger.debug('Cleared all weather constraints')
+								schLogger.debug('Cleared all weather constraints')
 								
 						### Load in the current weather adjustment, if needed
 						if self.wxAdjust is None:
@@ -137,7 +137,7 @@ class ScheduleProcessor(threading.Thread):
 									self.wxAdjust = 1.0
 							else:
 								self.wxAdjust = 1.0
-						schLogger.info('Set weather adjustment to %.1f%%', self.wxAdjust*100.0)
+							schLogger.info('Set weather adjustment to %.1f%%', self.wxAdjust*100.0)
 						
 						### Convert the interval into a timedeltas
 						interval = timedelta(days=interval)
