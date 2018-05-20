@@ -30,4 +30,5 @@ Usage
   
 Weather Adjustments
 -------------------
-The automatic weather adjustments are based on those used by sprinklers_pi.
+The automatic weather adjustments are based on those used by sprinklers_pi with an added
+correction for the average wind speed.
