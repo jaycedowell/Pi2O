@@ -4,7 +4,7 @@
 	<meta name="viewport" content="width=device-width, initial-scale=1">
 	<link rel="stylesheet" href="/css/jquery.mobile-1.4.5.min.css">
 	<link rel="stylesheet" href="/css/themes/Pi2O.css" />
-    <link rel="stylesheet" href="/css/themes/jquery.mobile.icons.min.css" />
+	<link rel="stylesheet" href="/css/themes/jquery.mobile.icons.min.css" />
 	<link href="/css/images/favicon.ico" rel="shortcut icon" type="image/x-icon" />
 	<script src="/js/jquery-1.11.1.min.js"></script>
 	<script src="/js/jquery.mobile-1.4.5.min.js"></script>
@@ -15,6 +15,11 @@
 	.ui-field-contain.ui-hide-label, .no-field-separator {
 		margin: 1em 0;
 		padding: 0;
+	}
+	.sixcol {
+		/* Based on https://stackoverflow.com/questions/6161377/more-than-5-items-per-line-in-jquery-mobile-navbar */
+		width: 16.66% !important;  /* 16.66% for 6 tabs wide */
+		clear: none !important;  /* Prevent line break caused by ui-block-a */
 	}
 	</style>
 </head>
@@ -122,12 +127,12 @@
 	<div data-role="footer" role="banner" class="ui-header ui-bar-inherit">
 		<div data-role="navbar">
 			<ul>
-				<li><a href="/">Home</a></li>
-				<li><a href="/zones">Zones</a></li>
-				<li><a href="/schedules">Schedules</a></li>
-				<li><a href="/weather">Weather</a></li>
-				<!--<li><a href="/manual">Manual Control</a></li>-->
-				<li><a href="/logs">Logs</a></li>
+				<li class="sixcol"><a href="/">Home</a></li>
+				<li class="sixcol"><a href="/zones">Zones</a></li>
+				<li class="sixcol"><a href="/schedules">Schedules</a></li>
+				<li class="sixcol"><a href="/weather">Weather</a></li>
+				<li class="sixcol">Manual Control</li>
+				<li class="sixcol"><a href="/logs">Logs</a></li>
 			</ul>
 		</div>
 	</div>
