@@ -224,6 +224,7 @@ def getWeatherAdjustment(apiKey, pws=None, postal=None, timeout=5):
 		hNow  = float(cNow['history']['dailysummary'][0]['minhumidity'])
 		hNow += float(cNow['history']['dailysummary'][0]['maxhumidity'])
 		hNow /= 2.0
+	wNow = float(cNow['history']['dailysummary'][0]['meanwindspdi'])
 	pNow = float(cNow['history']['dailysummary'][0]['precipi'])
 	
 	# Yesterday
@@ -236,13 +237,15 @@ def getWeatherAdjustment(apiKey, pws=None, postal=None, timeout=5):
 		hPast  = float(cPast['history']['dailysummary'][0]['minhumidity'])
 		hPast += float(cPast['history']['dailysummary'][0]['maxhumidity'])
 		hPast /= 2.0
+	wPast = float(cPast['history']['dailysummary'][0]['meanwindspdi'])
 	pPast = float(cPast['history']['dailysummary'][0]['precipi'])
 	
 	# The various bits of the scaling relation
-	tFactor = 4.0*((0.5*tNow + 0.5*tPast) - 70.0)	# percent
-	rFactor = 1.0*(30.0 - (0.5*hNow + 0.5*hPast))	# percent
+	tFactor =  4.0*((0.5*tNow + 0.5*tPast) - 70.0)	# percent
+	rFactor =  1.0*(30.0 - (0.5*hNow + 0.5*hPast))	# percent
+	wFactor =  2.0*(0.5*wNow + 0.5*wPast)			# percent
 	pFactor = -2.0*((pNow + pPast)*100.0)			# percent
-	factor = 100.0 + tFactor + rFactor + pFactor
+	factor = 100.0 + tFactor + rFactor + wFactor + pFactor
 	factor = min([factor, 200])
 	factor = max([0, factor])
 	
