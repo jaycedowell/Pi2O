@@ -135,6 +135,9 @@ class ScheduleProcessor(threading.Thread):
 								except RuntimeError:
 									schLogger.warning('Cannot connect to WUnderground for weather adjustment, setting to 100%')
 									self.wxAdjust = 1.0
+								except Exception as e:
+									schLogger.warning('Error computing weather adjustment, setting to 100%')
+									self.wxAdjust = 1.0
 							else:
 								self.wxAdjust = 1.0
 							schLogger.info('Set weather adjustment to %.1f%%', self.wxAdjust*100.0)
