@@ -10,6 +10,8 @@ import logging
 import urllib2
 from datetime import datetime, timedelta
 
+from expiring_cache import expiring_cache
+
 __version__ = "0.3"
 __all__ = ["getCurrentConditions", "getYesterdaysConditions", "getHistory", "getCurrentTemperature", 
 		   "getWeatherAdjustment", "__version__", "__all__"]
@@ -88,7 +90,7 @@ class _rateLimiter(object):
 _rl = _rateLimiter()
 
 
-def getCurrentConditions(apiKey, pws=None, postal=None, timeout=5):
+def getCurrentConditions(apiKey, pws=None, postal=None, timeout=30):
 	"""
 	Get the current conditions of the personal weather station or postal 
 	code using the WUnderground API.
@@ -120,7 +122,7 @@ def getCurrentConditions(apiKey, pws=None, postal=None, timeout=5):
 	return data
 
 
-def getYesterdaysConditions(apiKey, pws=None, postal=None, timeout=5):
+def getYesterdaysConditions(apiKey, pws=None, postal=None, timeout=30):
 	"""
 	Get yesterday's conditions of the personal weather station or postal 
 	code using the WUnderground API.
@@ -152,7 +154,7 @@ def getYesterdaysConditions(apiKey, pws=None, postal=None, timeout=5):
 	return data
 
 
-def getHistory(apiKey, date, pws=None, postal=None, timeout=5):
+def getHistory(apiKey, date, pws=None, postal=None, timeout=30):
 	"""
 	Get the weather history for the specified date/YYYYMMDD date string 
 	of the personal weather station or postal code using the 
@@ -195,7 +197,8 @@ def getHistory(apiKey, date, pws=None, postal=None, timeout=5):
 	return data
 
 
-def getCurrentTemperature(apiKey, pws=None, postal=None, timeout=5):
+@expiring_cache(maxage=3600)
+def getCurrentTemperature(apiKey, pws=None, postal=None, timeout=30):
 	"""
 	Get the current temperature in degrees Fahrenheit using the WUnderground 
 	API.
@@ -209,7 +212,8 @@ def getCurrentTemperature(apiKey, pws=None, postal=None, timeout=5):
 	return tNow
 
 
-def getWeatherAdjustment(apiKey, pws=None, postal=None, timeout=5):
+@expiring_cache(maxage=3600)
+def getWeatherAdjustment(apiKey, pws=None, postal=None, timeout=30):
 	"""
 	Compute a watering time scale factor using the WUnderground conditions.
 	"""
