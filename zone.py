@@ -209,9 +209,12 @@ class SoftRainSensor(object):
 			apiKey = self.config.get('Weather', 'key')
 			postal = self.config.get('Weather', 'postal')
 			pws = self.config.get('Weather', 'pws')
-			cNow = getCurrentConditions(apiKey, pws=pws, postal=postal)
+			try:
+				cNow = getCurrentConditions(apiKey, pws=pws, postal=postal)
 			
-			self.rainfall = float(cNow['current_observation']['precip_today_in'])
+				self.rainfall = float(cNow['current_observation']['precip_today_in'])
+			except RuntimeError:
+				self.rainfall = -1
 			self.lastPoll = tNow
 			
 		if self.rainfall >= self.precip:

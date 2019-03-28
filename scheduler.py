@@ -214,7 +214,7 @@ class ScheduleProcessor(threading.Thread):
 				else:
 					self.wxAdjust = None
 					
-			except Exception, e:
+			except Exception as e:
 				exc_type, exc_value, exc_traceback = sys.exc_info()
 				schLogger.error("ScheduleProcessor: %s at line %i", e, traceback.tb_lineno(exc_traceback))
 				## Grab the full traceback and save it to a string via StringIO
