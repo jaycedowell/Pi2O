@@ -177,6 +177,7 @@ class AJAX(object):
         for i,zone in enumerate(self.hardwareZones):
             i += 1
             output['status%i' % i] = 'on' if zone.isActive() else 'off'
+            output['current_et_value%i' % i] = zone.current_et_value
             output['name%i' % i] = self.config.get('Zone%i' % i, 'name')
             output['zones'].append(i)
         for entry in self.history.getData():
@@ -288,6 +289,7 @@ class Interface(object):
         for i,zone in enumerate(self.hardwareZones):
             i += 1
             kwds['zone%i-status' % i] = 'on' if zone.isActive() else 'off'
+            kwds['zone%i-current_et_value' % i] = zone.current_et_value
         for entry in self.history.getData():
             try:
                 kwds['zone%i-lastStart' % entry['zone']]
@@ -440,6 +442,7 @@ def main(args):
     hardwareZones = initZones(config)
     for previousRun in history.getData(scheduledOnly=True):
         logger.info('Previous run of zone %i was on %s LT', previousRun['zone'], datetime.fromtimestamp(previousRun['dateTimeStart']))
+        logger.info('Previous ET value of zone %i was %.2f inches', previousRun['zone'], hardwareZones[previousRun['zone']-1].current_et_value)
         
         if hardwareZones[previousRun['zone']-1].lastStart == 0:
             hardwareZones[previousRun['zone']-1].lastStart = previousRun['dateTimeStart']
@@ -469,6 +472,7 @@ def main(args):
             history.writeData(time.time(), i, 'off')
         ## Save the ET values so that we have some state
         config.set('Zone%i' % (i+1), 'current_et_value', zone.current_et_value)
+        logger.info('Saved ET value for zone %i of %.2f inches', i+1, zone.current_et_value)
         
     # Shutdown the archive
     history.cancel()
