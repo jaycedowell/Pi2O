@@ -63,8 +63,8 @@
 					{% break %}
 					{% endif %}
 					{% if kwds.get("zone%i-enabled"|format(zone)) == 'on' %}
-					<label for="schedule{{ month }}-loss">ET Loss Amount - {{ kwds.get("zone%i-name"|format(zone)) }}:</label>
-					<input id="schedule{{ month }}-loss{{ zone }}" type="text" name="schedule{{ month }}-loss{{ zone }}" value="{{ kwds.get("schedule%i-loss%s"|format(month,zone)) }}" >
+					<label for="schedule{{ month }}-threshold">ET Threshold (inches): - {{ kwds.get("zone%i-name"|format(zone)) }}:</label>
+					<input id="schedule{{ month }}-threshold{{ zone }}" type="text" name="schedule{{ month }}-threshold{{ zone }}" value="{{ kwds.get("schedule%i-threshold%s"|format(month,zone)) }}" >
 					{% endif %}
 					{% endfor %}
 				</div>

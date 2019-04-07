@@ -147,9 +147,9 @@ class ScheduleProcessor(threading.Thread):
                             #### Is the current zone even active?
                             if self.config.get('Zone%i' % zone, 'enabled') == 'on':
                                 #### What duration do we use for this zone?
-                                ##### Get the allowed ET loss value and convert it to a duration
-                                loss = self.config.get('Schedule%i' % tNow.month, 'loss%i' % zone)
-                                duration = self.hardwareZones[zone-1].getDurationFromPrecipitation(loss)
+                                ##### Get the allowed ET threshold value and convert it to a duration
+                                threshold = self.config.get('Schedule%i' % tNow.month, 'threshold%i' % zone)
+                                duration = self.hardwareZones[zone-1].getDurationFromPrecipitation(threshold)
                                 adjustmentUsed = -2.0
                                     
                                 duration = timedelta(minutes=int(duration), seconds=int((duration*60) % 60))
@@ -179,9 +179,9 @@ class ScheduleProcessor(threading.Thread):
                                         if zone in self.processedInBlock:
                                             continue
                                             
-                                    if self.hardwareZones[zone-1].current_et_value >= loss:
+                                    if self.hardwareZones[zone-1].current_et_value >= threshold:
                                         self.hardwareZones[zone-1].on()
-                                        self.hardwareZones[zone-1].current_et_value -= loss
+                                        self.hardwareZones[zone-1].current_et_value -= threshold
                                         self.history.writeData(tNowDB, zone, 'on', wxAdjustment=adjustmentUsed)
                                         schLogger.info('Zone %i - on', zone)
                                         schLogger.info('  Last Ran: %s LT (%s ago)', tLast, tNow-tLast)

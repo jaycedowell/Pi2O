@@ -145,19 +145,19 @@ def loadConfig(filename):
             config.set('Zone%i' % zone, keyword, '')
             if keyword == 'enabled':
                 config.set('Zone%i' % zone, keyword, 'off')
-            elif keyword == 'current_et_value':
+            elif keyword in ('rate', 'current_et_value'):
                 config.set('Zone%i' % zone, keyword, '0.0')
                 
     ## Dummy schedule information - one for each month
     ##  1) start - start time as HH:MM, 24-hour format
-    ##  2) loss - accumulated ET loss before watering
+    ##  2) threshold - accumulated ET threshold before watering
     ##  3) enabled - whether or not the schedule is active
     for month in xrange(1, 13):
         config.add_section('Schedule%i' % month)
-        for keyword in ('start', 'loss', 'enabled'):
-            if keyword == 'loss':
+        for keyword in ('start', 'threshold', 'enabled'):
+            if keyword == 'threshold':
                 for zone in xrange(1, MAX_ZONES+1):
-                    config.set('Schedule%i' % month, '%s%i' % (keyword, zone), '')
+                    config.set('Schedule%i' % month, '%s%i' % (keyword, zone), '0.5')
             else:
                 config.set('Schedule%i' % month, keyword, '')
                 
