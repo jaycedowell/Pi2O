@@ -139,6 +139,7 @@ def loadConfig(filename):
     ##  2) pin - RPi GPIO pin
     ##  3) rate - precipitation rate in inches per hour
     ##  4) enabled - whether or not the zone is active
+    ##  _) current_et_value - hidden value to record the ET between restarts
     for zone in xrange(1, MAX_ZONES+1):
         config.add_section('Zone%i' % zone)
         for keyword in ('name', 'pin', 'rate', 'enabled', 'current_et_value'):
@@ -156,7 +157,7 @@ def loadConfig(filename):
         config.add_section('Schedule%i' % month)
         for keyword in ('start', 'threshold', 'enabled'):
             if keyword == 'threshold':
-                config.set('Schedule%i' % month, '%s%i' % (keyword, zone), '0.5')
+                config.set('Schedule%i' % month, keyword, '0.5')
             else:
                 config.set('Schedule%i' % month, keyword, '')
                 

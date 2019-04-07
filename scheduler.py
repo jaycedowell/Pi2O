@@ -96,6 +96,7 @@ class ScheduleProcessor(threading.Thread):
                                 daily_et = getET(pws)
                                 for zone in range(1, len(self.hardwareZones)+1):
                                     zone.current_et_value += daily_et
+                                    self.config.set('Zone%i' % zone, 'current_et_value', self.hardwareZones[zone-1].current_et_value)
                                     
                             except Exception as e:
                                 schLogger.warning('Cannot connect to WUnderground for ET estimate, skipping')
@@ -182,11 +183,14 @@ class ScheduleProcessor(threading.Thread):
                                     if self.hardwareZones[zone-1].current_et_value >= threshold:
                                         self.hardwareZones[zone-1].on()
                                         self.hardwareZones[zone-1].current_et_value -= threshold
+                                        
                                         self.history.writeData(tNowDB, zone, 'on', wxAdjustment=adjustmentUsed)
+                                        self.config.set('Zone%i' % zone, 'current_et_value', self.hardwareZones[zone-1].current_et_value)
+                                        
                                         schLogger.info('Zone %i - on', zone)
                                         schLogger.info('  Last Ran: %s LT (%s ago)', tLast, tNow-tLast)
                                         schLogger.info('  Duration: %s', duration)
-                                        schLogger.info('  Loss: %.2f"', self.hardwareZones[zone-1].current_et_value)
+                                        schLogger.info('  Current ET Losses: %.2f"', self.hardwareZones[zone-1].current_et_value)
                                         self.blockActive = True
                                         self.processedInBlock.append( zone )
                                         break
