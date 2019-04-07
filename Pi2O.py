@@ -177,7 +177,7 @@ class AJAX(object):
         for i,zone in enumerate(self.hardwareZones):
             i += 1
             output['status%i' % i] = 'on' if zone.isActive() else 'off'
-            output['current_et_value%i' % i] = zone.current_et_value
+            output['etv%i' % i] = zone.current_et_value
             output['name%i' % i] = self.config.get('Zone%i' % i, 'name')
             output['zones'].append(i)
         for entry in self.history.getData():

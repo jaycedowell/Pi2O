@@ -74,7 +74,7 @@
 				var start = new Date(data['start'+zone]);
 				var run = data['run'+zone] / 1000.0;
 				var adjust = data['adjust'+zone];
-				var et = data['current_et_value'+zone];
+				var etv = data['etv'+zone];
 				
 				var startStr = (start.getMonth()+1)+"/"+start.getDate()+"/"+start.getFullYear();
 				
@@ -93,11 +93,11 @@
 					$('#zone'+zone+'Info').html("<q>"+name+"</q> is on");
 				} else {
 					if( adjust >= 0 ) {
-						$('#zone'+zone+'Info').html("<q>"+name+"</q> last ran on "+startStr+" for "+runStr+" <i>(weather adjustment "+(adjust*100).toFixed()+"%)</i><br />Current ET value: "+et.toFixed(2)+" inches");
+						$('#zone'+zone+'Info').html("<q>"+name+"</q> last ran on "+startStr+" for "+runStr+" <i>(weather adjustment "+(adjust*100).toFixed()+"%)</i><br />Current ET value: "+etv.toFixed(2)+" inches");
 					} else if( adjust == -1 ) {
-						$('#zone'+zone+'Info').html("<q>"+name+"</q> last ran on "+startStr+" for "+runStr+" <i>(manual)</i><br />Current ET value: "+et.toFixed(2)+" inches");
+						$('#zone'+zone+'Info').html("<q>"+name+"</q> last ran on "+startStr+" for "+runStr+" <i>(manual)</i><br />Current ET value: "+etv.toFixed(2)+" inches");
 					} else {
-						$('#zone'+zone+'Info').html("<q>"+name+"</q> last ran on "+startStr+" for "+runStr+"</i><br />Current ET value: "+et.toFixed(2)+" inches");
+						$('#zone'+zone+'Info').html("<q>"+name+"</q> last ran on "+startStr+" for "+runStr+"</i><br />Current ET value: "+etv.toFixed(2)+" inches");
 					}
 				}
 			}
