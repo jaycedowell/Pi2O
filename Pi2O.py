@@ -467,7 +467,7 @@ def main(args):
         if zone.isActive():
             zone.off()
             history.writeData(time.time(), i, 'off')
-        config.set('Zone%i' % (i+1), 'previous_et', zone.previous_et)
+        config.set('Zone%i' % (i+1), 'current_et_value', zone.current_et_value)
         
     # Shutdown the archive
     history.cancel()

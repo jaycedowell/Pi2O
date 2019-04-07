@@ -200,6 +200,10 @@ class ScheduleProcessor(threading.Thread):
                     else:
                             pass
                             
+                else:
+                    for zone in range(1, len(self.hardwareZones)+1):
+                        zone.current_et_value = 0.0
+                        
             except Exception as e:
                 exc_type, exc_value, exc_traceback = sys.exc_info()
                 schLogger.error("ScheduleProcessor: %s at line %i", e, traceback.tb_lineno(exc_traceback))
