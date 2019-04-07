@@ -1,5 +1,5 @@
 """
-Calculation of the Penman-Monteith equation based using values from WUnderground 
+Moduole for calculating the Penman-Monteith equation based using values from WUnderground 
 weather station.  Based on:
 
 Step by Step Calculation of the Penman-Monteith Evapotranspiration (FAO-56 Method)
@@ -10,9 +10,19 @@ http://edis.ifas.ufl.edu/pdffiles/ae/ae45900.pdf
 """
 
 import numpy
+import logging
 from datetime import datetime, timedelta
 
 from weather import getCurrentConditions, getThreeDayHistory
+
+__version__ = '0.1'
+__all__ = ['T', 'u2', 'Delta', 'P', 'Elevation', 'gamma', 'DT', 'PT', 'TT', 'eT', 'eS', 'eA', 
+           'Ra', 'Rso', 'Rns', 'Rnl', 'Rn', 'ET', 'getET', '__version__']
+
+
+# Logger instance
+pmLogger = logging.getLogger('__main__')
+
 
 def T(TF):
     """
@@ -197,7 +207,7 @@ def ET(Tmin, Tmax, u2, RHmin, RHmax, lat, elev, J, R=None):
     w = PT(Tmean, p, u2) * TT(Tmean, u2) * (eS(Tmin, Tmax) - eA(Tmin, Tmax, RHmin, RHmax))
     return r + w
 
-def getET(pws, inches=True, timeout=30, verbose=True):
+def getET(pws, inches=True, timeout=30):
     """
     Estimate the evapotranpsersion loss (in mm or inches) for the last 24 hours using data
     from the specified WUnderground weather station.  If the loss is wanted in mm, set
@@ -256,22 +266,20 @@ def getET(pws, inches=True, timeout=30, verbose=True):
         r = None
         
     # Report - part 1
-    if verbose:
-        print "Temperature: %.1f to %.1f C" % (Tmin, Tmax)
-        print "Relative humidity: %.0f%% to %.0f%%" % (RHmin, RHmax)
-        print "Average wind speed: %.1f m/s" % w
-        print "Elevation above sea level: %.1f m" % elev
-        print "Total rainfall: %.2f mm" % sum(p)
-        print "Average solar radiation: %.1f W/m^2/d" % r
+    pmLogger.debug("Temperature: %.1f to %.1f C", Tmin, Tmax)
+    pmLogger.debug("Relative humidity: %.0f%% to %.0f%%", RHmin, RHmax)
+    pmLogger.debug("Average wind speed: %.1f m/s",  w)
+    pmLogger.debug("Elevation above sea level: %.1f m",  elev)
+    pmLogger.debug("Total rainfall: %.2f mm", sum(p))
+    pmLogger.debug("Average solar radiation: %.1f W/m^2/d", r)
         
     # Compute the evapotranspiration loss...
     loss = ET(Tmin, Tmax, w, RHmin, RHmax, lat, elev, dtStart, R=r)
-    if verbose:
-        print "ET loss: %.2f mm" % loss
+    pmLogger.info("ET loss: %.2f mm", loss)
     # ... and correct for the amount of rainfall received.
     loss -= sum(p)
-    if verbose:
-        print "ET loss, less rainfall received: %.2f mm" % loss
+    loss = max([0.0, loss])
+    pmLogger.info("ET loss, less rainfall received: %.2f mm", loss)
         
     # Convert, if needed, and return
     if inches:
