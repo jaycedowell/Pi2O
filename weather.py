@@ -12,9 +12,9 @@ from datetime import datetime, timedelta
 
 from expiring_cache import expiring_cache
 
-__version__ = "0.5"
-__all__ = ["getCurrentConditions", "getThreeDayHistory", "getCurrentTemperature", 
-           "getWeatherAdjustment", "__version__", "__all__"]
+__version__ = '0.5'
+__all__ = ['getCurrentConditions', 'getThreeDayHistory', 'getCurrentTemperature', 
+           '__version__']
 
 
 # Logger instance
@@ -149,72 +149,3 @@ def getCurrentTemperature(pws, timeout=30):
         raise RuntimeError("Failed to get current temperature: %s" % str(e))
         
     return tNow
-
-
-@expiring_cache(maxage=1800)
-def getWeatherAdjustment(pws, adj_min=0.0, adj_max=200.0, timeout=30):
-    """
-    Compute a watering time scale factor using the WUnderground conditions.
-    """
-    
-    # Pre-process
-    adj_min = float(adj_min)
-    adj_max = float(adj_max)
-    
-    # Past 24 hours
-    dtNow = datetime.utcnow()
-    dtStart = dtNow - timedelta(days=1)
-    data = getThreeDayHistory(pws, timeout=timeout)
-    
-    a, t, h, w, p = [], [], [], [], []
-    try:
-        history = data['observations']
-        
-        for day in history:
-            dt = datetime.utcfromtimestamp(day['epoch'])
-            if dt < dtStart:
-                continue
-                
-            a.append( (dtNow - dt).total_seconds() )
-            t.append( float(day['imperial']['tempAvg']) )
-            h.append( float(day['humidityAvg']) )
-            w.append( float(day['imperial']['windspeedAvg']) )
-            p.append( float(day['imperial']['precipTotal']) )
-            
-        ## Convert the total rainfall to Delta_{rain}
-        dp = [0.0,]
-        for i in xrange(1, len(p)):
-            dp.append( p[i]-p[i-1] )
-            if dp[-1] < 0:
-                dp[-1] = 0.0
-        p = dp
-        
-    except Exception as e:
-        wxLogger.warning('Error parsing three-day history: %s', str(e))
-        
-    # The various bits of the scaling relation
-    tFactor = 0.0
-    if len(t) != 0:
-        tFactor = 4.0*(sum(t)/len(t) - 70.0)    # +4% for every degree above 70 F
-    hFactor = 0.0
-    if len(h) != 0:
-        hFactor = -1.0*(sum(h)/len(h) - 30.0)   # -1% for every percent above 30% RH 
-    wFactor = 0.0
-    if len(w) != 0:
-        wFactor = 2.0*(sum(w)/len(w) - 5.0)     # +2% for every MPH over 5 MPH
-        wFactor = max([0.0, wFactor])           # force to be positive only
-    pFactor = 0.0
-    if len(p) != 0:
-        pFactor = -2.0*sum(p)*25                # -2% for every 0.04" of rain
-    factor = 100.0 + tFactor + hFactor + wFactor + pFactor
-    factor = min([factor, adj_max])
-    factor = max([adj_min, factor])
-    
-    wxLogger.debug('Current weather adjustment is %.1f%% for %s', factor, pws)
-    wxLogger.debug('  Corrections')
-    wxLogger.debug('    Temperature: %.2f%%', tFactor)
-    wxLogger.debug('    Humidity: %.2f%%', hFactor)
-    wxLogger.debug('    Wind: %.2f%%', wFactor)
-    wxLogger.debug('    Rain: %.2f%%', pFactor)
-    
-    return factor/100.0

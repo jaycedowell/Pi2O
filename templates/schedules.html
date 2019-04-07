@@ -63,8 +63,8 @@
 					{% break %}
 					{% endif %}
 					{% if kwds.get("zone%i-enabled"|format(zone)) == 'on' %}
-					<label for="schedule{{ month }}-duration">Duration - {{ kwds.get("zone%i-name"|format(zone)) }}:</label>
-					<input type="range" id="schedule{{ month }}-duration{{ zone }}" name="schedule{{ month }}-duration{{ zone }}" value="{{ kwds.get("schedule%i-duration%s"|format(month,zone)) }}" min="0" max="60" data-highlight="true">
+					<label for="schedule{{ month }}-loss">ET Loss Amount - {{ kwds.get("zone%i-name"|format(zone)) }}:</label>
+					<input id="schedule{{ month }}-loss{{ zone }}" type="text" name="schedule{{ month }}-loss{{ zone }}" value="{{ kwds.get("schedule%i-loss%s"|format(month,zone)) }}" >
 					{% endif %}
 					{% endfor %}
 				</div>
@@ -74,18 +74,6 @@
 					<input type="time" id="schedule{{ month }}-start" name="schedule{{ month }}-start" value="{{ kwds.get("schedule%i-start"|format(month)) }}" data-role="datebox" data-options='{"useInline": true, "useInlineHideInput": true}'/>
 				</div>
 				
-				<div class="ui-field-contain no-field-separator">
-					<label for="schedule{{ month }}-interval">Interval:</label>
-					<input type="range" id="schedule{{ month }}-interval" name="schedule{{ month }}-interval" value="{{ kwds.get("schedule%i-interval"|format(month)) }}" min="1" max="30" data-highlight="true"/>
-				</div>
-				
-				<div class="ui-field-contain">
-					<label for="schedule{{ month }}-wxadjust">Weather Adjustment:</label>
-					<select class="wxadjust{{ month }}" id="schedule{{ month }}-wxadjust" name="schedule{{ month }}-wxadjust" data-role="flipswitch">
-						<option value="off">Off</option>
-						<option value="on" {{ 'selected' if kwds.get("schedule%i-wxadjust"|format(month)) == 'on' else '' }}>On</option>
-					</select>
-				</div>
 			</div>
 			{% endfor %}
 			<button type="submit">Save Configuration</button>

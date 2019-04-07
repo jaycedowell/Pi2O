@@ -55,6 +55,8 @@
 						<option value="24" {{ 'selected' if kwds.get("zone%i-pin"|format(zone)) == '24' else '' }}>24</option>
 						<option value="25" {{ 'selected' if kwds.get("zone%i-pin"|format(zone)) == '25' else '' }}>25</option>
 					</select>
+					<label for="zone{{ zone }}-rate">Precipitation Rate:</label>
+					<input class="rate{{ zone }}" type="text" name="zone{{ zone }}-rate" value="{{ kwds.get("zone%i-rate"|format(zone)) }}"/>
 					<label for="zone{{ zone }}-enabled">Enabled:</label>
 					<select class="enabled{{ zone }}" name="zone{{ zone }}-enabled" data-role="slider">
 						<option value="off">Off</option>
@@ -63,31 +65,6 @@
 				</div>
 			</div>
 			{% endfor %}
-			
-			<div data-role="collapsible">
-				<h3 class="ui-title" role="heading" aira-level="1">Rain Sensor</h3>
-				<div class="ui-field-contain">
-					<fieldset data-role="controlgroup" data-type="horizontal">
-						<legend>Type:</legend>
-						<input class="rtype" type="radio" name="rainsensor-type" id="rainsensor-choice-1" value="off" {{ 'checked' if kwds.get('rainsensor-type') == 'off' else '' }}>
-						<label for="rainsensor-choice-1">Not Installed</label>
-						<input class="rtype" type="radio" name="rainsensor-type" id="rainsensor-choice-2" value="software" {{ 'checked' if kwds.get('rainsensor-type') == 'software' else '' }}>
-						<label for="rainsensor-choice-2">Software</label>
-						<input class="rtype" type="radio" name="rainsensor-type" id="rainsensor-choice-3" value="hardware" {{ 'checked' if kwds.get('rainsensor-type') == 'hardware' else '' }}>
-						<label for="rainsensor-choice-3">Hardware</label>
-					</fieldset>
-					<label for="rainsensor-pin">GPIO Pin:</label>
-					<select class="pinr" id="pinr" name="rainsensor-pin">
-						<option value="17" {{ 'selected' if kwds.get("rainsensor-pin") == '17' else '' }}>17</option>
-						<option value="18" {{ 'selected' if kwds.get("rainsensor-pin") == '18' else '' }}>18</option>
-						<option value="23" {{ 'selected' if kwds.get("rainsensor-pin") == '23' else '' }}>23</option>
-						<option value="24" {{ 'selected' if kwds.get("rainsensor-pin") == '24' else '' }}>24</option>
-						<option value="25" {{ 'selected' if kwds.get("rainsensor-pin") == '25' else '' }}>25</option>
-					</select>
-					<label for="rainsensor-precip">Rainfall:</label>
-					<input class="precip" type="range" name="rainsensor-precip" value="{{ kwds.get("rainsensor-precip") }}" min="0.04" max="0.52" step="0.04" data-highlight="true"/>
-				</div>
-			</div>
 			
 			<script type="text/javascript">
 				$(window).load( function() {
@@ -99,6 +76,7 @@
 				
 				{% if kwds.get("zone%i-enabled"|format(zone)) != 'on' %}
 				$('.name{{ zone }}').textinput('disable');
+				$('.rate{{ zone}}').textinput('disable');
 				$('#pin{{ zone }}').selectmenu('disable');
 				{% endif %}
 			
@@ -106,27 +84,16 @@
 				$('.enabled{{ zone }}').bind('slidestop', function (e) {
 					if (this.value == 'on') {
 						$('.name{{ zone }}').textinput('enable');
+						$('.rate{{ zone}}').textinput('enable');
 						$('#pin{{ zone }}').selectmenu('enable');
 					} else {
 						$('.name{{ zone }}').textinput('disable');
+						$('.rate{{ zone}}').textinput('disable');
 						$('#pin{{ zone }}').selectmenu('disable');
 					}
 				});
 				{% endfor %}
 				$('#pinr').selectmenu('refresh', true);
-				
-				{% if kwds.get('rainsensor-type') == 'off' %}
-				$('.precip').slider('disable');
-				$('#pinr').selectmenu('disable');
-				{% endif %}
-				{% if kwds.get('rainsensor-type') == 'software' %}
-				$('.precip').slider('enable');
-				$('#pinr').selectmenu('disable');
-				{% endif %}
-				{% if kwds.get('rainsensor-type') == 'hardware' %}
-				$('.precip').slider('disable');
-				$('#pinr').selectmenu('enable');
-				{% endif %}
 				
 				$('.rtype').trigger('create');
 				$('.rtype').on('click', function(e) {

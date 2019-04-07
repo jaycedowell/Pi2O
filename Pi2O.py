@@ -21,7 +21,7 @@ except ImportError:
 from config import *
 from database import Archive
 from scheduler import ScheduleProcessor
-from weather import getCurrentTemperature, getWeatherAdjustment
+from weather import getCurrentTemperature
 
 
 # Path configuration
@@ -340,7 +340,6 @@ class Interface(object):
                 kwds['weather-info'] = 'Error: No PWS ID provided'
             else:
                 kwds['weather-info'] = "Current temperature: %.0f F" % (getCurrentTemperature(kwds['weather-pws']),)
-                kwds['weather-info'] += "<br />Current weather correction: %i%%" % (100.0*getWeatherAdjustment(kwds['weather-pws'], adj_max=kwds['weather-max-adjust']),)
                 
         else:
             kwds['weather-info'] = ''
@@ -468,7 +467,8 @@ def main(args):
         if zone.isActive():
             zone.off()
             history.writeData(time.time(), i, 'off')
-            
+        config.set('Zone%i' % (i+1), 'previous_et', zone.previous_et)
+        
     # Shutdown the archive
     history.cancel()
     

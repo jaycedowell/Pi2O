@@ -15,10 +15,11 @@ except ImportError:
     import StringIO
 from datetime import datetime, timedelta
 
-from weather import getCurrentTemperature, getWeatherAdjustment
+from weather import getCurrentTemperature
+from pm import getET
 
-__version__ = "0.4"
-__all__ = ["ScheduleProcessor", "__version__", "__all__"]
+__version__ = '0.5'
+__all__ = ['ScheduleProcessor', '__version__']
 
 
 # Logger instance
@@ -60,8 +61,8 @@ class ScheduleProcessor(threading.Thread):
         
     def run(self):
         self.running = True
-        self.wxAdjust = None
         self.blockActive = False
+        self.updatedET = datetime.now().replace(year=2000)
         self.processedInBlock = []
         
         self.tDelay = timedelta(0)
@@ -85,6 +86,21 @@ class ScheduleProcessor(threading.Thread):
                     s = 0
                     schLogger.debug('Current month of %s is enabled with a start time of %i:%02i:%02i LT', tNow.strftime("%B"), h, m, s)
                     
+                    ## Update the ET values at midnight
+                    if tNow - tNow.replace(hour=0, minute=0, second=0) < timedelta(seconds=60):
+                        if tNow - self.updatedET >= timedelta(days=1):
+                            ### Load in the WUnderground API information
+                            pws = self.config.get('Weather', 'pws')
+                            
+                            try:
+                                daily_et = getET(pws)
+                                for zone in range(1, len(self.hardwareZones)+1):
+                                    zone.current_et_value += daily_et
+                                    
+                            except Exception as e:
+                                schLogger.warning('Cannot connect to WUnderground for ET estimate, skipping')
+                            self.updatedET = tNow
+                            
                     ## Figure out if it is the start time or if we are inside a schedule 
                     ## block.  If so, we need to turn things on.
                     ##
@@ -97,54 +113,32 @@ class ScheduleProcessor(threading.Thread):
                         
                         ### Load in the WUnderground API information
                         pws = self.config.get('Weather', 'pws')
-                        adj_max = self.config.getint('Weather', 'max_adjust')
-                        enb = self.config.get('Weather', 'enabled')
                         
                         ### Check the temperature to see if it is safe to run
-                        if pws != '' and enb == 'on':
-                            try:
-                                temp = getCurrentTemperature(pws)
-                            except RuntimeError:
-                                schLogger.warning('Cannot connect to WUnderground for temperature information, skipping check')
+                        try:
+                            temp = getCurrentTemperature(pws)
+                        except RuntimeError:
+                            schLogger.warning('Cannot connect to WUnderground for temperature information, skipping check')
+                        else:
+                            if temp > 35.0:
+                                #### Everything is good to go, reset the delay
+                                if self.tDelay > timedelta(0):
+                                    schLogger.info('Resuming schedule after %i hour delay', self.tDelay.seconds/3600)
+                                    
+                                self.tDelay = timedelta(0)
+                                
                             else:
-                                if temp > 35.0:
-                                    #### Everything is good to go, reset the delay
-                                    if self.tDelay > timedelta(0):
-                                        schLogger.info('Resuming schedule after %i hour delay', self.tDelay.seconds/3600)
-                                        
+                                #### Wait for an hour an try again...
+                                self.tDelay += timedelta(seconds=3600)
+                                if self.tDelay >= timedelta(seconds=86400):
                                     self.tDelay = timedelta(0)
                                     
-                                else:
-                                    #### Wait for an hour an try again...
-                                    self.tDelay += timedelta(seconds=3600)
-                                    if self.tDelay >= timedelta(seconds=86400):
-                                        self.tDelay = timedelta(0)
-                                        
-                                        schLogger.info('Temperature of %.1f F is below 35 F, delaying schedule for one hour', temp)
-                                        schLogger.info('New schedule start time will be %s LT', tSchedule+self.tDelay)
-                                        
-                                        continue
-                                schLogger.debug('Cleared all weather constraints')
-                                
-                        ### Load in the current weather adjustment, if needed
-                        if self.wxAdjust is None:
-                            if pws != '' and enb == 'on':
-                                try:
-                                    self.wxAdjust = getWeatherAdjustment(pws, adj_max=adj_max)
-                                except RuntimeError:
-                                    schLogger.warning('Cannot connect to WUnderground for weather adjustment, setting to 100%')
-                                    self.wxAdjust = 1.0
-                                except Exception as e:
-                                    schLogger.warning('Error computing weather adjustment, setting to 100%')
-                                    self.wxAdjust = 1.0
-                            else:
-                                self.wxAdjust = 1.0
-                            schLogger.info('Set weather adjustment to %.1f%%', self.wxAdjust*100.0)
-                        
-                        ### Convert the interval into a timedeltas
-                        interval = timedelta(days=interval)
-                        schLogger.debug('Run interval for this schedule set to %s', interval)
-                        
+                                    schLogger.info('Temperature of %.1f F is below 35 F, delaying schedule for one hour', temp)
+                                    schLogger.info('New schedule start time will be %s LT', tSchedule+self.tDelay)
+                                    
+                                    continue
+                            schLogger.debug('Cleared all weather constraints')
+                            
                         ### Load in the last schedule run times
                         previousRuns = self.history.getData(scheduledOnly=True)
                         
@@ -153,14 +147,10 @@ class ScheduleProcessor(threading.Thread):
                             #### Is the current zone even active?
                             if self.config.get('Zone%i' % zone, 'enabled') == 'on':
                                 #### What duration do we use for this zone?
-                                duration = int(self.config.get('Schedule%i' % tNow.month, 'duration%i' % zone))
-                                if self.config.get('Schedule%i' % tNow.month, 'wxadjust') == 'on':
-                                    duration = duration*self.wxAdjust
-                                    adjustmentUsed = self.wxAdjust*1.0
-                                else:
-                                    duration = duration*1.0
-                                    adjustmentUsed = -2.0
-                                    schLogger.info('Weather adjustment is not enabled for this schedule, ignoring previous value')
+                                ##### Get the allowed ET loss value and convert it to a duration
+                                loss = self.config.get('Schedule%i' % tNow.month, 'loss%i' % zone)
+                                duration = self.hardwareZones[zone-1].getDurationFromPrecipitation(loss)
+                                adjustmentUsed = -2.0
                                     
                                 duration = timedelta(minutes=int(duration), seconds=int((duration*60) % 60))
                                 
@@ -189,12 +179,14 @@ class ScheduleProcessor(threading.Thread):
                                         if zone in self.processedInBlock:
                                             continue
                                             
-                                    if tNow - tLast >= interval - timedelta(hours=3):
+                                    if self.hardwareZones[zone-1].current_et_value >= loss:
                                         self.hardwareZones[zone-1].on()
+                                        self.hardwareZones[zone-1].current_et_value -= loss
                                         self.history.writeData(tNowDB, zone, 'on', wxAdjustment=adjustmentUsed)
                                         schLogger.info('Zone %i - on', zone)
                                         schLogger.info('  Last Ran: %s LT (%s ago)', tLast, tNow-tLast)
                                         schLogger.info('  Duration: %s', duration)
+                                        schLogger.info('  Loss: %.2f"', self.hardwareZones[zone-1].current_et_value)
                                         self.blockActive = True
                                         self.processedInBlock.append( zone )
                                         break
@@ -204,15 +196,10 @@ class ScheduleProcessor(threading.Thread):
                             if zone == len(self.hardwareZones) and not self.hardwareZones[zone-1].isActive():
                                 self.blockActive = False
                                 self.processedInBlock = []
-                                self.wxAdjust = None
                                 
                     else:
-                            #self.wxAdjust = None
                             pass
                             
-                else:
-                    self.wxAdjust = None
-                    
             except Exception as e:
                 exc_type, exc_value, exc_traceback = sys.exc_info()
                 schLogger.error("ScheduleProcessor: %s at line %i", e, traceback.tb_lineno(exc_traceback))

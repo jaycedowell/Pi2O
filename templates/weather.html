@@ -39,37 +39,15 @@
 	<form method="post" action="weather">
 		<div data-role="main" class="ui-content">
 			<h3 class="ui-title" role="heading" aira-level="1">WUnderground API</h3>
-			<div class="ui-field-contain">
-				<label for="weather-enabled">Enabled:</label>
-				<select class="enabled" name="weather-enabled" data-role="slider">
-					<option value="off">Off</option>
-					<option value="on" {{ 'selected' if kwds.get("weather-enabled") == 'on' else '' }}>On</option>
-				</select> 
-			</div>
 			<h3 class="ui-title" role="heading" aira-level="1">Location</h3>
 			<div class="ui-field-contain">
 				<label for="weather-pws">PWS ID:</label>
 				<input type="text" name="weather-pws" value="{{ kwds.get("weather-pws") }}"/>
-				<label for="weather-max-adjust">Maximum Weather Adjustment:</label>
-				<input type="text" name="weather-max-adjust" value="{{ kwds.get("weather-max-adjust") }}"/>%
 				<label for="weather-text">Test These Settings:</label>
 				<input class="test" type="checkbox" name="test-config" data-role="flipswitch"/>
 			</div>
 			<script type="text/javascript">
 				$('.test').trigger('create');
-				
-				{% if kwds.get("weather-enabled") != 'on' %}
-				$('.test').flipswitch('disable');
-				{% endif %}
-				
-				$('.enabled').trigger('create');
-				$('.enabled').bind('slidestop', function (e) {
-					if (this.value == 'on') {
-						$('.test').flipswitch('enable');
-					} else {
-						$('.test').flipswitch('disable');
-					}
-				});
 			</script>
 			<button type="submit">Save Configuration</button>
 		</div>

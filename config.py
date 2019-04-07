@@ -9,10 +9,11 @@ import logging
 import threading
 from ConfigParser import SafeConfigParser, NoSectionError
 
-from zone import GPIORelay, GPIORainSensor, NullRainSensor, SoftRainSensor, SprinklerZone
+from zone import GPIORelay, SprinklerZone
 
 __version__ = '0.4'
-__all__ = ['CONFIG_FILE', 'LockingConfigParser', 'loadConfig', 'initZones', 'saveConfig', '__version__', '__all__']
+__all__ = ['CONFIG_FILE', 'LockingConfigParser', 'loadConfig', 'initZones', 'saveConfig', 
+           '__version__']
 
 
 # Logger instance
@@ -116,8 +117,6 @@ class LockingConfigParser(SafeConfigParser):
                 section, keyword = key.split('-', 1)
                 keyword = keyword.replace('-', '_')
                 section = section.capitalize()
-                if section == 'Rainsensor':
-                    section = 'RainSensor'
                 self.set(section, keyword, value)
             except Exception, e:
                 print str(e)
@@ -138,52 +137,36 @@ def loadConfig(filename):
     ## Dummy information about the four zones:
     ##  1) name - zone nickname
     ##  2) pin - RPi GPIO pin
-    ##  3) enabled - whether or not the zone is active
+    ##  3) rate - precipitation rate in inches per hour
+    ##  4) enabled - whether or not the zone is active
     for zone in xrange(1, MAX_ZONES+1):
         config.add_section('Zone%i' % zone)
-        for keyword in ('name', 'pin', 'enabled'):
+        for keyword in ('name', 'pin', 'rate', 'enabled', 'current_et_value'):
             config.set('Zone%i' % zone, keyword, '')
             if keyword == 'enabled':
                 config.set('Zone%i' % zone, keyword, 'off')
+            elif keyword == 'current_et_value':
+                config.set('Zone%i' % zone, keyword, '0.0')
                 
-    ## Dummy rain sensor information
-    ##  1) type - off, software, or hardware
-    ##  2) pin - RPi GPIO pin for the hardware rain sensor
-    ##  3) precip - precipitation cutoff for the software rain sensor
-    config.add_section('RainSensor')
-    config.set('RainSensor', 'type', 'off')
-    config.set('RainSensor', 'pin', '')
-    config.set('RainSensor', 'precip', '')
-    
     ## Dummy schedule information - one for each month
     ##  1) start - start time as HH:MM, 24-hour format
-    ##  2) duration - duration in minutes
-    ##  3) interval - run interval in days
-    ##  4) enabled - whether or not the schedule is active
-    ##  5) wxadjust - whether or not weather adjustments should be applied
+    ##  2) loss - accumulated ET loss before watering
+    ##  3) enabled - whether or not the schedule is active
     for month in xrange(1, 13):
         config.add_section('Schedule%i' % month)
-        for keyword in ('start', 'duration', 'interval', 'enabled', 'wxadjust'):
-            if keyword == 'duration':
+        for keyword in ('start', 'loss', 'enabled'):
+            if keyword == 'loss':
                 for zone in xrange(1, MAX_ZONES+1):
                     config.set('Schedule%i' % month, '%s%i' % (keyword, zone), '')
             else:
                 config.set('Schedule%i' % month, keyword, '')
-            if keyword in ('enabled', 'wxadjust'):
-                config.set('Schedule%i' % month, keyword, 'off')
                 
     ## Dummy weather station information
     ##  1) pws - PWS ID to use for weather info
-    ##  2) max_adjust - maximum weather adjustment percentage
-    ##  3) enabled - whether or not use to WUnderground
     config.add_section('Weather')
-    for keyword in ('pws', 'max_adjust', 'enabled'):
+    for keyword in ('pws',):
         config.set('Weather', keyword, '')
-        if keyword == 'enabled':
-            config.set('Weather', keyword, 'off')
-        if keyword == 'max_adjust':
-            config.set('Weather', keyword, '200')
-            
+        
     # Try to read in the actual configuration file
     try:
         config.read(filename)
@@ -202,14 +185,6 @@ def initZones(config):
     SprinklerZone instances to control the various zones.
     """
     
-    # Initialize the rain sensor
-    if config.get('RainSensor', 'type') == 'off':
-        rainSensor = NullRainSensor()
-    elif config.get('RainSensor', 'type') == 'software':
-        rainSensor = SoftRainSensor( config.getfloat('RainSensor', 'precip'), config )
-    else:
-        rainSensor = GPIORainSensor( config.getint('RainSensor', 'pin') )
-        
     # Create the list of SprinklerZone instances
     zones = []
     zone = 1
@@ -220,12 +195,15 @@ def initZones(config):
             if zoneEnabled == 'on':
                 ### If so, use the real GPIO pin
                 zonePin = config.getint('Zone%i' % zone, 'pin')
-                ### If not, use a dummy pin
             else:
+                ### If not, use a dummy pin
                 zonePin = -1
                 
             ## Create the SprinklerZone instance
-            zones.append( SprinklerZone(zonePin, rainSensor=rainSensor) )
+            zones.append( SprinklerZone(zonePin, 
+                                        rate=config.getfloat('Zone%i' % zone, 'rate'), 
+                                        current_et_value=config.getfloat('Zone%i' % zone, 'current_et_value'))
+                        )
             
             ## Update the counter
             zone += 1
