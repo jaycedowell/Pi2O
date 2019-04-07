@@ -467,6 +467,7 @@ def main(args):
         if zone.isActive():
             zone.off()
             history.writeData(time.time(), i, 'off')
+        ## Save the ET values so that we have some state
         config.set('Zone%i' % (i+1), 'current_et_value', zone.current_et_value)
         
     # Shutdown the archive

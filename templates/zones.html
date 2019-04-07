@@ -55,7 +55,7 @@
 						<option value="24" {{ 'selected' if kwds.get("zone%i-pin"|format(zone)) == '24' else '' }}>24</option>
 						<option value="25" {{ 'selected' if kwds.get("zone%i-pin"|format(zone)) == '25' else '' }}>25</option>
 					</select>
-					<label for="zone{{ zone }}-rate">Water Rate (in/hr):</label>
+					<label for="zone{{ zone }}-rate">Water Rate (inches/hour):</label>
 					<input class="rate{{ zone }}" type="text" name="zone{{ zone }}-rate" value="{{ kwds.get("zone%i-rate"|format(zone)) }}"/>
 					<label for="zone{{ zone }}-enabled">Enabled:</label>
 					<select class="enabled{{ zone }}" name="zone{{ zone }}-enabled" data-role="slider">

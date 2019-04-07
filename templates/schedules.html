@@ -58,15 +58,8 @@
 				</div>
 				
 				<div class="ui-field-contain no-field-separator">
-					{% for zone in range(1, 33) %}
-					{% if not kwds.get("zone%i-enabled"|format(zone)) %}
-					{% break %}
-					{% endif %}
-					{% if kwds.get("zone%i-enabled"|format(zone)) == 'on' %}
-					<label for="schedule{{ month }}-threshold">ET Threshold (inches): - {{ kwds.get("zone%i-name"|format(zone)) }}:</label>
-					<input id="schedule{{ month }}-threshold{{ zone }}" type="text" name="schedule{{ month }}-threshold{{ zone }}" value="{{ kwds.get("schedule%i-threshold%s"|format(month,zone)) }}" >
-					{% endif %}
-					{% endfor %}
+					<label for="schedule{{ month }}-threshold">ET Threshold (inches):</label>
+					<input id="schedule{{ month }}-threshold" type="text" name="schedule{{ month }}-threshold" value="{{ kwds.get("schedule%i-threshold"|format(month) }}" >
 				</div>
 				
 				<div class="ui-field-contain no-field-separator">

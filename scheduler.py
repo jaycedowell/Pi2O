@@ -148,7 +148,7 @@ class ScheduleProcessor(threading.Thread):
                             if self.config.get('Zone%i' % zone, 'enabled') == 'on':
                                 #### What duration do we use for this zone?
                                 ##### Get the allowed ET threshold value and convert it to a duration
-                                threshold = self.config.get('Schedule%i' % tNow.month, 'threshold%i' % zone)
+                                threshold = self.config.get('Schedule%i' % tNow.month, 'threshold')
                                 duration = self.hardwareZones[zone-1].getDurationFromPrecipitation(threshold)
                                 adjustmentUsed = -2.0
                                     
