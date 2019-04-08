@@ -13,25 +13,24 @@ import numpy
 import logging
 from datetime import datetime, timedelta
 
-from weather import getCurrentConditions, getThreeDayHistory
+from weather import get_current_conditions, get_three_day_history
 
 __version__ = '0.1'
-__all__ = ['T', 'u2', 'Delta', 'P', 'Elevation', 'gamma', 'DT', 'PT', 'TT', 'eT', 'eS', 'eA', 
-           'Ra', 'Rso', 'Rns', 'Rnl', 'Rn', 'ET', 'getET', '__version__']
+__all__ = ['get_daily_et', '__version__']
 
 
 # Logger instance
-pmLogger = logging.getLogger('__main__')
+_LOGGER = logging.getLogger('__main__')
 
 
-def T(TF):
+def _T(TF):
     """
     Temperature in F to C.
     """
     
     return (TF-32.0)*5.0/9.0
 
-def u2(uMPH, height=2.0):
+def _u2(uMPH, height=2.0):
     """
     Wind speed in mph measured at height (in m) to m/s at 2 m.
     """
@@ -40,7 +39,7 @@ def u2(uMPH, height=2.0):
     u *= 4.87 / numpy.log(67.8*height - 5.42)
     return u
 
-def Delta(Tmean):
+def _Delta(Tmean):
     """
     Slope of saturation water vapor curve (in kPa/C) at temperature T (in C).
     """
@@ -50,7 +49,7 @@ def Delta(Tmean):
     d = d / (Tmean + 237.3)**2
     return d
 
-def P(elev):
+def _P(elev):
     """
     Atmospheric pressure (in kPa) as a function of elevation (in m).
     """
@@ -59,7 +58,7 @@ def P(elev):
     p = 101.3*p**5.26
     return p
 
-def Elevation(P):
+def _Elevation(P):
     """
     Effective elevation (in m) as a function of the atmospheric pressure (in kPa)
     [inverse of P(elev)].
@@ -69,62 +68,62 @@ def Elevation(P):
     elev = (293.0 - elev*293.0) / 0.0065
     return elev
 
-def gamma(P):
+def _gamma(P):
     """
     Psychrometric constant (in kPa/C) as a function of atmospheric pressure (in kPa).
     """
     
     return 0.000665*P
 
-def DT(Tmean, P, u2, Cd=0.34):
+def _DT(Tmean, P, u2, Cd=0.34):
     """
     Delta term for the radiation component.
     """
     
-    d = Delta(Tmean)
-    g = gamma(P)
+    d = _Delta(Tmean)
+    g = _gamma(P)
     return d / (d + g*(1+Cd*u2))
 
-def PT(Tmean, P, u2, Cd=0.34):
+def _PT(Tmean, P, u2, Cd=0.34):
     """
     Psi term for the wind component.
     """
     
-    d = Delta(Tmean)
-    g = gamma(P)
+    d = _Delta(Tmean)
+    g = _gamma(P)
     return g / (d + g*(1+Cd*u2))
 
-def TT(Tmean, u2, Cn=900.0):
+def _TT(Tmean, u2, Cn=900.0):
     """
     Temperature term for the wind component.
     """
     
     return u2*Cn/(Tmean + 273.0)
 
-def eT(T):
+def _eT(T):
     """
     Saturation vapor pressure (in kPa) of air at temperature T (in C).
     """
     
     return 0.6108*numpy.exp(17.27*T/(T+237.3))
 
-def eS(Tmin, Tmax):
+def _eS(Tmin, Tmax):
     """
     Mean saturation vapor pressure (in kPa) of air in the temperture range of Tmin to 
     Tmax (in C).
     """
     
-    return 0.5*eT(Tmin) + 0.5*eT(Tmax)
+    return 0.5*_eT(Tmin) + 0.5*_eT(Tmax)
 
-def eA(Tmin, Tmax, RHmin, RHmax):
+def _eA(Tmin, Tmax, RHmin, RHmax):
     """
     Actual mean vapor pressure (in kPa) of air at temperature range Tmin to Tmax (in C) 
     and relative humidity range RHmin to RHmax (as a percentage).
     """
     
-    return 0.5*eT(Tmin)*RHmax/100.0 + 0.5*eT(Tmax)*RHmin/100.0
+    return 0.5*_eT(Tmin)*RHmax/100.0 + 0.5*_eT(Tmax)*RHmin/100.0
     
-def Ra(lat, J):
+def _Ra(lat, J):
     """
     Solar radiation (in MJ/m^2/d) from the latitude (in deg) and the day-of-the-year.
     """
@@ -144,35 +143,35 @@ def Ra(lat, J):
     r = 24*60/numpy.pi * Gs*dR*r
     return r
 
-def Rso(lat, elev, J):
+def _Rso(lat, elev, J):
     """
     Clear sky solar radiation (in MJ/m^2/d) from latitude (in deg), elevation (in m), and
     the day-of-the-year.
     """
     
-    return (0.75 + 2e-5*elev)*Ra(lat, J)
+    return (0.75 + 2e-5*elev)*_Ra(lat, J)
 
-def Rns(R=None, lat=0.0, elev=0.0, J=0.0, albedo=0.23):
+def _Rns(R=None, lat=0.0, elev=0.0, J=0.0, albedo=0.23):
     """
     Net solar radiation (in MJ/m^2/d) from the mean daily solar radiation in (W/m^2/d).
     """
     
     if R is None:
-        R = Rso(lat, elev, J)
+        R = _Rso(lat, elev, J)
     else:
         R = R*0.0864
         
     return (1.0-albedo)*R
 
-def Rnl(Tmin, Tmax, RHmin, RHmax, lat, elev, J, R=None):
+def _Rnl(Tmin, Tmax, RHmin, RHmax, lat, elev, J, R=None):
     """
     Net outgoing long wave solar radiation (in MJ/m^2/d) from the tempereture range (in C), 
     latitude (in deg), elevation (in m), day-of-the-year, and the mean daily solar radiation
     (in W/m^2/d).
     """
     
-    e = eA(Tmin, Tmax, RHmin, RHmax)
-    rs = Rso(lat, elev, J)
+    e = _eA(Tmin, Tmax, RHmin, RHmax)
+    rs = _Rso(lat, elev, J)
     if R is None:
         R = rs*1.0
     else:
@@ -183,16 +182,16 @@ def Rnl(Tmin, Tmax, RHmin, RHmax, lat, elev, J, R=None):
     t3 = 1.35*R/rs - 0.35
     return t1*t2*t3
 
-def Rn(Tmin, Tmax, RHmin, RHmax, lat, elev, J, R=None, albedo=0.23):
+def _Rn(Tmin, Tmax, RHmin, RHmax, lat, elev, J, R=None, albedo=0.23):
     """
     Net radiation (in mm equivalent evaporation) from the tempereture range (in C), 
     latitude (in deg), elevation (in m), day-of-the-year, and the mean daily solar 
     radiation (in W/m^2/d).
     """
     
-    return 0.408*(Rns(R=R, lat=lat, elev=elev, J=J, albedo=albedo) - Rnl(Tmin, Tmax, RHmin, RHmax, lat, elev, J, R))
+    return 0.408*(_Rns(R=R, lat=lat, elev=elev, J=J, albedo=albedo) - _Rnl(Tmin, Tmax, RHmin, RHmax, lat, elev, J, R))
 
-def ET(Tmin, Tmax, u2, RHmin, RHmax, lat, elev, J, R=None, Cn=900.0, Cd=0.34, albedo=0.23):
+def _ET(Tmin, Tmax, u2, RHmin, RHmax, lat, elev, J, R=None, Cn=900.0, Cd=0.34, albedo=0.23):
     """
     Evapotransperation value (in mm/d) as a function of the temperature range Tmin to Tmax
     (in C), the wind speed (in m/s), the relative humidity range RHmin ot RHmax (as a
@@ -201,13 +200,13 @@ def ET(Tmin, Tmax, u2, RHmin, RHmax, lat, elev, J, R=None, Cn=900.0, Cd=0.34, al
     """
     
     Tmean = 0.5*Tmin + 0.5*Tmax
-    p = P(elev)
+    p = _P(elev)
     
-    r = DT(Tmean, p, u2, Cd=Cd) * Rn(Tmin, Tmax, RHmin, RHmax, lat, elev, J, R, albedo=albedo)
-    w = PT(Tmean, p, u2, Cd=Cd) * TT(Tmean, u2, Cn=Cn) * (eS(Tmin, Tmax) - eA(Tmin, Tmax, RHmin, RHmax))
+    r = _DT(Tmean, p, u2, Cd=Cd) * _Rn(Tmin, Tmax, RHmin, RHmax, lat, elev, J, R, albedo=albedo)
+    w = _PT(Tmean, p, u2, Cd=Cd) * _TT(Tmean, u2, Cn=Cn) * (_eS(Tmin, Tmax) - _eA(Tmin, Tmax, RHmin, RHmax))
     return r + w
 
-def getET(pws, Cn=900.0, Cd=0.34, albedo=0.23, inches=True, timeout=30):
+def get_daily_et(pws, Cn=900.0, Cd=0.34, albedo=0.23, inches=True, timeout=30):
     """
     Estimate the evapotranpsersion loss (in mm or inches) for the last 24 hours using data
     from the specified WUnderground weather station.  If the loss is wanted in mm, set
@@ -216,14 +215,14 @@ def getET(pws, Cn=900.0, Cd=0.34, albedo=0.23, inches=True, timeout=30):
     
     # Weather station latitude and elevation above sea level (in m) via the current 
     # conditions
-    data = getCurrentConditions(pws, timeout=timeout)
+    data = get_current_conditions(pws, timeout=timeout)
     lat = float(data['observations'][0]['lat'])                         # degrees
     elev = float(data['observations'][0]['imperial']['elev']) * 0.3048  # ft -> m
     
     # Weather conditions for the past 24 hours
     dtNow = datetime.utcnow()
     dtStart = dtNow - timedelta(days=1)
-    data = getThreeDayHistory(pws, timeout=timeout)
+    data = get_three_day_history(pws, timeout=timeout)
     
     t, h, w, p, r = [], [], [], [], []
     try:
@@ -234,9 +233,9 @@ def getET(pws, Cn=900.0, Cd=0.34, albedo=0.23, inches=True, timeout=30):
             if dt < dtStart:
                 continue
                 
-            t.append( T(float(day['imperial']['tempAvg'])) )        # F -> C
+            t.append( _T(float(day['imperial']['tempAvg'])) )        # F -> C
             h.append( float(day['humidityAvg']) )                   # %
-            w.append( u2(float(day['imperial']['windspeedAvg'])) )  # MPH -> m/s
+            w.append( _u2(float(day['imperial']['windspeedAvg'])) )  # MPH -> m/s
             p.append( float(day['imperial']['precipTotal'])*25.4 )  # in -> mm
             try:
                 r.append( float(day['solarRadiationHigh']) )        # W/m^2
@@ -266,20 +265,23 @@ def getET(pws, Cn=900.0, Cd=0.34, albedo=0.23, inches=True, timeout=30):
         r = None
         
     # Report - part 1
-    pmLogger.debug("Temperature: %.1f to %.1f C", Tmin, Tmax)
-    pmLogger.debug("Relative humidity: %.0f%% to %.0f%%", RHmin, RHmax)
-    pmLogger.debug("Average wind speed: %.1f m/s",  w)
-    pmLogger.debug("Elevation above sea level: %.1f m",  elev)
-    pmLogger.debug("Total rainfall: %.2f mm", sum(p))
-    pmLogger.debug("Average solar radiation: %.1f W/m^2/d", r)
+    _LOGGER.debug("Temperature: %.1f to %.1f C", Tmin, Tmax)
+    _LOGGER.debug("Relative humidity: %.0f%% to %.0f%%", RHmin, RHmax)
+    _LOGGER.debug("Average wind speed: %.1f m/s",  w)
+    _LOGGER.debug("Elevation above sea level: %.1f m",  elev)
+    _LOGGER.debug("Total rainfall: %.2f mm", sum(p))
+    try:
+        _LOGGER.debug("Average solar radiation: %.1f W/m^2/d", r)
+    except TypeError:
+        _LOGGER.debug("Average solar radiation: calculated from latitude and day-of-the-year")
         
     # Compute the evapotranspiration loss...
-    loss = ET(Tmin, Tmax, w, RHmin, RHmax, lat, elev, dtStart, R=r, Cn=Cn, Cd=Cd, albedo=albedo)
-    pmLogger.info("ET loss: %.2f mm", loss)
+    loss = _ET(Tmin, Tmax, w, RHmin, RHmax, lat, elev, dtStart, R=r, Cn=Cn, Cd=Cd, albedo=albedo)
+    _LOGGER.info("ET loss: %.2f mm", loss)
     # ... and correct for the amount of rainfall received.
     loss -= sum(p)
     loss = max([0.0, loss])
-    pmLogger.info("ET loss, less rainfall received: %.2f mm", loss)
+    _LOGGER.info("ET loss, less rainfall received: %.2f mm", loss)
         
     # Convert, if needed, and return
     if inches:

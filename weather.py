@@ -13,24 +13,24 @@ from datetime import datetime, timedelta
 from expiring_cache import expiring_cache
 
 __version__ = '0.5'
-__all__ = ['getCurrentConditions', 'getThreeDayHistory', 'getCurrentTemperature', 
+__all__ = ['get_current_conditions', 'get_three_day_history', 'get_current_temperature', 
            '__version__']
 
 
 # Logger instance
-wxLogger = logging.getLogger('__main__')
+_LOGGER = logging.getLogger('__main__')
 
 
 # Rate limiter
-class _rateLimiter(object):
+class _RateLimiter(object):
     """
     Class to help make sure that the various calls to the WUnderground API don't exceed 
     the free rate limit of 5 queries per minute.  This class can also be adjusted to 
     work with other rate limits as well.
     """
     
-    def __init__(self, requestsPerMinute=5):
-        self.requestsPerMinute = float(requestsPerMinute)
+    def __init__(self, requests_per_minute=5):
+        self.requests_per_minute = float(requests_per_minute)
         
         self._requests = []
         
@@ -61,19 +61,19 @@ class _rateLimiter(object):
             
         # Can we make another request?
         clear = False
-        if requestCount < self.requestsPerMinute:
+        if requestCount < self.requests_per_minute:
             ## Yes, update the requests list
             self._requests.append( tNow )
             clear = True
         else:
             if block:
                 ## Sleep for a bit and try again
-                wxLogger.warning('WUnderground rate limiter in effect')
+                _LOGGER.warning('WUnderground rate limiter in effect')
                 time.sleep(5)
                 while not self.clearToSend(block=False):
                     time.sleep(5)
                     
-                wxLogger.info('WUnderground rate limiter cleared')
+                _LOGGER.info('WUnderground rate limiter cleared')
                 clear = True
             else:
                 ## Nope
@@ -83,10 +83,10 @@ class _rateLimiter(object):
 
 
 # Create the rate limiter
-_rl = _rateLimiter()
+_rl = _RateLimiter()
 
 
-def getCurrentConditions(pws, timeout=30):
+def get_current_conditions(pws, timeout=30):
     """
     Get the current conditions of the personal weather station using WUnderground.
     """
@@ -108,7 +108,7 @@ def getCurrentConditions(pws, timeout=30):
     return data
 
 
-def getThreeDayHistory(pws, timeout=30):
+def get_three_day_history(pws, timeout=30):
     """
     Get the weather history for the last three days from a personal weather station using
     WUnderground.
@@ -132,19 +132,19 @@ def getThreeDayHistory(pws, timeout=30):
 
 
 @expiring_cache(maxage=1800)
-def getCurrentTemperature(pws, timeout=30):
+def get_current_temperature(pws, timeout=30):
     """
     Get the current temperature in degrees Fahrenheit using the WUnderground 
     API.
     """
     
-    data = getCurrentConditions(pws, timeout=timeout)
+    data = get_current_conditions(pws, timeout=timeout)
     
     try:
         current = data['observations'][0]
         
         tNow = float(current['imperial']['temp'])
-        wxLogger.debug('Current temperature is %.1f F for %s', tNow, pws)
+        _LOGGER.debug('Current temperature is %.1f F for %s', tNow, pws)
     except Exception as e:
         raise RuntimeError("Failed to get current temperature: %s" % str(e))
         

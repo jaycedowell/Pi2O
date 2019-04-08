@@ -12,15 +12,13 @@ try:
     import cStringIO as StringIO
 except ImportError:
     import StringIO
-    
-from weather import getCurrentConditions
 
 __version__ = '0.2'
 __all__ = ['GPIORelay', 'SprinklerZone', '__version__']
 
 
 # Logger instance
-zoneLogger = logging.getLogger('__main__')
+_LOGGER = logging.getLogger('__main__')
 
 
 class GPIORelay(object):
@@ -103,7 +101,7 @@ class SprinklerZone(object):
     def on(self):
         if self.state == 0:
             self.relay.on()
-            zoneLogger.info('Turned on GPIO pin %i', self.relay.pin)
+            _LOGGER.info('Turned on GPIO pin %i', self.relay.pin)
             
             self.state = 1
             self.lastStart = time.time()
@@ -111,17 +109,17 @@ class SprinklerZone(object):
     def off(self):
         if self.state == 1:
             self.relay.off()
-            zoneLogger.info('Turned off GPIO pin %i', self.relay.pin)
+            _LOGGER.info('Turned off GPIO pin %i', self.relay.pin)
             
             self.state = 0
             self.lastStop = time.time()
             
-    def isActive(self):
+    def is_active(self):
         return True if self.state else False
         
-    def getLastRun(self):
+    def get_last_run(self):
         return self.lastStart
         
-    def getDurationFromPrecipitation(self, precip):
+    def get_durations_from_precipitation(self, precip):
         return precip / self.rate * 60.0
         

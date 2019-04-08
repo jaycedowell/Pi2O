@@ -12,12 +12,12 @@ from ConfigParser import SafeConfigParser, NoSectionError
 from zone import GPIORelay, SprinklerZone
 
 __version__ = '0.4'
-__all__ = ['CONFIG_FILE', 'LockingConfigParser', 'loadConfig', 'initZones', 'saveConfig', 
+__all__ = ['CONFIG_FILE', 'LockingConfigParser', 'load_config', 'init_zones', 'save_config', 
            '__version__']
 
 
 # Logger instance
-confLogger = logging.getLogger('__main__')
+_LOGGER = logging.getLogger('__main__')
 
 
 # Maximum number of zones to configure
@@ -36,7 +36,7 @@ class LockingConfigParser(SafeConfigParser):
     """
     Sub-class of ConfigParser.SafeConfigParser that wraps the get, set, and 
     write methods with a semaphore to ensure that only one get/set/read/write 
-    happens at a time.  The sub-class also adds asDict and fromDict methods
+    happens at a time.  The sub-class also adds as_dict and from_dict methods
     to make it easier to tie the configuration into webforms.
     """
     
@@ -91,7 +91,7 @@ class LockingConfigParser(SafeConfigParser):
         
         SafeConfigParser.write(self, *args, **kwds)
         
-    def asDict(self):
+    def as_dict(self):
         """
         Return the configuration as a dictionary with keys structured as
         section-option.
@@ -105,9 +105,9 @@ class LockingConfigParser(SafeConfigParser):
         # Done
         return configDict
         
-    def fromDict(self, configDict):
+    def from_dict(self, configDict):
         """
-        Given a dictionary created by asDict(), update the configuration 
+        Given a dictionary created by as_dict(), update the configuration 
         as needed.
         """
         
@@ -126,7 +126,7 @@ class LockingConfigParser(SafeConfigParser):
         return True
 
 
-def loadConfig(filename):
+def load_config(filename):
     """
     Read in the configuration file and return a LockingConfigParser instance.
     """
@@ -177,7 +177,7 @@ def loadConfig(filename):
     # Try to read in the actual configuration file
     try:
         config.read(filename)
-        confLogger.info('Loaded configuration from \'%s\'', os.path.basename(filename))
+        _LOGGER.info('Loaded configuration from \'%s\'', os.path.basename(filename))
         
     except:
         pass
@@ -186,7 +186,7 @@ def loadConfig(filename):
     return config
 
 
-def initZones(config):
+def init_zones(config):
     """
     Given a LockingConfigParser configuration instance, create a list of 
     SprinklerZone instances to control the various zones.
@@ -222,7 +222,7 @@ def initZones(config):
     return zones
 
 
-def saveConfig(filename, config):
+def save_config(filename, config):
     """
     Given a filename and a LockingConfigParser, write the configuration to 
     disk.
@@ -232,4 +232,4 @@ def saveConfig(filename, config):
     config.write(fh)
     fh.close()
     
-    confLogger.info('Saved configuration to \'%s\'', os.path.basename(filename))
+    _LOGGER.info('Saved configuration to \'%s\'', os.path.basename(filename))
