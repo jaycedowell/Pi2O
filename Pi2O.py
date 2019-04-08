@@ -21,8 +21,7 @@ except ImportError:
 from config import *
 from database import Archive
 from scheduler import ScheduleProcessor
-from weather import get_current_temperature
-from pm import get_daily_et
+from weather import get_current_temperature, get_daily_et
 
 
 # Path configuration

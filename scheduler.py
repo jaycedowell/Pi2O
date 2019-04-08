@@ -15,8 +15,7 @@ except ImportError:
     import StringIO
 from datetime import datetime, timedelta
 
-from weather import get_current_temperature
-from pm import get_daily_et
+from weather import get_current_temperature, get_daily_et
 
 __version__ = '0.5'
 __all__ = ['ScheduleProcessor', '__version__']
