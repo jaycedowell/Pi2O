@@ -22,6 +22,7 @@ from config import *
 from database import Archive
 from scheduler import ScheduleProcessor
 from weather import getCurrentTemperature
+from pm import getET
 
 
 # Path configuration
@@ -342,6 +343,9 @@ class Interface(object):
                 kwds['weather-info'] = 'Error: No PWS ID provided'
             else:
                 kwds['weather-info'] = "Current temperature: %.0f F" % (getCurrentTemperature(kwds['weather-pws']),)
+                kwds['weather-info'] += "<br />Current daily ET losses: %.2f inches" % (getET(kwds['weather-pws'], 
+                                                                                              Cn=kwds['weather-cn'], 
+                                                                                              Cd=kwds['weather-cd']),)
                 
         else:
             kwds['weather-info'] = ''

@@ -93,11 +93,11 @@
 					$('#zone'+zone+'Info').html("<q>"+name+"</q> is on");
 				} else {
 					if( adjust >= 0 ) {
-						$('#zone'+zone+'Info').html("<q>"+name+"</q> last ran on "+startStr+" for "+runStr+" <i>(weather adjustment "+(adjust*100).toFixed()+"%)</i><br />Current ET value: "+etv.toFixed(2)+" inches");
+						$('#zone'+zone+'Info').html("<q>"+name+"</q> last ran on "+startStr+" for "+runStr+" <i>(weather adjustment "+(adjust*100).toFixed()+"%)</i><br />Current accumulated ET losses: "+etv.toFixed(2)+" inches");
 					} else if( adjust == -1 ) {
-						$('#zone'+zone+'Info').html("<q>"+name+"</q> last ran on "+startStr+" for "+runStr+" <i>(manual)</i><br />Current ET value: "+etv.toFixed(2)+" inches");
+						$('#zone'+zone+'Info').html("<q>"+name+"</q> last ran on "+startStr+" for "+runStr+" <i>(manual)</i><br />Current accumulated ET losses: "+etv.toFixed(2)+" inches");
 					} else {
-						$('#zone'+zone+'Info').html("<q>"+name+"</q> last ran on "+startStr+" for "+runStr+"</i><br />Current ET value: "+etv.toFixed(2)+" inches");
+						$('#zone'+zone+'Info').html("<q>"+name+"</q> last ran on "+startStr+" for "+runStr+"</i><br />Current accumulated ET losses: "+etv.toFixed(2)+" inches");
 					}
 				}
 			}

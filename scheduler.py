@@ -91,9 +91,11 @@ class ScheduleProcessor(threading.Thread):
                         if tNow - self.updatedET >= timedelta(days=1):
                             ### Load in the WUnderground API information
                             pws = self.config.get('Weather', 'pws')
+                            Cn = self.config.getfloat('Weather', 'cn')
+                            Cd = self.config.getfloat('Weather', 'cd')
                             
                             try:
-                                daily_et = getET(pws)
+                                daily_et = getET(pws, Cn=Cn, Cd=Cd)
                                 for zone in range(1, len(self.hardwareZones)+1):
                                     zone.current_et_value += daily_et
                                     self.config.set('Zone%i' % zone, 'current_et_value', self.hardwareZones[zone-1].current_et_value)
@@ -183,6 +185,7 @@ class ScheduleProcessor(threading.Thread):
                                     if self.hardwareZones[zone-1].current_et_value >= threshold:
                                         self.hardwareZones[zone-1].on()
                                         self.hardwareZones[zone-1].current_et_value -= threshold
+                                        self.hardwareZones[zone-1].current_et_value = max([self.hardwareZones[zone-1].current_et_value, 0.0])
                                         
                                         self.history.writeData(tNowDB, zone, 'on', wxAdjustment=adjustmentUsed)
                                         self.config.set('Zone%i' % zone, 'current_et_value', self.hardwareZones[zone-1].current_et_value)

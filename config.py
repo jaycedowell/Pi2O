@@ -163,10 +163,17 @@ def loadConfig(filename):
                 
     ## Dummy weather station information
     ##  1) pws - PWS ID to use for weather info
+    ##  2) Cn - Crop type numerator constant
+    ##  3) Cd - Crop type denominator constant
     config.add_section('Weather')
-    for keyword in ('pws',):
-        config.set('Weather', keyword, '')
-        
+    for keyword in ('pws', 'cn', 'cd'):
+        if keyword == 'cn':
+            config.set('Weather', 'cn', '900.0')
+        elif keywod == 'cd':
+            config.set('Weather', 'cd', '0.34')
+        else:
+            config.set('Weather', keyword, '')
+            
     # Try to read in the actual configuration file
     try:
         config.read(filename)

@@ -42,7 +42,7 @@ def u2(uMPH, height=2.0):
 
 def Delta(Tmean):
     """
-    Slope of saturation water vapor curve at temperature T (in C).
+    Slope of saturation water vapor curve (in kPa/C) at temperature T (in C).
     """
     
     d = 17.27*Tmean / (Tmean + 237.3)
@@ -76,30 +76,30 @@ def gamma(P):
     
     return 0.000665*P
 
-def DT(Tmean, P, u2):
+def DT(Tmean, P, u2, Cd=0.34):
     """
     Delta term for the radiation component.
     """
     
     d = Delta(Tmean)
     g = gamma(P)
-    return d / (d + g*(1+0.34*u2))
+    return d / (d + g*(1+Cd*u2))
 
-def PT(Tmean, P, u2):
+def PT(Tmean, P, u2, Cd=0.34):
     """
     Psi term for the wind component.
     """
     
     d = Delta(Tmean)
     g = gamma(P)
-    return g / (d + g*(1+0.34*u2))
+    return g / (d + g*(1+Cd*u2))
 
-def TT(Tmean, u2):
+def TT(Tmean, u2, Cn=900.0):
     """
     Temperature term for the wind component.
     """
     
-    return u2*900.0/(Tmean + 273.0)
+    return u2*Cn/(Tmean + 273.0)
 
 def eT(T):
     """
@@ -152,7 +152,7 @@ def Rso(lat, elev, J):
     
     return (0.75 + 2e-5*elev)*Ra(lat, J)
 
-def Rns(R=None, a=0.23, lat=0.0, elev=0.0, J=0.0):
+def Rns(R=None, lat=0.0, elev=0.0, J=0.0, albedo=0.23):
     """
     Net solar radiation (in MJ/m^2/d) from the mean daily solar radiation in (W/m^2/d).
     """
@@ -162,7 +162,7 @@ def Rns(R=None, a=0.23, lat=0.0, elev=0.0, J=0.0):
     else:
         R = R*0.0864
         
-    return (1.0-a)*R
+    return (1.0-albedo)*R
 
 def Rnl(Tmin, Tmax, RHmin, RHmax, lat, elev, J, R=None):
     """
@@ -183,16 +183,16 @@ def Rnl(Tmin, Tmax, RHmin, RHmax, lat, elev, J, R=None):
     t3 = 1.35*R/rs - 0.35
     return t1*t2*t3
 
-def Rn(Tmin, Tmax, RHmin, RHmax, lat, elev, J, R=None):
+def Rn(Tmin, Tmax, RHmin, RHmax, lat, elev, J, R=None, albedo=0.23):
     """
     Net radiation (in mm equivalent evaporation) from the tempereture range (in C), 
     latitude (in deg), elevation (in m), day-of-the-year, and the mean daily solar 
     radiation (in W/m^2/d).
     """
     
-    return 0.408*(Rns(R=R, lat=lat, elev=elev, J=J) - Rnl(Tmin, Tmax, RHmin, RHmax, lat, elev, J, R))
+    return 0.408*(Rns(R=R, lat=lat, elev=elev, J=J, albedo=albedo) - Rnl(Tmin, Tmax, RHmin, RHmax, lat, elev, J, R))
 
-def ET(Tmin, Tmax, u2, RHmin, RHmax, lat, elev, J, R=None):
+def ET(Tmin, Tmax, u2, RHmin, RHmax, lat, elev, J, R=None, Cn=900.0, Cd=0.34, albedo=0.23):
     """
     Evapotransperation value (in mm/d) as a function of the temperature range Tmin to Tmax
     (in C), the wind speed (in m/s), the relative humidity range RHmin ot RHmax (as a
@@ -203,11 +203,11 @@ def ET(Tmin, Tmax, u2, RHmin, RHmax, lat, elev, J, R=None):
     Tmean = 0.5*Tmin + 0.5*Tmax
     p = P(elev)
     
-    r = DT(Tmean, p, u2) * Rn(Tmin, Tmax, RHmin, RHmax, lat, elev, J, R)
-    w = PT(Tmean, p, u2) * TT(Tmean, u2) * (eS(Tmin, Tmax) - eA(Tmin, Tmax, RHmin, RHmax))
+    r = DT(Tmean, p, u2, Cd=Cd) * Rn(Tmin, Tmax, RHmin, RHmax, lat, elev, J, R, albedo=albedo)
+    w = PT(Tmean, p, u2, Cd=Cd) * TT(Tmean, u2, Cn=Cn) * (eS(Tmin, Tmax) - eA(Tmin, Tmax, RHmin, RHmax))
     return r + w
 
-def getET(pws, inches=True, timeout=30):
+def getET(pws, Cn=900.0, Cd=0.34, albedo=0.23, inches=True, timeout=30):
     """
     Estimate the evapotranpsersion loss (in mm or inches) for the last 24 hours using data
     from the specified WUnderground weather station.  If the loss is wanted in mm, set
@@ -274,7 +274,7 @@ def getET(pws, inches=True, timeout=30):
     pmLogger.debug("Average solar radiation: %.1f W/m^2/d", r)
         
     # Compute the evapotranspiration loss...
-    loss = ET(Tmin, Tmax, w, RHmin, RHmax, lat, elev, dtStart, R=r)
+    loss = ET(Tmin, Tmax, w, RHmin, RHmax, lat, elev, dtStart, R=r, Cn=Cn, Cd=Cd, albedo=albedo)
     pmLogger.info("ET loss: %.2f mm", loss)
     # ... and correct for the amount of rainfall received.
     loss -= sum(p)
