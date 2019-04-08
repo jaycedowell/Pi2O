@@ -169,7 +169,7 @@ def loadConfig(filename):
     for keyword in ('pws', 'cn', 'cd'):
         if keyword == 'cn':
             config.set('Weather', 'cn', '900.0')
-        elif keywod == 'cd':
+        elif keyword == 'cd':
             config.set('Weather', 'cd', '0.34')
         else:
             config.set('Weather', keyword, '')
