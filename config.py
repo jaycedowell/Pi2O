@@ -40,16 +40,16 @@ class LockingConfigParser(SafeConfigParser):
     to make it easier to tie the configuration into webforms.
     """
     
-    _lock = threading.Semaphore()
+    _lock = threading.RLock()
     
     def get(self, *args, **kwds):
         """
         Locked get() method.
         """
         
-        #self._lock.acquire()
-        value = SafeConfigParser.get(self, *args, **kwds)
-        #self._lock.release()
+        with self._lock:
+            value = SafeConfigParser.get(self, *args, **kwds)
+            
         return value
         
     def getint(self, *args, **kwds):
@@ -73,35 +73,37 @@ class LockingConfigParser(SafeConfigParser):
         Locked set() method.
         """
         
-        #self._lock.acquire()
-        SafeConfigParser.set(self, *args, **kwds)
-        #self._lock.release()
-        
+        with self._lock:
+            SafeConfigParser.set(self, *args, **kwds)
+            
     def read(self, *args, **kwds):
         """
         Locked read() method.
         """
         
-        SafeConfigParser.read(self, *args, **kwds)
-        
+        with self._lock:
+            SafeConfigParser.read(self, *args, **kwds)
+            
     def write(self, *args, **kwds):
         """
         Locked write() method.
         """
         
-        SafeConfigParser.write(self, *args, **kwds)
-        
+        with self._lock:
+            SafeConfigParser.write(self, *args, **kwds)
+            
     def as_dict(self):
         """
         Return the configuration as a dictionary with keys structured as
         section-option.
         """
         
-        configDict = {}
-        for section in self.sections():
-            for keyword,value in self.items(section):
-                configDict['%s-%s' % (section.lower(), keyword.replace('_', '-'))] = value
-        
+        with self._lock:
+            configDict = {}
+            for section in self.sections():
+                for keyword,value in self.items(section):
+                    configDict['%s-%s' % (section.lower(), keyword.replace('_', '-'))] = value
+                    
         # Done
         return configDict
         
@@ -112,16 +114,17 @@ class LockingConfigParser(SafeConfigParser):
         """
         
         # Loop over the pairs in the dictionary
-        for key,value in configDict.iteritems():
-            try:
-                section, keyword = key.split('-', 1)
-                keyword = keyword.replace('-', '_')
-                section = section.capitalize()
-                self.set(section, keyword, value)
-            except Exception, e:
-                print str(e)
-                pass
-                
+        with self._lock:
+            for key,value in configDict.iteritems():
+                try:
+                    section, keyword = key.split('-', 1)
+                    keyword = keyword.replace('-', '_')
+                    section = section.capitalize()
+                    self.set(section, keyword, value)
+                except Exception, e:
+                    print str(e)
+                    pass
+                    
         # Done
         return True
 
@@ -158,13 +161,15 @@ def load_config(filename):
         for keyword in ('start', 'threshold', 'enabled'):
             if keyword == 'threshold':
                 config.set('Schedule%i' % month, keyword, '0.5')
+            elif keyword == 'enabled':
+                config.set('Schedule%i' % month, keyword, 'off')
             else:
                 config.set('Schedule%i' % month, keyword, '')
                 
     ## Dummy weather station information
     ##  1) pws - PWS ID to use for weather info
-    ##  2) Cn - Crop type numerator constant
-    ##  3) Cd - Crop type denominator constant
+    ##  2) cn - Crop type numerator constant
+    ##  3) cd - Crop type denominator constant
     config.add_section('Weather')
     for keyword in ('pws', 'cn', 'cd'):
         if keyword == 'cn':
