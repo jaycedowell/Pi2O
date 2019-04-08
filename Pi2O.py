@@ -344,8 +344,8 @@ class Interface(object):
             else:
                 kwds['weather-info'] = "Current temperature: %.0f F" % (getCurrentTemperature(kwds['weather-pws']),)
                 kwds['weather-info'] += "<br />Current daily ET losses: %.2f inches" % (getET(kwds['weather-pws'], 
-                                                                                              Cn=kwds['weather-cn'], 
-                                                                                              Cd=kwds['weather-cd']),)
+                                                                                              Cn=float(kwds['weather-cn']), 
+                                                                                              Cd=float(kwds['weather-cd'])),)
                 
         else:
             kwds['weather-info'] = ''
