@@ -11,8 +11,7 @@ Requirements
  * jinja2
  * sqlite3
  * a relay board that activates on high
- * a WUnderground API key if you want to use a software rain sensor or automatic
-   runtime adjustment
+ * the name of a WUnderground PWS with a solar radiation sensor to use
 
 Usage
 -----
@@ -20,7 +19,7 @@ Usage
   then pin goes high.
   
   2) Optionally wire up a rain sensor via another GPIO pin such that the pin goes high 
-     when the sensor is active.
+  when the sensor is active.
   
   3) Create the sqlite3 database using the 'archive/initDB.sh' script
   
@@ -30,5 +29,5 @@ Usage
   
 Weather Adjustments
 -------------------
-The automatic weather adjustments are based on those used by sprinklers_pi with an added
-correction for the average wind speed.
+The amount to water and the frequency of watering is determined by using the integrated
+evapotranspiration losses as computed by the Penman-Monteith equation.
