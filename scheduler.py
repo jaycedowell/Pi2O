@@ -95,14 +95,17 @@ class ScheduleProcessor(threading.Thread):
                             
                             try:
                                 daily_et = get_daily_et(pws, Cn=Cn, Cd=Cd)
+                                _LOGGER.info('Daily ET loss update: %.2f inches', daily_et)
+                                
                                 for zone in range(1, len(self.hardwareZones)+1):
                                     zone.current_et_value += daily_et
                                     self.config.set('Zone%i' % zone, 'current_et_value', self.hardwareZones[zone-1].current_et_value)
                                     
+                                self.updatedET = tNow
+                                
                             except Exception as e:
                                 _LOGGER.warning('Cannot connect to WUnderground for ET estimate, skipping')
-                            self.updatedET = tNow
-                            
+                                
                     ## Figure out if it is the start time or if we are inside a schedule 
                     ## block.  If so, we need to turn things on.
                     ##
