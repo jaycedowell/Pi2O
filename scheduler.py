@@ -84,8 +84,8 @@ class ScheduleProcessor(threading.Thread):
                     s = 0
                     _LOGGER.debug('Current month of %s is enabled with a start time of %i:%02i:%02i LT', tNow.strftime("%B"), h, m, s)
                     
-                    ## Update the ET values at midnight
-                    if tNow - tNow.replace(hour=0, minute=0, second=0) < timedelta(seconds=60):
+                    ## Update the ET values within one hour of midnight
+                    if tNow - tNow.replace(hour=0, minute=0, second=0) < timedelta(hours=1):
                         if tNow - self.updatedET >= timedelta(days=1):
                             ### Load in the WUnderground API information
                             pws = self.config.get('Weather', 'pws')
