@@ -38,11 +38,14 @@
 	</div>
 	<form method="post" action="weather">
 		<div data-role="main" class="ui-content">
-			<h3 class="ui-title" role="heading" aira-level="1">WUnderground and ET Parameters</h3>
-			<h3 class="ui-title" role="heading" aira-level="1">Location</h3>
+			<h3 class="ui-title" role="heading" aira-level="1">WUnderground</h3>
+			<h3 class="ui-title" role="heading" aira-level="1">Weather Station</h3>
 			<div class="ui-field-contain">
 				<label for="weather-pws">PWS ID:</label>
 				<input type="text" name="weather-pws" value="{{ kwds.get("weather-pws") }}"/>
+			</div>
+			<h3 class="ui-title" role="heading" aira-level="1">Crop ET Parameters</h3>
+			<div class="ui-field-contain">
 				<label for="weather-cn">Crop numerator constant:</label>
 				<input type="text" name="weather-cn" value="{{ kwds.get("weather-cn") }}"/>
 				<label for="weather-cd">Crop denominator constant:</label>
