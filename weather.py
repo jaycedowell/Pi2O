@@ -5,8 +5,8 @@ Module for reading in weather conditions from Weather Underground.
 """
 
 import json
+import math
 import time
-import numpy
 import logging
 import urllib2
 from datetime import datetime, timedelta
@@ -159,14 +159,16 @@ def _T(TF):
     
     return (TF-32.0)*5.0/9.0
 
+
 def _u2(uMPH, height=2.0):
     """
     Wind speed in mph measured at height (in m) to m/s at 2 m.
     """
     
     u = uMPH*0.447
-    u *= 4.87 / numpy.log(67.8*height - 5.42)
+    u *= 4.87 / math.log(67.8*height - 5.42)
     return u
+
 
 def _Delta(Tmean):
     """
@@ -174,9 +176,10 @@ def _Delta(Tmean):
     """
     
     d = 17.27*Tmean / (Tmean + 237.3)
-    d = 4098.0*0.6108*numpy.exp(d)
+    d = 4098.0*0.6108*math.exp(d)
     d = d / (Tmean + 237.3)**2
     return d
+
 
 def _P(elev):
     """
@@ -186,6 +189,7 @@ def _P(elev):
     p = (293 - 0.0065*elev)/293.0
     p = 101.3*p**5.26
     return p
+
 
 def _Elevation(P):
     """
@@ -197,12 +201,14 @@ def _Elevation(P):
     elev = (293.0 - elev*293.0) / 0.0065
     return elev
 
+
 def _gamma(P):
     """
     Psychrometric constant (in kPa/C) as a function of atmospheric pressure (in kPa).
     """
     
     return 0.000665*P
+
 
 def _DT(Tmean, P, u2, Cd=0.34):
     """
@@ -213,6 +219,7 @@ def _DT(Tmean, P, u2, Cd=0.34):
     g = _gamma(P)
     return d / (d + g*(1+Cd*u2))
 
+
 def _PT(Tmean, P, u2, Cd=0.34):
     """
     Psi term for the wind component.
@@ -222,6 +229,7 @@ def _PT(Tmean, P, u2, Cd=0.34):
     g = _gamma(P)
     return g / (d + g*(1+Cd*u2))
 
+
 def _TT(Tmean, u2, Cn=900.0):
     """
     Temperature term for the wind component.
@@ -229,12 +237,14 @@ def _TT(Tmean, u2, Cn=900.0):
     
     return u2*Cn/(Tmean + 273.0)
 
+
 def _eT(T):
     """
     Saturation vapor pressure (in kPa) of air at temperature T (in C).
     """
     
-    return 0.6108*numpy.exp(17.27*T/(T+237.3))
+    return 0.6108*math.exp(17.27*T/(T+237.3))
+
 
 def _eS(Tmin, Tmax):
     """
@@ -244,6 +254,7 @@ def _eS(Tmin, Tmax):
     
     return 0.5*_eT(Tmin) + 0.5*_eT(Tmax)
 
+
 def _eA(Tmin, Tmax, RHmin, RHmax):
     """
     Actual mean vapor pressure (in kPa) of air at temperature range Tmin to Tmax (in C) 
@@ -251,26 +262,28 @@ def _eA(Tmin, Tmax, RHmin, RHmax):
     """
     
     return 0.5*_eT(Tmin)*RHmax/100.0 + 0.5*_eT(Tmax)*RHmin/100.0
-    
+
+
 def _Ra(lat, J):
     """
     Solar radiation (in MJ/m^2/d) from the latitude (in deg) and the day-of-the-year.
     """
     
-    lat = lat*numpy.pi/180.0
+    lat = lat*math.pi/180.0
     if type(J) is datetime:
         J = float(J.strftime("%j"))
         
-    dR = 1.0 + 0.033*numpy.cos(2*numpy.pi*J/365.0)
-    d = 0.409*numpy.sin(2*numpy.pi*J/365.0 - 1.39)
+    dR = 1.0 + 0.033*math.cos(2*math.pi*J/365.0)
+    d = 0.409*math.sin(2*math.pi*J/365.0 - 1.39)
     Gs = 0.0820
     
     # Sunset hour angle
-    omega = numpy.arccos(-numpy.tan(lat)*numpy.tan(d))
+    omega = math.acos(-math.tan(lat)*math.tan(d))
     
-    r = omega*numpy.sin(lat)*numpy.sin(d) + numpy.cos(lat)*numpy.cos(d)*numpy.sin(omega)
-    r = 24*60/numpy.pi * Gs*dR*r
+    r = omega*math.sin(lat)*math.sin(d) + math.cos(lat)*math.cos(d)*math.sin(omega)
+    r = 24*60/math.pi * Gs*dR*r
     return r
+
 
 def _Rso(lat, elev, J):
     """
@@ -279,6 +292,7 @@ def _Rso(lat, elev, J):
     """
     
     return (0.75 + 2e-5*elev)*_Ra(lat, J)
+
 
 def _Rns(R=None, lat=0.0, elev=0.0, J=0.0, albedo=0.23):
     """
@@ -291,6 +305,7 @@ def _Rns(R=None, lat=0.0, elev=0.0, J=0.0, albedo=0.23):
         R = R*0.0864
         
     return (1.0-albedo)*R
+
 
 def _Rnl(Tmin, Tmax, RHmin, RHmax, lat, elev, J, R=None):
     """
@@ -307,9 +322,10 @@ def _Rnl(Tmin, Tmax, RHmin, RHmax, lat, elev, J, R=None):
         R = R*0.0864
         
     t1 = 4.903e-9*( 0.5*(Tmin+273.16)**4 + 0.5*(Tmax+273.16)**4 )
-    t2 = 0.34 - 0.14*numpy.sqrt(e)
+    t2 = 0.34 - 0.14*math.sqrt(e)
     t3 = 1.35*R/rs - 0.35
     return t1*t2*t3
+
 
 def _Rn(Tmin, Tmax, RHmin, RHmax, lat, elev, J, R=None, albedo=0.23):
     """
@@ -319,6 +335,7 @@ def _Rn(Tmin, Tmax, RHmin, RHmax, lat, elev, J, R=None, albedo=0.23):
     """
     
     return 0.408*(_Rns(R=R, lat=lat, elev=elev, J=J, albedo=albedo) - _Rnl(Tmin, Tmax, RHmin, RHmax, lat, elev, J, R))
+
 
 def _ET(Tmin, Tmax, u2, RHmin, RHmax, lat, elev, J, R=None, Cn=900.0, Cd=0.34, albedo=0.23):
     """
@@ -334,6 +351,7 @@ def _ET(Tmin, Tmax, u2, RHmin, RHmax, lat, elev, J, R=None, Cn=900.0, Cd=0.34, a
     r = _DT(Tmean, p, u2, Cd=Cd) * _Rn(Tmin, Tmax, RHmin, RHmax, lat, elev, J, R, albedo=albedo)
     w = _PT(Tmean, p, u2, Cd=Cd) * _TT(Tmean, u2, Cn=Cn) * (_eS(Tmin, Tmax) - _eA(Tmin, Tmax, RHmin, RHmax))
     return r + w
+
 
 def get_daily_et(pws, Cn=900.0, Cd=0.34, albedo=0.23, inches=True, timeout=30):
     """
