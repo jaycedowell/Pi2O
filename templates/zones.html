@@ -42,7 +42,7 @@
 			{% if not kwds.get("zone%i-enabled"|format(zone)) %}
 			{% break %}
 			{% endif %}
-			<div data-role="collapsible">
+			<div data-role="collapsible" {{ 'data-collapsed="false"' if kwds.get("zone%i-enabled"|format(zone)) == 'on' }}>
 				<h3 class="ui-title" role="heading" aira-level="1">Zone {{ zone }}</h3>
 				<div class="ui-field-contain">
 					<label for="zone{{ zone }}-name">Name:</label>
