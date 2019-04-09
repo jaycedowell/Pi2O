@@ -49,7 +49,6 @@ class LockingConfigParser(SafeConfigParser):
         
         with self._lock:
             value = SafeConfigParser.get(self, *args, **kwds)
-            
         return value
         
     def getint(self, *args, **kwds):
@@ -57,16 +56,18 @@ class LockingConfigParser(SafeConfigParser):
         Locked getint() method.
         """
         
-        value = SafeConfigParser.getint(self, *args, **kwds)
-        return int(value)
+        with self._lock:
+            value = SafeConfigParser.getint(self, *args, **kwds)
+        return value
         
     def getfloat(self, *args, **kwds):
         """
         Locked getfloat() method.
         """
         
-        value = SafeConfigParser.getfloat(self, *args, **kwds)
-        return float(value)
+        with self._lock:
+            value = SafeConfigParser.getfloat(self, *args, **kwds)
+        return value
         
     def set(self, *args, **kwds):
         """
@@ -121,9 +122,8 @@ class LockingConfigParser(SafeConfigParser):
                     keyword = keyword.replace('-', '_')
                     section = section.capitalize()
                     self.set(section, keyword, value)
-                except Exception, e:
-                    print str(e)
-                    pass
+                except Exception as e:
+                    _LOGGER.warning("from_dict with key='%s', value='%s': %s", key, value, str(e))
                     
         # Done
         return True
