@@ -474,7 +474,7 @@ def main(args):
             zone.off()
             history.write_data(time.time(), i, 'off')
         ## Save the ET values so that we have some state
-        config.set('Zone%i' % (i+1), 'current_et_value', zone.current_et_value)
+        config.set('Zone%i' % (i+1), 'current_et_value', "%.2f" % zone.current_et_value)
         logger.info('Saved ET value for zone %i of %.2f inches', i+1, zone.current_et_value)
         
     # Shutdown the archive

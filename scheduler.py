@@ -99,7 +99,7 @@ class ScheduleProcessor(threading.Thread):
                                 for zone in range(1, len(self.hardwareZones)+1):
                                     if self.config.get('Zone%i' % zone, 'enabled') == 'on':
                                         self.hardwareZones[zone-1].current_et_value += daily_et
-                                        self.config.set('Zone%i' % zone, 'current_et_value', self.hardwareZones[zone-1].current_et_value)
+                                        self.config.set('Zone%i' % zone, 'current_et_value', "%.2f" % self.hardwareZones[zone-1].current_et_value)
                                         
                                 self.updatedET = tNow
                                 
@@ -190,7 +190,7 @@ class ScheduleProcessor(threading.Thread):
                                         self.hardwareZones[zone-1].current_et_value = max([self.hardwareZones[zone-1].current_et_value, 0.0])
                                         
                                         self.history.write_data(tNowDB, zone, 'on', wx_adjustment=adjustmentUsed)
-                                        self.config.set('Zone%i' % zone, 'current_et_value', self.hardwareZones[zone-1].current_et_value)
+                                        self.config.set('Zone%i' % zone, 'current_et_value', "%.2f" % self.hardwareZones[zone-1].current_et_value)
                                         
                                         _LOGGER.info('Zone %i - on', zone)
                                         _LOGGER.info('  Last Ran: %s LT (%s ago)', tLast, tNow-tLast)
