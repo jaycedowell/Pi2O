@@ -187,7 +187,6 @@ class ScheduleProcessor(threading.Thread):
                                     if self.hardwareZones[zone-1].current_et_value >= threshold:
                                         self.hardwareZones[zone-1].on()
                                         self.hardwareZones[zone-1].current_et_value -= threshold
-                                        self.hardwareZones[zone-1].current_et_value = max([self.hardwareZones[zone-1].current_et_value, 0.0])
                                         
                                         self.history.write_data(tNowDB, zone, 'on', wx_adjustment=adjustmentUsed)
                                         self.config.set('Zone%i' % zone, 'current_et_value', "%.2f" % self.hardwareZones[zone-1].current_et_value)

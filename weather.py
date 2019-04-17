@@ -427,7 +427,6 @@ def get_daily_et(pws, Cn=900.0, Cd=0.34, albedo=0.23, inches=True, timeout=30):
     _LOGGER.info("ET loss: %.2f mm", loss)
     # ... and correct for the amount of rainfall received.
     loss -= sum(p)
-    loss = max([0.0, loss])
     _LOGGER.info("ET loss, less rainfall received: %.2f mm", loss)
         
     # Convert, if needed, and return
