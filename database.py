@@ -86,7 +86,7 @@ class DatabaseProcessor(threading.Thread):
         
         while self.alive.isSet() or not self.input.empty():
             try:
-                rid, cmd = self.input.get()
+                rid, cmd = self.input.get(timeout=5)
                 self._cursor.execute(cmd)
                 output = []
                 for row in self._cursor.fetchall():
@@ -95,7 +95,10 @@ class DatabaseProcessor(threading.Thread):
                     self._dbConn.commit()
                 self.output.put( (rid,output) )
                 
-            except Exception, e:
+            except Queue.Empty:
+                continue
+                
+            except Exception as e:
                 exc_type, exc_value, exc_traceback = sys.exc_info()
                 _LOGGER.error("DatabaseProcessor: %s at line %i", e, traceback.tb_lineno(exc_traceback))
                 ## Grab the full traceback and save it to a string via StringIO
