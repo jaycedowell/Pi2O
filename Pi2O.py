@@ -458,6 +458,7 @@ def main(args):
     # Initialize the web interface
     ws = Interface(config, hardwareZones, history)
     #cherrypy.quickstart(ws, config=cpConfig)
+    cherrypy.engine.signal_handler.subscribe()
     cherrypy.tree.mount(ws, "/", config=cpConfig)
     cherrypy.engine.start()
     cherrypy.engine.block()
@@ -482,6 +483,7 @@ def main(args):
     
     # Save the final configuration
     save_config(cmdConfig['configFile'], config)
+    logger.info('Done')
 
 
 if __name__ == "__main__":
