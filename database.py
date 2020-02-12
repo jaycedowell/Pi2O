@@ -19,7 +19,7 @@ try:
 except ImportError:
     import StringIO
     
-__version__ = '0.2'
+__version__ = '0.3'
 __all__ = ['Archive', '__version__']
 
 
@@ -27,7 +27,7 @@ __all__ = ['Archive', '__version__']
 _LOGGER = logging.getLogger('__main__')
 
 
-class DatabaseProcessor(threading.Thread):
+class DatabaseProcessor(object):
     """
     Class responsible for providing access to the database from a single thread.
     """
@@ -58,7 +58,13 @@ class DatabaseProcessor(threading.Thread):
             self.thread.join()
             
         _LOGGER.info('Stopped the DatabaseProcessor background thread')
-            
+        
+    def is_alive(self):
+        status = False
+        if self.thread is not None:
+            status = self.thread.is_alive()
+        return status
+        
     def append_request(self, cmd):
         rid = str(uuid.uuid4())
         self.input.put( (rid,cmd) )
@@ -164,7 +170,10 @@ class Archive(object):
     
         if self._backend is not None:
             self._backend.cancel()
-            
+           
+    def is_alive(self):
+        return self._backend.is_alive()
+        
     def get_data(self, age=0, scheduled_only=False):
         """
         Return a collection of data a certain number of seconds into the past.

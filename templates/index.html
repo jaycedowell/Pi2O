@@ -68,6 +68,9 @@
 		}
 		
 		function setSummary(data) {
+		    $('#history').html(data['history']);
+		    $('#scheduler').html(data['scheduler']);
+		    
 			for( var zone in data['zones']) {
 				var name = data['name'+zone];
 				var stat = data['status'+zone];
@@ -143,18 +146,14 @@
 		<div class="ui-field-contain">
 			<h3 class="ui-title" role="heading" aira-level="1">Zone {{ zone }}</h3>
 			<span id="zone{{zone}}Info"></span>
-			<!--
-			{% if kwds.get("zone%i-status"|format(zone)) == 'on' %}
-			{{ kwds.get("zone%i-name"|format(zone)) }} is on
-			{% else %}
-			{% set rtime = kwds.get("zone%i-lastStop"|format(zone)) - kwds.get("zone%i-lastStart"|format(zone)) %}
-			{% set stime = rtime.days*86400 + rtime.seconds %}
-			{{ kwds.get("zone%i-name"|format(zone)) }} last ran on {{ kwds.get("zone%i-lastStart"|format(zone)).strftime("%m/%d/%Y") }} for {{ "%i:%02i:%02i"|format(stime/3600, stime%3600/60, stime%60) }} <i>({{ 'manual' if kwds.get("zone%i-adjust"|format(zone)) < 0 else "weather adjustment %i%%"|format(100.0*kwds.get("zone%i-adjust"|format(zone))) }})</i>
-			{% endif %}
-			-->
 		</div>
 		{% endif %}
 		{% endfor %}
+		<div class="ui-field-contain">
+		    <h3 class="ui-title" role="heading" aira-level="1">Status</h3>
+			History - <span id="history" ></span><br />
+			Scheduler - <span id="scheduler"></span><br />
+		</div>
 	</div>
 	<br />
 	<div data-role="footer" role="banner" class="ui-header ui-bar-inherit">

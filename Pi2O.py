@@ -156,10 +156,11 @@ def parseOptions(args):
 
 # AJAX interface
 class AJAX(object):
-    def __init__(self, config, hardwareZones, history):
+    def __init__(self, config, hardwareZones, history, scheduler):
         self.config = config
         self.hardwareZones = hardwareZones
         self.history = history
+        self.scheduler = scheduler
         
     def serialize(self, dt):
         if isinstance(dt, datetime):
@@ -172,7 +173,9 @@ class AJAX(object):
     @cherrypy.tools.json_out()
     def summary(self):
         output = {}
-
+        output['history'] = 'active' if self.history.is_alive() else 'failed'
+        output['scheduler'] = 'active' if self.scheduler.is_alive() else 'failed'
+        
         output['zones'] = []
         for i,zone in enumerate(self.hardwareZones):
             i += 1
@@ -274,18 +277,23 @@ class AJAX(object):
 
 # Main web interface
 class Interface(object):
-    def __init__(self, config, hardwareZones, history):
+    def __init__(self, config, hardwareZones, history, scheduler):
         self.config = config
         self.hardwareZones = hardwareZones
         self.history = history
+        self.scheduler = scheduler
         
-        self.query = AJAX(config, hardwareZones, history)
+        self.query = AJAX(config, hardwareZones, history, scheduler)
         
     @cherrypy.expose
     def index(self):
         kwds = self.config.as_dict()
         kwds['tNow'] = datetime.now()
         kwds['tzOffset'] = int(datetime.now().strftime("%s")) - int(datetime.utcnow().strftime("%s"))
+        
+        kwds['history'] = 'active' if self.history.is_alive() else 'failed'
+        kwds['scheduler'] = 'active' if self.scheduler.is_alive() else 'failed'
+        
         for i,zone in enumerate(self.hardwareZones):
             i += 1
             kwds['zone%i-status' % i] = 'on' if zone.is_active() else 'off'
@@ -452,11 +460,11 @@ def main(args):
             hardwareZones[previousRun['zone']-1].lastStop = previousRun['dateTimeStop']
             
     # Initialize the scheduler
-    bg = ScheduleProcessor(config, hardwareZones, history)
-    bg.start()
+    scheduler = ScheduleProcessor(config, hardwareZones, history)
+    scheduler.start()
     
     # Initialize the web interface
-    ws = Interface(config, hardwareZones, history)
+    ws = Interface(config, hardwareZones, history, scheduler)
     #cherrypy.quickstart(ws, config=cpConfig)
     cherrypy.engine.signal_handler.subscribe()
     cherrypy.tree.mount(ws, "/", config=cpConfig)
@@ -467,7 +475,7 @@ def main(args):
     logger.info('Shutting down Pi2O, please wait...')
     
     # Stop the scheduler thread
-    bg.cancel()
+    scheduler.cancel()
     
     # Make sure the sprinkler zones are off
     for i,zone in enumerate(hardwareZones):

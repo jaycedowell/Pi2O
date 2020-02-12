@@ -17,7 +17,7 @@ from datetime import datetime, timedelta
 
 from weather import get_current_temperature, get_daily_et
 
-__version__ = '0.5'
+__version__ = '0.6'
 __all__ = ['ScheduleProcessor', '__version__']
 
 
@@ -25,13 +25,12 @@ __all__ = ['ScheduleProcessor', '__version__']
 _LOGGER = logging.getLogger('__main__')
 
 
-class ScheduleProcessor(threading.Thread):
+class ScheduleProcessor(object):
     """
     Class responsible to running the various zones according to the schedule.
     """
 
     def __init__(self, config, hardwareZones, history):
-        threading.Thread.__init__(self)
         self.interval = 5
         self.config = config
         self.hardwareZones = hardwareZones
@@ -57,6 +56,12 @@ class ScheduleProcessor(threading.Thread):
             self.thread.join()
             
         _LOGGER.info('Stopped the ScheduleProcessor background thread')
+        
+    def is_alive(self):
+        status = False
+        if self.thread is not None:
+            status = self.thread.is_alive()
+        return status
         
     def run(self):
         self.running = True
@@ -138,10 +143,10 @@ class ScheduleProcessor(threading.Thread):
                                 if self.tDelay >= timedelta(seconds=86400):
                                     self.tDelay = timedelta(0)
                                     
-                                    _LOGGER.info('Temperature of %.1f F is below 35 F, delaying schedule for one hour', temp)
-                                    _LOGGER.info('New schedule start time will be %s LT', tSchedule+self.tDelay)
-                                    
-                                    continue
+                                _LOGGER.info('Temperature of %.1f F is below 35 F, delaying schedule for one hour', temp)
+                                _LOGGER.info('New schedule start time will be %s LT', tSchedule+self.tDelay)
+                                
+                                continue
                             _LOGGER.debug('Cleared all weather constraints')
                             
                         ### Load in the last schedule run times
@@ -223,6 +228,3 @@ class ScheduleProcessor(threading.Thread):
                 ## Print the traceback to the logger as a series of DEBUG messages
                 for line in tbString.split('\n'):
                     _LOGGER.debug("%s", line)
-                    
-    def _set_daemon(self):
-        return True
