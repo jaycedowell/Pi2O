@@ -68,8 +68,16 @@
 		}
 		
 		function setSummary(data) {
-		    $('#history').html(data['history']);
-		    $('#scheduler').html(data['scheduler']);
+		    if( data['history'] == 'active' ) {
+		        $('#history').html('<font color="green">&check;</font>');
+		    } else {
+		        $('#history').html('<font color="red">&cross;</font>');
+		    }
+		    if( data['scheduler'] == 'active' ) {
+		        $('#scheduler').html('<font color="green">&check;</font>');
+		    } else {
+		        $('#scheduler').html('<font color="red">&cross;</font>');
+		    }
 		    
 			for( var zone in data['zones']) {
 				var name = data['name'+zone];
@@ -150,9 +158,11 @@
 		{% endif %}
 		{% endfor %}
 		<div class="ui-field-contain">
-		    <h3 class="ui-title" role="heading" aira-level="1">Status</h3>
-			History - <span id="history" ></span><br />
-			Scheduler - <span id="scheduler"></span><br />
+		    <h3 class="ui-title" role="heading" aira-level="1">Service Status</h3>
+			<ul>
+				<li>History Database <span id="history"></span></li>
+			    <li>Scheduler <span id="scheduler"></span></li>
+			</ul>
 		</div>
 	</div>
 	<br />
