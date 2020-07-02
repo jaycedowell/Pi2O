@@ -9,6 +9,9 @@
 	<script src="/js/jquery-1.11.1.min.js"></script>
 	<script src="/js/jquery.mobile-1.4.5.min.js"></script>
 	<style>
+	input.invalid, textarea.invalid{
+	    border: 2px solid red;
+    }
 	.ui-hide-label.ui-br, .no-field-separator {
 		border-bottom-width: 0;
 	}
@@ -36,27 +39,68 @@
 	<div data-role="header" role="banner" class="ui-header ui-bar-inherit">
 		<h1 class="ui-title" role="heading" aira-level="1">Weather Adjustment</h1>
 	</div>
-	<form method="post" action="weather">
+	<form id="form" method="post" action="weather">
 		<div data-role="main" class="ui-content">
 			<h3 class="ui-title" role="heading" aira-level="1">Weather and ET Settings</h3>
 			<h3 class="ui-title" role="heading" aira-level="1">WUnderground Station</h3>
 			<div class="ui-field-contain">
 				<label for="weather-pws">PWS ID:</label>
-				<input type="text" name="weather-pws" value="{{ kwds.get("weather-pws") }}"/>
+				<input type="text" id="weather-pws" name="weather-pws" value="{{ kwds.get("weather-pws") }}"/>
 			</div>
 			<h3 class="ui-title" role="heading" aira-level="1">Crop Parameters</h3>
 			<div class="ui-field-contain">
 				<label for="weather-cn">Numerator constant:</label>
-				<input type="text" name="weather-cn" value="{{ kwds.get("weather-cn") }}"/>
+				<input type="text" id="weather-cn" name="weather-cn" value="{{ kwds.get("weather-cn") }}"/>
 				<label for="weather-cd">Denominator constant:</label>
-				<input type="text" name="weather-cd" value="{{ kwds.get("weather-cd") }}"/>
+				<input type="text" id="weather-cd" name="weather-cd" value="{{ kwds.get("weather-cd") }}"/>
 			</div>
 			<label for="weather-text">Test On Save:</label>
-				<input class="test" type="checkbox" name="test-config" data-role="flipswitch"/>
+			<input class="test" type="checkbox" name="test-config" data-role="flipswitch"/>
+			<button id="submit_form" type="submit">Save Configuration</button>
 			<script type="text/javascript">
 				$('.test').trigger('create');
+			    
+			    $('#weather-pws').on('input', function() {
+                    var input=$(this);
+                    var re = /^[A-Z]+[0-9]+$/;
+                    var is_pws=re.test(input.val());
+                    console.log(is_pws);
+                    if(is_pws){input.removeClass("invalid");}
+                    else{input.addClass("invalid");}
+                });
+			    
+			    $('#weather-cn').on('input', function() {
+                    var input=$(this);
+                    var re = /^\+?[0-9]+(\.[0-9]*?)?$/;
+                    var is_float=re.test(input.val());
+                    console.log(is_float);
+                    if(is_float){input.removeClass("invalid");}
+                    else{input.addClass("invalid");}
+                });
+			    
+                $('#weather-cd').on('input', function() {
+                    var input=$(this);
+                    var re = /^\+?[0-9]+(\.[0-9]*?)?$/;
+                    var is_float=re.test(input.val());
+                    console.log(is_float);
+                    if(is_float){input.removeClass("invalid");}
+                    else{input.addClass("invalid");}
+                });
+				
+				$("#submit_form").click(function(event){
+                    var form_data=$("#form").serializeArray();
+                    var error_free=true;
+                    for (var input in form_data){
+                        var element=$("#"+form_data[input]['name']);
+                        var invalid=element.hasClass("invalid");
+                        if (invalid){error_free=false;}
+                    }
+                    if (!error_free){
+                        event.preventDefault(); 
+                        alert('Errors: Form will be *not* be submitted');
+                    }
+                });
 			</script>
-			<button type="submit">Save Configuration</button>
 		</div>
 	</form>
 	<br />
