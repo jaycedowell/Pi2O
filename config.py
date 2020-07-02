@@ -168,11 +168,14 @@ def load_config(filename):
                 
     ## Dummy weather station information
     ##  1) pws - PWS ID to use for weather info
-    ##  2) cn - Crop type numerator constant
-    ##  3) cd - Crop type denominator constant
+    ##  2) kc - Crop constant
+    ##  3) cn - Crop type numerator constant
+    ##  4) cd - Crop type denominator constant
     config.add_section('Weather')
-    for keyword in ('pws', 'cn', 'cd'):
-        if keyword == 'cn':
+    for keyword in ('pws', 'kc', 'cn', 'cd'):
+        if keyword == 'kc':
+            config.set('Weather', 'kc', '1.0')
+        elif keyword == 'cn':
             config.set('Weather', 'cn', '900.0')
         elif keyword == 'cd':
             config.set('Weather', 'cd', '0.34')

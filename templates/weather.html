@@ -49,6 +49,8 @@
 			</div>
 			<h3 class="ui-title" role="heading" aira-level="1">Crop Parameters</h3>
 			<div class="ui-field-contain">
+			    <label for="weather-kc">Crop Coefficient:</label>
+			    <input type="text" id="weather-kc" name="weather-kc" value="{{ kwds.get("weather-kc") }}"/>
 				<label for="weather-cn">Numerator constant:</label>
 				<input type="text" id="weather-cn" name="weather-cn" value="{{ kwds.get("weather-cn") }}"/>
 				<label for="weather-cd">Denominator constant:</label>
@@ -64,27 +66,44 @@
                     var input=$(this);
                     var re = /^[A-Z]+[0-9]+$/;
                     var is_pws=re.test(input.val());
-                    console.log(is_pws);
-                    if(is_pws){input.removeClass("invalid");}
-                    else{input.addClass("invalid");}
+                    if(is_pws){
+                        input.removeClass("invalid");
+                    } else{ 
+                        input.addClass("invalid");
+                    }
+                });
+			    
+			    $('#weather-kc').on('input', function() {
+                    var input=$(this);
+                    var re = /^\+?[0-9]+(\.[0-9]*?)?$/;
+                    var is_float=re.test(input.val());
+                    if(is_float){
+                        input.removeClass("invalid");
+                    } else {
+                        input.addClass("invalid");
+                    }
                 });
 			    
 			    $('#weather-cn').on('input', function() {
                     var input=$(this);
                     var re = /^\+?[0-9]+(\.[0-9]*?)?$/;
                     var is_float=re.test(input.val());
-                    console.log(is_float);
-                    if(is_float){input.removeClass("invalid");}
-                    else{input.addClass("invalid");}
+                    if(is_float){
+                        input.removeClass("invalid");
+                    } else {
+                        input.addClass("invalid");
+                    }
                 });
 			    
                 $('#weather-cd').on('input', function() {
                     var input=$(this);
                     var re = /^\+?[0-9]+(\.[0-9]*?)?$/;
                     var is_float=re.test(input.val());
-                    console.log(is_float);
-                    if(is_float){input.removeClass("invalid");}
-                    else{input.addClass("invalid");}
+                    if(is_float){
+                        input.removeClass("invalid");
+                    } else {
+                        input.addClass("invalid");
+                    }
                 });
 				
 				$("#submit_form").click(function(event){
@@ -93,7 +112,9 @@
                     for (var input in form_data){
                         var element=$("#"+form_data[input]['name']);
                         var invalid=element.hasClass("invalid");
-                        if (invalid){error_free=false;}
+                        if (invalid){
+                            error_free=false;
+                        }
                     }
                     if (!error_free){
                         event.preventDefault(); 
