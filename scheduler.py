@@ -94,11 +94,12 @@ class ScheduleProcessor(object):
                         if tNow - self.updatedET >= timedelta(days=1):
                             ### Load in the WUnderground API information
                             pws = self.config.get('Weather', 'pws')
+                            Kc = self.config.getfloat('Weather', 'kc')
                             Cn = self.config.getfloat('Weather', 'cn')
                             Cd = self.config.getfloat('Weather', 'cd')
                             
                             try:
-                                daily_et = get_daily_et(pws, Cn=Cn, Cd=Cd)
+                                daily_et = get_daily_et(pws, Kc=Kc, Cn=Cn, Cd=Cd)
                                 _LOGGER.info('Daily ET loss update: %.2f inches', daily_et)
                                 
                                 for zone in range(1, len(self.hardwareZones)+1):

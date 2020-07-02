@@ -350,7 +350,8 @@ class Interface(object):
                 kwds['weather-info'] = 'Error: No PWS ID provided'
             else:
                 kwds['weather-info'] = "Current temperature: %.0f F" % (get_current_temperature(kwds['weather-pws']),)
-                kwds['weather-info'] += "<br />Current daily ET loss: %.2f inches" % (get_daily_et(kwds['weather-pws'], 
+                kwds['weather-info'] += "<br />Current daily ET loss: %.2f inches" % (get_daily_et(kwds['weather-pws'],
+                                                                                              Kc=float(kwds['weather-kc']), 
                                                                                               Cn=float(kwds['weather-cn']), 
                                                                                               Cd=float(kwds['weather-cd'])),)
                 

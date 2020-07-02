@@ -337,7 +337,7 @@ def _Rn(Tmin, Tmax, RHmin, RHmax, lat, elev, J, R=None, albedo=0.23):
     return 0.408*(_Rns(R=R, lat=lat, elev=elev, J=J, albedo=albedo) - _Rnl(Tmin, Tmax, RHmin, RHmax, lat, elev, J, R))
 
 
-def _ET(Tmin, Tmax, u2, RHmin, RHmax, lat, elev, J, R=None, Cn=900.0, Cd=0.34, albedo=0.23):
+def _ET(Tmin, Tmax, u2, RHmin, RHmax, lat, elev, J, R=None, Kc=1.0, Cn=900.0, Cd=0.34, albedo=0.23):
     """
     Evapotransperation value (in mm/d) as a function of the temperature range Tmin to Tmax
     (in C), the wind speed (in m/s), the relative humidity range RHmin ot RHmax (as a
@@ -350,10 +350,10 @@ def _ET(Tmin, Tmax, u2, RHmin, RHmax, lat, elev, J, R=None, Cn=900.0, Cd=0.34, a
     
     r = _DT(Tmean, p, u2, Cd=Cd) * _Rn(Tmin, Tmax, RHmin, RHmax, lat, elev, J, R, albedo=albedo)
     w = _PT(Tmean, p, u2, Cd=Cd) * _TT(Tmean, u2, Cn=Cn) * (_eS(Tmin, Tmax) - _eA(Tmin, Tmax, RHmin, RHmax))
-    return r + w
+    return Kc*(r + w)
 
 
-def get_daily_et(pws, Cn=900.0, Cd=0.34, albedo=0.23, inches=True, timeout=30):
+def get_daily_et(pws, Kc=1.0, Cn=900.0, Cd=0.34, albedo=0.23, inches=True, timeout=30):
     """
     Estimate the evapotranpsersion loss (in mm or inches) for the last 24 hours using data
     from the specified WUnderground weather station.  If the loss is wanted in mm, set
@@ -423,7 +423,7 @@ def get_daily_et(pws, Cn=900.0, Cd=0.34, albedo=0.23, inches=True, timeout=30):
         _LOGGER.debug("Average solar radiation: calculated from latitude and day-of-the-year")
         
     # Compute the evapotranspiration loss...
-    loss = _ET(Tmin, Tmax, w, RHmin, RHmax, lat, elev, dtStart, R=r, Cn=Cn, Cd=Cd, albedo=albedo)
+    loss = _ET(Tmin, Tmax, w, RHmin, RHmax, lat, elev, dtStart, R=r, Kc=Kc, Cn=Cn, Cd=Cd, albedo=albedo)
     _LOGGER.info("ET loss: %.2f mm", loss)
     # ... and correct for the amount of rainfall received.
     loss -= sum(p)
