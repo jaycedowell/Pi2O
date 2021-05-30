@@ -408,7 +408,7 @@ def get_daily_et(pws, Kc=1.0, Cn=900.0, Cd=0.34, albedo=0.23, inches=True, timeo
     w = sum(w)/len(w)
     try:
         r = sum(r)/len(r)
-    except TypeError:
+    except (TypeError, ZeroDivisionError):
         r = None
         
     # Report - part 1
