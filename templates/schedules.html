@@ -67,8 +67,25 @@
 					<input type="time" id="schedule{{ month }}-start" name="schedule{{ month }}-start" value="{{ kwds.get("schedule%i-start"|format(month)) }}" data-role="datebox" data-options='{"useInline": true, "useInlineHideInput": true}'/>
 				</div>
 				
+				<div class="ui-field-contain no-field-separator">
+					<label for="schedule{{ month }}-zones_to_skip">List of Zones to Skip:</label>
+					<input type="text" id="schedule{{ month }}-zones_to_skip" name="schedule{{ month }}-zones_to_skip" value="{{ kwds.get("schedule%i-zones_to_skip"|format(month)) }}" data-role="datebox" data-options='{"useInline": true, "useInlineHideInput": true}'/>
+				</div>
+				
 			</div>
 			{% endfor %}
+			
+			<div data-role="collapsible" data-collapsed="false">
+				<h3 class="ui-title" role="heading" aira-level="1">Schedule Run Limiter</h3>
+				<div class="ui-field-contain no-field-separator">
+					<label for="schedule-limiter">Only one zone/day:</label>
+					<select class="enabled" id="schedule-limiter" name="schedule-limiter" data-role="flipswitch">
+				    <option value="off">Off</option>
+						<option value="on" {{ 'selected' if kwds.get("schedule-limiter") == 'on' else '' }}>On</option>
+					</select> 
+				</div>
+			</div>
+			
 			<button type="submit">Save Configuration</button>
 		</div>
 	</form>

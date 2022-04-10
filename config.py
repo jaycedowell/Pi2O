@@ -51,6 +51,27 @@ class LockingConfigParser(SafeConfigParser):
             value = SafeConfigParser.get(self, *args, **kwds)
         return value
         
+    def get_aslist(self, *args, **kwds):
+        """
+        Locked wrapper around get() that interperates the value as a comma-
+        separated list of values.
+        """
+        
+        with self._lock:
+            value = self.get(*args, **kwds)
+            
+            output = []
+            for v in value.split(','):
+                try:
+                    v = int(v, 10)
+                except ValueError:
+                    try:
+                        v = float(v)
+                    except ValueError:
+                        pass
+                output.append(v)
+        return output
+        
     def getint(self, *args, **kwds):
         """
         Locked getint() method.
@@ -156,6 +177,7 @@ def load_config(filename):
     ##  1) start - start time as HH:MM, 24-hour format
     ##  2) threshold - accumulated ET threshold before watering
     ##  3) enabled - whether or not the schedule is active
+    ##  4) zones_to_skip - list of zones to skip
     for month in xrange(1, 13):
         config.add_section('Schedule%i' % month)
         for keyword in ('start', 'threshold', 'enabled'):
@@ -163,9 +185,16 @@ def load_config(filename):
                 config.set('Schedule%i' % month, keyword, '0.5')
             elif keyword == 'enabled':
                 config.set('Schedule%i' % month, keyword, 'off')
+            elif keyword == 'zones_to_skip':
+                config.set('Schedule%i', month, keyword, '')
             else:
                 config.set('Schedule%i' % month, keyword, '')
                 
+    ## Dummy schedule limiter - one value as to whether or not only a single
+    ## zone should run each day.
+    config.add_section('Schedule')
+    config.set('Schedule', 'limiter', 'off')
+    
     ## Dummy weather station information
     ##  1) pws - PWS ID to use for weather info
     ##  2) kc - Crop constant

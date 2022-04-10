@@ -89,6 +89,14 @@ class ScheduleProcessor(object):
                     s = 0
                     _LOGGER.debug('Current month of %s is enabled with a start time of %i:%02i:%02i LT', tNow.strftime("%B"), h, m, s)
                     
+                    ## Load in the zones to skip for this month
+                    zones_to_skip = self.config.get_aslist('Schedule%i' % tNow.month, 'zones_to_skip')
+                    if len(zones_to_skip):
+                        _LOGGER.debug('Zones %s will be skipped for this month', ','.join([str(z) for z in zones_to_skip]))
+                        
+                    ## Load in the schedule limiter option
+                    run_only_one = (self.config.get('Schedule', 'limiter') == 'on')
+                    
                     ## Update the ET values within one hour of midnight
                     if tNow - tNow.replace(hour=0, minute=0, second=0) < timedelta(hours=1):
                         if tNow - self.updatedET >= timedelta(days=1):
@@ -103,6 +111,10 @@ class ScheduleProcessor(object):
                                 _LOGGER.info('Daily ET loss update: %.2f inches', daily_et)
                                 
                                 for zone in range(1, len(self.hardwareZones)+1):
+                                    if zone in zones_to_skip:
+                                        self.hardwareZones[zone-1].current_et_value = 0.0
+                                        continue
+                                        
                                     if self.config.get('Zone%i' % zone, 'enabled') == 'on':
                                         self.hardwareZones[zone-1].current_et_value += daily_et
                                         self.config.set('Zone%i' % zone, 'current_et_value', "%.2f" % self.hardwareZones[zone-1].current_et_value)
@@ -156,7 +168,8 @@ class ScheduleProcessor(object):
                         ### Loop over the zones and work only on those that are enabled
                         for zone in range(1, len(self.hardwareZones)+1):
                             #### Is the current zone even active?
-                            if self.config.get('Zone%i' % zone, 'enabled') == 'on':
+                            if self.config.get('Zone%i' % zone, 'enabled') == 'on' \
+                               and zone not in zones_to_skip:
                                 #### What duration do we use for this zone?
                                 ##### Get the allowed ET threshold value and convert it to a duration
                                 threshold = self.config.getfloat('Schedule%i' % tNow.month, 'threshold')
@@ -191,6 +204,9 @@ class ScheduleProcessor(object):
                                             continue
                                             
                                     if self.hardwareZones[zone-1].current_et_value >= threshold:
+                                        if len(self.processedInBlock) == 1 and run_only_one:
+                                            continue
+                                            
                                         self.hardwareZones[zone-1].on()
                                         self.hardwareZones[zone-1].current_et_value -= threshold
                                         
@@ -216,6 +232,8 @@ class ScheduleProcessor(object):
                             
                 else:
                     for zone in range(1, len(self.hardwareZones)+1):
+                        if zone in zones_to_skip:
+                            continue
                         zone.current_et_value = 0.0
                         
             except Exception as e:
