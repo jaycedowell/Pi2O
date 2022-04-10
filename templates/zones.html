@@ -93,23 +93,6 @@
 					}
 				});
 				{% endfor %}
-				$('#pinr').selectmenu('refresh', true);
-				
-				$('.rtype').trigger('create');
-				$('.rtype').on('click', function(e) {
-					if (this.value == 'off') {
-						$('.precip').slider('disable');
-						$('#pinr').selectmenu('disable');
-					} else {
-						if (this.value == 'software') {
-							$('.precip').slider('enable');
-							$('#pinr').selectmenu('disable');
-						} else {
-							$('.precip').slider('disable');
-							$('#pinr').selectmenu('enable');
-						}
-					}
-				});
 			});
 			</script>
 			
