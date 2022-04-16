@@ -124,7 +124,7 @@ def parseOptions(args):
     config = {}
     config['configFile'] = CONFIG_FILE
     config['pidFile'] = None
-    config['debug'] = True #False
+    config['debug'] = False
     config['logfile'] = '/var/log/pi2o'
 
     try:
