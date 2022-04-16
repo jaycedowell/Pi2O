@@ -92,8 +92,9 @@ class ScheduleProcessor(object):
                     ## Load in the zones to skip for this month
                     zones_to_skip = self.config.get_aslist('Schedule%i' % tNow.month, 'zones_to_skip')
                     if len(zones_to_skip):
-                        _LOGGER.debug('Zones %s will be skipped for this month', ','.join([str(z) for z in zones_to_skip]))
-                        
+                        if zones_to_skip[0] is not None:
+                            _LOGGER.debug('Zones %s will be skipped for this month', ','.join([str(z) for z in zones_to_skip]))
+                            
                     ## Load in the schedule limiter option
                     run_only_one = (self.config.get('Schedule', 'limiter') == 'on')
                     
@@ -113,9 +114,7 @@ class ScheduleProcessor(object):
                                 for zone in range(1, len(self.hardwareZones)+1):
                                     if zone in zones_to_skip:
                                         self.hardwareZones[zone-1].current_et_value = 0.0
-                                        continue
-                                        
-                                    if self.config.get('Zone%i' % zone, 'enabled') == 'on':
+                                    elif self.config.get('Zone%i' % zone, 'enabled') == 'on':
                                         self.hardwareZones[zone-1].current_et_value += daily_et
                                         self.config.set('Zone%i' % zone, 'current_et_value', "%.2f" % self.hardwareZones[zone-1].current_et_value)
                                         
@@ -204,16 +203,18 @@ class ScheduleProcessor(object):
                                             continue
                                             
                                     if self.hardwareZones[zone-1].current_et_value >= threshold:
-                                        if len(self.processedInBlock) == 1 and run_only_one:
-                                            continue
+                                        if len(self.processedInBlock) >= 1 and run_only_one:
+                                            action_taken = 'skipping (one zone has already ran today)'
+                                        else:
+                                            action_taken = 'on'
                                             
-                                        self.hardwareZones[zone-1].on()
-                                        self.hardwareZones[zone-1].current_et_value -= threshold
-                                        
-                                        self.history.write_data(tNowDB, zone, 'on', wx_adjustment=adjustmentUsed)
-                                        self.config.set('Zone%i' % zone, 'current_et_value', "%.2f" % self.hardwareZones[zone-1].current_et_value)
-                                        
-                                        _LOGGER.info('Zone %i - on', zone)
+                                            self.hardwareZones[zone-1].on()
+                                            self.hardwareZones[zone-1].current_et_value -= threshold
+                                            
+                                            self.history.write_data(tNowDB, zone, 'on', wx_adjustment=adjustmentUsed)
+                                            self.config.set('Zone%i' % zone, 'current_et_value', "%.2f" % self.hardwareZones[zone-1].current_et_value)
+                                            
+                                        _LOGGER.info('Zone %i - %s', zone, action_taken)
                                         _LOGGER.info('  Last Ran: %s LT (%s ago)', tLast, tNow-tLast)
                                         _LOGGER.info('  Duration: %s', duration)
                                         _LOGGER.info('  Current ET Losses: %.2f"', self.hardwareZones[zone-1].current_et_value)
