@@ -190,10 +190,12 @@ def load_config(filename):
             else:
                 config.set('Schedule%i' % month, keyword, '')
                 
-    ## Dummy schedule limiter - one value as to whether or not only a single
-    ## zone should run each day.
+    ## Dummy schedule limiter
+    ##  1) limiter - whehter or not the limiter is active
+    ##  2) max_zones - maximum number of zones to run on a given day
     config.add_section('Schedule')
     config.set('Schedule', 'limiter', 'off')
+    config.set('Schedule', 'max_zones', '0')
     
     ## Dummy weather station information
     ##  1) pws - PWS ID to use for weather info

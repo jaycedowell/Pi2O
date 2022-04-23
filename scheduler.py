@@ -96,8 +96,12 @@ class ScheduleProcessor(object):
                             _LOGGER.debug('Zones %s will be skipped for this month', ','.join([str(z) for z in zones_to_skip]))
                             
                     ## Load in the schedule limiter option
-                    run_only_one = (self.config.get('Schedule', 'limiter') == 'on')
-                    
+                    run_only_N = 32
+                    if self.config.get('Schedule', 'limiter') == 'on':
+                        run_only_N = self.config.getint('Schedule', 'max_zones')
+                        if run_only_N <= 0:
+                            run_only_N = 32
+                            
                     ## Update the ET values within one hour of midnight
                     if tNow - tNow.replace(hour=0, minute=0, second=0) < timedelta(hours=1):
                         if tNow - self.updatedET >= timedelta(days=1):
@@ -203,8 +207,8 @@ class ScheduleProcessor(object):
                                             continue
                                             
                                     if self.hardwareZones[zone-1].current_et_value >= threshold:
-                                        if len(self.processedInBlock) >= 1 and run_only_one:
-                                            action_taken = 'skipping (one zone has already ran today)'
+                                        if len(self.processedInBlock) >= run_only_N:
+                                            action_taken = "skipping (%i zones have already ran today)" % run_only_N
                                         else:
                                             action_taken = 'on'
                                             

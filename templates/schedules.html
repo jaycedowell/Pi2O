@@ -68,8 +68,8 @@
 				</div>
 				
 				<div class="ui-field-contain no-field-separator">
-					<label for="schedule{{ month }}-zones_to_skip">List of Zones to Skip:</label>
-					<input type="text" id="schedule{{ month }}-zones_to_skip" name="schedule{{ month }}-zones_to_skip" value="{{ kwds.get("schedule%i-zones_to_skip"|format(month)) }}" data-role="datebox" data-options='{"useInline": true, "useInlineHideInput": true}'/>
+					<label for="schedule{{ month }}-zones-to-skip">List of Zones to Skip:</label>
+					<input type="text" id="schedule{{ month }}-zones-to-skip" name="schedule{{ month }}-zones-to-skip" value="{{ kwds.get("schedule%i-zones-to-skip"|format(month)) }}" data-role="datebox" data-options='{"useInline": true, "useInlineHideInput": true}'/>
 				</div>
 				
 			</div>
@@ -77,12 +77,18 @@
 			
 			<div data-role="collapsible" data-collapsed="false">
 				<h3 class="ui-title" role="heading" aira-level="1">Schedule Run Limiter</h3>
+				
 				<div class="ui-field-contain no-field-separator">
-					<label for="schedule-limiter">Only one zone/day:</label>
+					<label for="schedule-limiter">Limit zones/day:</label>
 					<select class="enabled" id="schedule-limiter" name="schedule-limiter" data-role="flipswitch">
 				    <option value="off">Off</option>
 						<option value="on" {{ 'selected' if kwds.get("schedule-limiter") == 'on' else '' }}>On</option>
-					</select> 
+					</select>
+				</div>
+				
+				<div class="ui-field-contain no-field-separator">
+					<label for="schedule-max-zones">Max zones/day:</label>
+					<input id="schedule-max-zones" type="text" name="schedule-max-zones" value="{{ kwds.get("schedule-max-zones") }}" >
 				</div>
 			</div>
 			
