@@ -79,7 +79,9 @@ class ScheduleProcessor(object):
             try:
                 tNow = datetime.now()
                 tNow = tNow.replace(microsecond=0)
-                tNowDB = int(tNow.strftime("%s"))
+                tNowDB = datetime.utcnow()
+                tNowDB = tNowDB.replace(microsecond=0)
+                tNowDB = int(tNowDB.strftime("%s"))
                 _LOGGER.debug('Starting scheduler polling at %s LT', tNow)
                 
                 # Is the current schedule active?
