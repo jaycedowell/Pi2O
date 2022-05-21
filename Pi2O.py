@@ -36,7 +36,7 @@ TEMPLATE_PATH = os.path.join(_BASE_PATH, 'templates')
 _LOCAL_TZ = pytz.utc
 if os.path.exists('/etc/timezone'):
     with open('/etc/timezone', 'r') as fh:
-        _LOCAL_TZ = pytz.timezone(fh.read())
+        _LOCAL_TZ = pytz.timezone(fh.read().strip().rstrip())
 
 
 # Jinja configuration
