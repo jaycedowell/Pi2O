@@ -2,6 +2,7 @@
 
 import os
 import sys
+import pytz
 import time
 import getopt
 import calendar
@@ -29,6 +30,13 @@ _BASE_PATH = os.path.dirname(os.path.abspath(__file__))
 CSS_PATH = os.path.join(_BASE_PATH, 'css')
 JS_PATH = os.path.join(_BASE_PATH, 'js')
 TEMPLATE_PATH = os.path.join(_BASE_PATH, 'templates')
+
+
+# Timezone configuration
+_LOCAL_TZ = pytz.utc
+if os.path.exists('/etc/timezone'):
+    with open('/etc/timezone', 'r') as fh:
+        _LOCAL_TZ = pytz.timezone(fh.read())
 
 
 # Jinja configuration
@@ -256,7 +264,7 @@ class AJAX(object):
         for i,entry in enumerate(history):
             i += 1
             output['entry%iZone' % i] = entry['zone']
-            output['entry%iStart' % i] = datetime.fromtimestamp(entry['dateTimeStart']).strftime("%Y-%m-%d %H:%M:%S")
+            output['entry%iStart' % i] = datetime.fromutctimestamp(entry['dateTimeStart']).localize(_LOCAL_TZ).strftime("%Y-%m-%d %H:%M:%S")
             if entry['dateTimeStop'] >= entry['dateTimeStart']:
                 active = False
                 runtime = entry['dateTimeStop'] - entry['dateTimeStart']
