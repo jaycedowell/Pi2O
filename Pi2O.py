@@ -264,7 +264,7 @@ class AJAX(object):
         for i,entry in enumerate(history):
             i += 1
             output['entry%iZone' % i] = entry['zone']
-            output['entry%iStart' % i] = datetime.fromutctimestamp(entry['dateTimeStart']).localize(_LOCAL_TZ).strftime("%Y-%m-%d %H:%M:%S")
+            output['entry%iStart' % i] = datetime.utcfromtimestamp(entry['dateTimeStart']).localize(pytz.utc).astimezone(_LOCAL_TZ).strftime("%Y-%m-%d %H:%M:%S")
             if entry['dateTimeStop'] >= entry['dateTimeStart']:
                 active = False
                 runtime = entry['dateTimeStop'] - entry['dateTimeStart']
@@ -312,8 +312,8 @@ class Interface(object):
                 kwds['zone%i-lastStop' % entry['zone']]
                 kwds['zone%i-adjust' % entry['zone']]
             except KeyError:
-                kwds['zone%i-lastStart' % entry['zone']] = datetime.utcfromtimestamp(entry['dateTimeStart'])
-                kwds['zone%i-lastStop' % entry['zone']] = datetime.utcfromtimestamp(entry['dateTimeStop'])
+                kwds['zone%i-lastStart' % entry['zone']] = datetime.utcfromtimestamp(entry['dateTimeStart']).localize(pytz.utc).astimezone(_LOCAL_TZ)
+                kwds['zone%i-lastStop' % entry['zone']] = datetime.utcfromtimestamp(entry['dateTimeStop']).localize(pytz.utc).astimezone(_LOCAL_TZ)
                 kwds['zone%i-adjust' % entry['zone']] = entry['wxAdjust']
                 
         template = jinjaEnv.get_template('index.html')
@@ -410,8 +410,8 @@ class Interface(object):
         kwds['tzOffset'] = int(datetime.now().strftime("%s")) - int(datetime.utcnow().strftime("%s"))
         kwds['history'] = self.history.get_data(age=7*24*3600)[:25]
         for i in xrange(len(kwds['history'])):
-            kwds['history'][i]['dateTimeStart'] = datetime.utcfromtimestamp(kwds['history'][i]['dateTimeStart'])
-            kwds['history'][i]['dateTimeStop'] = datetime.utcfromtimestamp(kwds['history'][i]['dateTimeStop'])
+            kwds['history'][i]['dateTimeStart'] = datetime.utcfromtimestamp(kwds['history'][i]['dateTimeStart']).localize(pytz.utc).astimezone(_LOCAL_TZ)
+            kwds['history'][i]['dateTimeStop'] = datetime.utcfromtimestamp(kwds['history'][i]['dateTimeStop']).localize(pytz.utc).astimezone(_LOCAL_TZ)
             
         template = jinjaEnv.get_template('log.html')
         return template.render({'kwds':kwds})
