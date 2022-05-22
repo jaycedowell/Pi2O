@@ -197,9 +197,9 @@ class AJAX(object):
                 output['run%i' % entry['zone']]
                 output['adjust%i' % entry['zone']]
             except KeyError:
-                lStart = datetime.fromtimestamp(entry['dateTimeStart'])
+                lStart = datetime.utcfromtimestamp(entry['dateTimeStart'])
                 if entry['dateTimeStop'] > 0:
-                    lStop = datetime.fromtimestamp(entry['dateTimeStop'])
+                    lStop = datetime.utcfromtimestamp(entry['dateTimeStop'])
                 else:
                     lStop = datetime.now()
                 output['start%i' % entry['zone']] = self.serialize(lStart)
@@ -218,8 +218,8 @@ class AJAX(object):
             output['status'] = 'on' if self.hardwareZones[id-1].is_active() else 'off'
             for entry in self.history.get_data():
                 if entry['zone'] == id:
-                    output['lastStart'] = self.serialize(datetime.fromtimestamp(entry['dateTimeStart']))
-                    output['lastStop'] = self.serialize(datetime.fromtimestamp(entry['dateTimeStop']))
+                    output['lastStart'] = self.serialize(datetime.utcfromtimestamp(entry['dateTimeStart']))
+                    output['lastStop'] = self.serialize(datetime.utcfromtimestamp(entry['dateTimeStop']))
                     output['adjust'] = entry['wxAdjust']
                     
         except Exception as e:
@@ -312,8 +312,8 @@ class Interface(object):
                 kwds['zone%i-lastStop' % entry['zone']]
                 kwds['zone%i-adjust' % entry['zone']]
             except KeyError:
-                kwds['zone%i-lastStart' % entry['zone']] = datetime.fromtimestamp(entry['dateTimeStart'])
-                kwds['zone%i-lastStop' % entry['zone']] = datetime.fromtimestamp(entry['dateTimeStop'])
+                kwds['zone%i-lastStart' % entry['zone']] = datetime.utcfromtimestamp(entry['dateTimeStart'])
+                kwds['zone%i-lastStop' % entry['zone']] = datetime.utcfromtimestamp(entry['dateTimeStop'])
                 kwds['zone%i-adjust' % entry['zone']] = entry['wxAdjust']
                 
         template = jinjaEnv.get_template('index.html')
@@ -410,8 +410,8 @@ class Interface(object):
         kwds['tzOffset'] = int(datetime.now().strftime("%s")) - int(datetime.utcnow().strftime("%s"))
         kwds['history'] = self.history.get_data(age=7*24*3600)[:25]
         for i in xrange(len(kwds['history'])):
-            kwds['history'][i]['dateTimeStart'] = datetime.fromtimestamp(kwds['history'][i]['dateTimeStart'])
-            kwds['history'][i]['dateTimeStop'] = datetime.fromtimestamp(kwds['history'][i]['dateTimeStop'])
+            kwds['history'][i]['dateTimeStart'] = datetime.utcfromtimestamp(kwds['history'][i]['dateTimeStart'])
+            kwds['history'][i]['dateTimeStop'] = datetime.utcfromtimestamp(kwds['history'][i]['dateTimeStop'])
             
         template = jinjaEnv.get_template('log.html')
         return template.render({'kwds':kwds})
@@ -461,7 +461,7 @@ def main(args):
     # Initialize the hardware
     hardwareZones = init_zones(config)
     for previousRun in history.get_data(scheduled_only=True):
-        logger.info('Previous run of zone %i was on %s LT', previousRun['zone'], datetime.fromtimestamp(previousRun['dateTimeStart']))
+        logger.info('Previous run of zone %i was on %s UTC', previousRun['zone'], datetime.utcfromtimestamp(previousRun['dateTimeStart']))
         logger.info('Previous ET value of zone %i was %.2f inches', previousRun['zone'], hardwareZones[previousRun['zone']-1].current_et_value)
         
         if hardwareZones[previousRun['zone']-1].lastStart == 0:
