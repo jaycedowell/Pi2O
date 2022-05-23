@@ -79,9 +79,9 @@ class ScheduleProcessor(object):
             try:
                 tNow = datetime.now()
                 tNow = tNow.replace(microsecond=0)
-                tNowDB = datetime.utcnow()
-                tNowDB = tNowDB.replace(microsecond=0)
-                tNowDB = int(tNowDB.strftime("%s"))
+                tNowUTC = datetime.utcnow()
+                tNowUTC = tNowUTC.replace(microsecond=0)
+                tNowDB = time.time()
                 _LOGGER.debug('Starting scheduler polling at %s LT', tNow)
                 
                 # Is the current schedule active?
@@ -184,19 +184,19 @@ class ScheduleProcessor(object):
                                 duration = timedelta(minutes=int(duration), seconds=int((duration*60) % 60))
                                 
                                 #### What is the last run time for this zone?
-                                tLastDB = datetime.utcfromtimestamp( self.hardwareZones[zone-1].get_last_run() )
+                                tLastUTC = datetime.utcfromtimestamp( self.hardwareZones[zone-1].get_last_run() )
                                 for entry in previousRuns:
                                     if entry['zone'] == zone:
-                                        tLastDB = datetime.utcfromtimestamp( entry['dateTimeStart'] )
+                                        tLastUTC = datetime.utcfromtimestamp( entry['dateTimeStart'] )
                                         break
                                         
                                 if self.hardwareZones[zone-1].is_active():
                                     #### If the zone is active, check how long it has been on
-                                    if tNowDB-tLastDB >= duration:
+                                    if tNowUTC-tLastUTC >= duration:
                                         self.hardwareZones[zone-1].off()
                                         self.history.write_data(tNowDB, zone, 'off')
                                         _LOGGER.info('Zone %i - off', zone)
-                                        _LOGGER.info('  Run Time: %s', (tNowDB-tLastDB))
+                                        _LOGGER.info('  Run Time: %s', (tNowUTC-tLastUTC))
                                     else:
                                         self.blockActive = True
                                         break
@@ -221,7 +221,7 @@ class ScheduleProcessor(object):
                                             self.config.set('Zone%i' % zone, 'current_et_value', "%.2f" % self.hardwareZones[zone-1].current_et_value)
                                             
                                         _LOGGER.info('Zone %i - %s', zone, action_taken)
-                                        _LOGGER.info('  Last Ran: %s UTC (%s ago)', tLastDB, tNowDB-tLastDB)
+                                        _LOGGER.info('  Last Ran: %s UTC (%s ago)', tLastUTC, tNowUTC-tLastUTC)
                                         _LOGGER.info('  Duration: %s', duration)
                                         _LOGGER.info('  Current ET Losses: %.2f"', self.hardwareZones[zone-1].current_et_value)
                                         self.blockActive = True
