@@ -256,7 +256,7 @@ class AJAX(object):
     def log(self):
         output = {}
         
-        tNow = datetime.now()
+        tNow = datetime.utcnow()
         history = self.history.get_data(age=14*24*3600)[:25]
         
         output['tNow'] = self.serialize(tNow)
@@ -406,7 +406,7 @@ class Interface(object):
     @cherrypy.expose
     def logs(self, **kwds):
         kwds = {}
-        kwds['tNow'] = datetime.now()
+        kwds['tNow'] = _LOCAL_TZ.localize(datetime.now())
         kwds['tzOffset'] = int(datetime.now().strftime("%s")) - int(datetime.utcnow().strftime("%s"))
         kwds['history'] = self.history.get_data(age=7*24*3600)[:25]
         for i in xrange(len(kwds['history'])):
