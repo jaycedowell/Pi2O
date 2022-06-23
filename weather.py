@@ -379,6 +379,8 @@ def get_daily_et(pws, Kc=1.0, Cn=900.0, Cd=0.34, albedo=0.23, inches=True, timeo
             dt = datetime.utcfromtimestamp(day['epoch'])
             if dt < dtStart:
                 continue
+            if day['imperial']['tempAvg'] is None:
+                continue
                 
             t.append( _T(float(day['imperial']['tempAvg'])) )        # F -> C
             h.append( float(day['humidityAvg']) )                   # %
