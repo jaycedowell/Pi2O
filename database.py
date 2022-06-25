@@ -151,6 +151,11 @@ class Archive(object):
 			self._backend = DatabaseProcessor(self._dbName)
 		self._backend.start()
 		
+	def is_alive(self):
+		if self._backend is None:
+			return False
+		return self._backend.is_alive()
+		
 	def cancel(self):
 		"""
 		Close the database.
