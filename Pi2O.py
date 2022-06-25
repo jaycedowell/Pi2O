@@ -3,7 +3,7 @@
 import os
 import sys
 import time
-import getopt
+import argparse
 import calendar
 import threading
 from datetime import datetime, timedelta
@@ -100,58 +100,6 @@ def daemonize(stdin='/dev/null', stdout='/dev/null', stderr='/dev/null'):
     os.dup2(si.fileno(), sys.stdin.fileno())
     os.dup2(so.fileno(), sys.stdout.fileno())
     os.dup2(se.fileno(), sys.stderr.fileno())
-
-
-def usage(exitCode=None):
-    print("""Pi2O.py - Control your sprinklers with a Raspberry Pi
-
-Usage: Pi2O.py [OPTIONS]
-
-Options:
--h, --help                  Display this help information
--p, --pid-file              File to write the current PID to
--d, --debug                 Set the logging to 'debug' level
--l, --logfile               Set the logfile (default = /var/log/pi2o)
-""")
-
-    if exitCode is not None:
-        sys.exit(exitCode)
-    else:
-        return True
-
-
-def parseOptions(args):
-    config = {}
-    config['configFile'] = CONFIG_FILE
-    config['pidFile'] = None
-    config['debug'] = False
-    config['logfile'] = '/var/log/pi2o'
-
-    try:
-        opts, args = getopt.getopt(args, "hp:dl:", ["help", "pid-file=", "debug", "logfile="])
-    except getopt.GetoptError as err:
-        # Print help information and exit:
-        print(str(err)) # will print something like "option -a not recognized"
-        usage(exitCode=2)
-    
-    # Work through opts
-    for opt, value in opts:
-        if opt in ('-h', '--help'):
-            usage(exitCode=0)
-        elif opt in ('-p', '--pid-file'):
-            config['pidFile'] = str(value)
-        elif opt in ('-d', '--debug'):
-            config['debug'] = True
-        elif opt in ('-l', '--logfile'):
-            config['logfile'] = value
-        else:
-            assert False
-    
-    # Add in arguments
-    config['args'] = args
-
-    # Return configuration
-    return config
 
 
 # AJAX interface
@@ -397,27 +345,23 @@ class Interface(object):
 
 
 def main(args):
-    # Parse the command line and read in the configuration file
-    cmdConfig = parseOptions(args)
-    
     # Setup logging
     logger = logging.getLogger(__name__)
     logFormat = logging.Formatter('%(asctime)s [%(levelname)-8s] %(message)s', datefmt='%Y-%m-%d %H:%M:%S')
     logFormat.converter = time.gmtime
-    logHandler = WatchedFileHandler(cmdConfig['logfile'])
+    logHandler = WatchedFileHandler(args.log_file)
     logHandler.setFormatter(logFormat)
     logger.addHandler(logHandler)
-    if cmdConfig['debug']:
+    if args.debug:
         logger.setLevel(logging.DEBUG)
     else:
         logger.setLevel(logging.INFO)
         
     # PID file
-    if cmdConfig['pidFile'] is not None:
-        fh = open(cmdConfig['pidFile'], 'w')
-        fh.write("%i\n" % os.getpid())
-        fh.close()
-        
+    if args.pid_file is not None:
+        with open(args.pid_file, 'w') as fh:
+            fh.write("%i\n" % os.getpid())
+            
     # CherryPy configuration
     cherrypy.config.update({'server.socket_host': '0.0.0.0', 'server.socket_port': 80, 'environment': 'production'})
     cpConfig = {'/css': {'tools.staticdir.on': True,
@@ -431,7 +375,7 @@ def main(args):
     logger.info('All dates and times are in UTC except where noted')
      
     # Load in the configuration
-    config = loadConfig(cmdConfig['configFile'])
+    config = loadConfig(args.config_file)
     
     # Initialize the archive
     history = Archive(config)
@@ -473,19 +417,35 @@ def main(args):
     history.cancel()
     
     # Save the final configuration
-    saveConfig(cmdConfig['configFile'], config)
+    saveConfig(args.config_file, config)
 
 
 if __name__ == "__main__":
-    try:
-        os.unlink('/tmp/Pi2O.stdout')
-    except OSError:
-        pass
-    try:
-        os.unlink('/tmp/Pi2O.stderr')
-    except OSError:
-        pass
-        
-    daemonize('/dev/null', '/tmp/Pi2O.stdout', '/tmp/Pi2O.stderr')
-    main(sys.argv[1:])
+    parser = argparse.ArgumentParser(
+            description="control your sprinklers with a Raspberry Pi",
+            formatter_class=argparse.ArgumentDefaultsHelpFormatter
+            )
+    parser.add_argument('-c', '--config-file', type=str, default=CONFIG_FILE,
+                        help='configuraton file to use')
+    parser.add_argument('-p', '--pid-file', type=str,
+                        help='file to write the current PID to')
+    parser.add_argument('-d', '--debug', action='store_true',
+                        help='set the logging to \'debug\' level')
+    parser.add_argument('-l', '--log-file', type=str, default='/var/log/pi2o',
+                        help='set the logfile')
+    parser.add_argument('-f', '--foreground', action='store_true',
+                        help='run in the foreground instead of daemonizing')
+    args = parser.parse_args()
     
+    if not args.foreground:
+        try:
+            os.unlink('/tmp/Pi2O.stdout')
+        except OSError:
+            pass
+        try:
+            os.unlink('/tmp/Pi2O.stderr')
+        except OSError:
+            pass
+            
+        daemonize('/dev/null', '/tmp/Pi2O.stdout', '/tmp/Pi2O.stderr')
+    main(args)
