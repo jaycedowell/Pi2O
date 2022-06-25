@@ -188,7 +188,7 @@ def load_config(filename):
     # Try to read in the actual configuration file
     try:
         config.read(filename)
-        _LOGGER.info('Loaded configuration from \'%s\'', os.path.basename(filename))
+        confLogger.info('Loaded configuration from \'%s\'', os.path.basename(filename))
         
     except:
         pass
@@ -247,4 +247,4 @@ def save_config(filename, config):
     with open(filename, 'w') as fh:
         config.write(fh)
         
-    _LOGGER.info('Saved configuration to \'%s\'', os.path.basename(filename))
+    confLogger.info('Saved configuration to \'%s\'', os.path.basename(filename))
