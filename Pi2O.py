@@ -366,9 +366,9 @@ def main(args):
     cherrypy.config.update({'server.socket_host': '0.0.0.0', 'server.socket_port': 80, 'environment': 'production'})
     cpConfig = {'/css': {'tools.staticdir.on': True,
                          'tools.staticdir.dir': CSS_PATH},
-                  '/js':  {'tools.staticdir.on': True,
-                           'tools.staticdir.dir': JS_PATH}
-                  }
+                '/js':  {'tools.staticdir.on': True,
+                         'tools.staticdir.dir': JS_PATH}
+               }
                 
     # Report on who we are
     logger.info('Starting Pi2O.py with PID %i', os.getpid())
@@ -438,14 +438,14 @@ if __name__ == "__main__":
     args = parser.parse_args()
     
     if not args.foreground:
-        try:
-            os.unlink('/tmp/Pi2O.stdout')
-        except OSError:
-            pass
-        try:
-            os.unlink('/tmp/Pi2O.stderr')
-        except OSError:
-            pass
-            
+        for redirname in ('/tmp/Pi2O.stdout', '/tmp/Pi2O.stderr'):
+            try:
+                os.unlink(redirname+'_old')
+            except OSError:
+                pass
+            try:
+                os.rename(redirname, redirname+'_old')
+            except OSError:
+                pass
         daemonize('/dev/null', '/tmp/Pi2O.stdout', '/tmp/Pi2O.stderr')
     main(args)
