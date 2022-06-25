@@ -370,9 +370,10 @@ def main(args):
     logger = logging.getLogger(__name__)
     logFormat = logging.Formatter('%(asctime)s [%(levelname)-8s] %(message)s', datefmt='%Y-%m-%d %H:%M:%S')
     logFormat.converter = time.gmtime
-    logHandler = WatchedFileHandler(args.log_file)
-    logHandler.setFormatter(logFormat)
-    logger.addHandler(logHandler)
+    if args.log_file != 'stdout':
+        logHandler = WatchedFileHandler(args.log_file)
+        logHandler.setFormatter(logFormat)
+        logger.addHandler(logHandler)
     if args.debug:
         logger.setLevel(logging.DEBUG)
     else:
