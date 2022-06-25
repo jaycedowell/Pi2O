@@ -167,7 +167,7 @@ class AJAX(object):
     @cherrypy.tools.json_out()
     def control(self, **kwds):
         if len(kwds.keys()) > 0:
-            for keyword,value in kwds.iteritems():
+            for keyword,value in kwds.items():
                 if keyword[:4] == 'zone' and keyword.find('-') == -1:
                     i = int(keyword[4:])
                     if value == 'on' and not self.hardwareZones[i-1].is_active:
@@ -302,11 +302,11 @@ class Interface(object):
             kwds = self.config.dict
         else:
             configDict = self.config.dict
-            for keyword,value in configDict.iteritems():
+            for keyword,value in configDict.items():
                 if keyword not in kwds.keys():
                     kwds[keyword] = value
                     
-        for keyword,value in kwds.iteritems():
+        for keyword,value in kwds.items():
             if keyword[:4] == 'zone' and keyword.find('-') == -1:
                 i = int(keyword[4:])
                 if value == 'on' and not self.hardwareZones[i-1].is_active:
