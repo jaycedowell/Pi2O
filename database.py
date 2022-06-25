@@ -115,7 +115,7 @@ class Archive(object):
 		self.config = config
 		self._dbName = os.path.join(os.path.dirname(__file__), 'archive', 'pi2o-data.db')
 		if not os.path.exists(self._dbName):
-			raise RuntimeError("Archive database not found")
+			raise RuntimeError(f"Archive database '{self._dbName}' not found")
 		self._backend = None
 		
 		# Figure out how many zones there are
@@ -124,10 +124,10 @@ class Archive(object):
 		while True:
 			try:
 				## Is the zone enabled?
-				zoneEnabled = config.get('Zone%i' % zone, 'enabled')
+				zoneEnabled = config.get(f"Zone{zone}", 'enabled')
 				if zoneEnabled == 'on':
 					### If so, use the real GPIO pin
-					zonePin = config.getint('Zone%i' % zone, 'pin')
+					zonePin = config.getint(f"Zone{zone}", 'pin')
 					### If not, use a dummy pin
 				else:
 					zonePin = -1
