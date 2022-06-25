@@ -32,8 +32,8 @@ class DatabaseProcessor(object):
     def __init__(self, dbName):
         self._dbName = dbName
         self.running = False
-        self.input = Queue.Queue()
-        self.output = Queue.Queue()
+        self.input = queue.Queue()
+        self.output = queue.Queue()
         
         self.thread = None
         self.alive = threading.Event()
@@ -87,7 +87,7 @@ class DatabaseProcessor(object):
         self._dbConn.row_factory = self.dict_factory
         self._cursor = self._dbConn.cursor()
         
-        while self.alive.isSet() or not self.input.empty():
+        while self.alive.is_set() or not self.input.empty():
             try:
                 rid, cmd = self.input.get(timeout=5)
                 self._cursor.execute(cmd)
@@ -98,7 +98,7 @@ class DatabaseProcessor(object):
                     self._dbConn.commit()
                 self.output.put( (rid,output) )
                 
-            except Queue.Empty:
+            except queue.Empty:
                 continue
                 
             except Exception as e:

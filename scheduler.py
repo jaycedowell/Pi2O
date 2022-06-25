@@ -68,7 +68,7 @@ class ScheduleProcessor(object):
         
         self.tDelay = timedelta(0)
         
-        while self.alive.isSet():
+        while self.alive.is_set():
             time.sleep(self.interval)
             if not self.running:
                 return True
