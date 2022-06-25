@@ -458,7 +458,7 @@ if __name__ == "__main__":
     parser.add_argument('-d', '--debug', action='store_true',
                         help='set the logging to \'debug\' level')
     parser.add_argument('-l', '--log-file', type=str, default='/var/log/pi2o',
-                        help='set the logfile')
+                        help="set the logfile; use 'stdout' to write to the screen")
     parser.add_argument('-f', '--foreground', action='store_true',
                         help='run in the foreground instead of daemonizing')
     args = parser.parse_args()
