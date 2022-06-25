@@ -243,8 +243,7 @@ def saveConfig(filename, config):
     disk.
     """
     
-    fh = open(filename, 'w')
-    config.write(fh)
-    fh.close()
-    
+    with open(filename, 'w') as fh:
+        config.write(fh)
+        
     confLogger.info('Saved configuration to \'%s\'', os.path.basename(filename))

@@ -38,17 +38,15 @@ class GPIORelay(object):
         if self.pin > 0:
             try:    
                 # Export
-                fh = open('/sys/class/gpio/export', 'w')
-                fh.write(str(self.pin))
-                fh.flush()
-                fh.close()
-                
+                with open('/sys/class/gpio/export', 'w') as fh:
+                    fh.write(str(self.pin))
+                    fh.flush()
+                    
                 # Direction
-                fh = open('/sys/class/gpio/gpio%i/direction' % self.pin, 'w')
-                fh.write('out')
-                fh.flush()
-                fh.close()
-                
+                with open('/sys/class/gpio/gpio%i/direction' % self.pin, 'w') as fh:
+                    fh.write('out')
+                    fh.flush()
+                    
                 # Off
                 self.off()
                 
@@ -61,21 +59,19 @@ class GPIORelay(object):
         """
         
         if self.pin > 0:
-            fh = open('/sys/class/gpio/gpio%i/value' % self.pin, 'w')
-            fh.write('1')
-            fh.flush()
-            fh.close()
-            
+            with open('/sys/class/gpio/gpio%i/value' % self.pin, 'w') as fh:
+                fh.write('1')
+                fh.flush()
+                
     def off(self):
         """
         Turn the relay off.
         """
     
         if self.pin > 0:
-            fh = open('/sys/class/gpio/gpio%i/value' % self.pin, 'w')
-            fh.write('0')
-            fh.flush()
-            fh.close()
+            with open('/sys/class/gpio/gpio%i/value' % self.pin, 'w') as fh:
+                fh.write('0')
+                fh.flush()
 
 
 class GPIORainSensor(object):
@@ -98,17 +94,15 @@ class GPIORainSensor(object):
         if self.pin > 0:
             try:    
                 # Export
-                fh = open('/sys/class/gpio/export', 'w')
-                fh.write(str(self.pin))
-                fh.flush()
-                fh.close()
-                
+                with open('/sys/class/gpio/export', 'w') as fh: 
+                    fh.write(str(self.pin))
+                    fh.flush()
+                    
                 # Direction
-                fh = open('/sys/class/gpio/gpio%i/direction' % self.pin, 'w')
-                fh.write('in')
-                fh.flush()
-                fh.close()
-                
+                with open('/sys/class/gpio/gpio%i/direction' % self.pin, 'w') as fh:
+                    fh.write('in')
+                    fh.flush()
+                    
             except IOError:
                 pass
                 
@@ -118,10 +112,9 @@ class GPIORainSensor(object):
         """
         
         if self.pin > 0:
-            fh = open('/sys/class/gpio/gpio%i/value' % self.pin, 'r')
-            value = int(fh.read(), 10)
-            fh.close()
-            
+            with open('/sys/class/gpio/gpio%i/value' % self.pin, 'r') as fh:
+                value = int(fh.read(), 10)
+                
             return value
         else:
             return -1
