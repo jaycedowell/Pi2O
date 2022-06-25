@@ -9,16 +9,13 @@ import time
 import logging
 import threading
 import traceback
-try:
-    import cStringIO as StringIO
-except ImportError:
-    import StringIO
+from io import StringIO
 from datetime import datetime, timedelta
 
-from weather import getCurrentTemperature, getWeatherAdjustment
+from weather import get_current_temperature, get_weather_adjustment
 
-__version__ = "0.4"
-__all__ = ["ScheduleProcessor", "__version__", "__all__"]
+__version__ = '0.5'
+__all__ = ['ScheduleProcessor',]
 
 
 # Logger instance
@@ -103,7 +100,7 @@ class ScheduleProcessor(threading.Thread):
                         ### Check the temperature to see if it is safe to run
                         if pws != '' and enb == 'on':
                             try:
-                                temp = getCurrentTemperature(pws)
+                                temp = get_current_t/emperature(pws)
                             except RuntimeError:
                                 schLogger.warning('Cannot connect to WUnderground for temperature information, skipping check')
                             else:
@@ -130,7 +127,7 @@ class ScheduleProcessor(threading.Thread):
                         if self.wxAdjust is None:
                             if pws != '' and enb == 'on':
                                 try:
-                                    self.wxAdjust = getWeatherAdjustment(pws, adj_max=adj_max)
+                                    self.wxAdjust = get_weather_adjustment(pws, adj_max=adj_max)
                                 except RuntimeError:
                                     schLogger.warning('Cannot connect to WUnderground for weather adjustment, setting to 100%')
                                     self.wxAdjust = 1.0
@@ -146,7 +143,7 @@ class ScheduleProcessor(threading.Thread):
                         schLogger.debug('Run interval for this schedule set to %s', interval)
                         
                         ### Load in the last schedule run times
-                        previousRuns = self.history.getData(scheduledOnly=True)
+                        previousRuns = self.history.get_data(scheduled_only=True)
                         
                         ### Loop over the zones and work only on those that are enabled
                         for zone in range(1, len(self.hardwareZones)+1):
@@ -165,17 +162,17 @@ class ScheduleProcessor(threading.Thread):
                                 duration = timedelta(minutes=int(duration), seconds=int((duration*60) % 60))
                                 
                                 #### What is the last run time for this zone?
-                                tLast = datetime.fromtimestamp( self.hardwareZones[zone-1].getLastRun() )
+                                tLast = datetime.fromtimestamp( self.hardwareZones[zone-1].get_last_run() )
                                 for entry in previousRuns:
                                     if entry['zone'] == zone:
                                         tLast = datetime.fromtimestamp( entry['dateTimeStart'] )
                                         break
                                         
-                                if self.hardwareZones[zone-1].isActive():
+                                if self.hardwareZones[zone-1].is_active:
                                     #### If the zone is active, check how long it has been on
                                     if tNow-tLast >= duration:
                                         self.hardwareZones[zone-1].off()
-                                        self.history.writeData(tNowDB, zone, 'off')
+                                        self.history.write_data(tNowDB, zone, 'off')
                                         schLogger.info('Zone %i - off', zone)
                                         schLogger.info('  Run Time: %s', (tNow-tLast))
                                     else:
@@ -191,7 +188,7 @@ class ScheduleProcessor(threading.Thread):
                                             
                                     if tNow - tLast >= interval - timedelta(hours=3):
                                         self.hardwareZones[zone-1].on()
-                                        self.history.writeData(tNowDB, zone, 'on', wxAdjustment=adjustmentUsed)
+                                        self.history.write_data(tNowDB, zone, 'on', wx_adjustment=adjustmentUsed)
                                         schLogger.info('Zone %i - on', zone)
                                         schLogger.info('  Last Ran: %s LT (%s ago)', tLast, tNow-tLast)
                                         schLogger.info('  Duration: %s', duration)
@@ -201,7 +198,7 @@ class ScheduleProcessor(threading.Thread):
                                         
                             #### If this is the last zone to process and it is off, we
                             #### are done with this block
-                            if zone == len(self.hardwareZones) and not self.hardwareZones[zone-1].isActive():
+                            if zone == len(self.hardwareZones) and not self.hardwareZones[zone-1].is_active:
                                 self.blockActive = False
                                 self.processedInBlock = []
                                 self.wxAdjust = None
@@ -217,7 +214,7 @@ class ScheduleProcessor(threading.Thread):
                 exc_type, exc_value, exc_traceback = sys.exc_info()
                 schLogger.error("ScheduleProcessor: %s at line %i", e, traceback.tb_lineno(exc_traceback))
                 ## Grab the full traceback and save it to a string via StringIO
-                fileObject = StringIO.StringIO()
+                fileObject = StringIO()
                 traceback.print_tb(exc_traceback, file=fileObject)
                 tbString = fileObject.getvalue()
                 fileObject.close()

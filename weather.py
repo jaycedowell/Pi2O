@@ -7,14 +7,14 @@ Module for reading in weather conditions from Weather Underground.
 import json
 import time
 import logging
-import urllib2
+from urllib.request import urlopen
 from datetime import datetime, timedelta
 
 from expiring_cache import expiring_cache
 
-__version__ = "0.5"
-__all__ = ["getCurrentConditions", "getThreeDayHistory", "getCurrentTemperature", 
-           "getWeatherAdjustment", "__version__", "__all__"]
+__version__ = '0.6'
+__all__ = ['get_current_conditions', 'get_three_day_history', 'get_current_temperature', 
+           'get_weather_adjustment']
 
 
 # Logger instance
@@ -22,7 +22,7 @@ wxLogger = logging.getLogger('__main__')
 
 
 # Rate limiter
-class _rateLimiter(object):
+class _RateLimiter(object):
     """
     Class to help make sure that the various calls to the WUnderground API don't exceed 
     the free rate limit of 5 queries per minute.  This class can also be adjusted to 
@@ -34,7 +34,7 @@ class _rateLimiter(object):
         
         self._requests = []
         
-    def clearToSend(self, block=True):
+    def clear_to_send(self, block=True):
         """
         Find out if sending a request now would be allowable.  Return True
         if it is, False otherwise.  If 'block' is set to True, the function
@@ -70,7 +70,7 @@ class _rateLimiter(object):
                 ## Sleep for a bit and try again
                 wxLogger.warning('WUnderground rate limiter in effect')
                 time.sleep(5)
-                while not self.clearToSend(block=False):
+                while not self.clear_to_send(block=False):
                     time.sleep(5)
                     
                 wxLogger.info('WUnderground rate limiter cleared')
@@ -83,10 +83,10 @@ class _rateLimiter(object):
 
 
 # Create the rate limiter
-_rl = _rateLimiter()
+_rl = _RateLimiter()
 
 
-def getCurrentConditions(pws, timeout=30):
+def get_current_conditions(pws, timeout=30):
     """
     Get the current conditions of the personal weather station using WUnderground.
     """
@@ -95,10 +95,10 @@ def getCurrentConditions(pws, timeout=30):
     url = "https://api.weather.com/v2/pws/observations/current?apiKey=6532d6454b8aa370768e63d6ba5a832e&stationId=%s&format=json&units=e" % pws
     
     # Check the rate limiter
-    _rl.clearToSend()
+    _rl.clear_to_send()
     
     try:
-        uh = urllib2.urlopen(url, None, timeout)
+        uh = urlopen(url, None, timeout)
     except Exception as e:
         raise RuntimeError("Failed to connect to WUnderground for current conditions: %s" % str(e))
     else:
@@ -108,7 +108,7 @@ def getCurrentConditions(pws, timeout=30):
     return data
 
 
-def getThreeDayHistory(pws, timeout=30):
+def get_three_day_history(pws, timeout=30):
     """
     Get the weather history for the last three days from a personal weather station using
     WUnderground.
@@ -118,10 +118,10 @@ def getThreeDayHistory(pws, timeout=30):
     url = "https://api.weather.com/v2/pws/observations/all/3day?apiKey=6532d6454b8aa370768e63d6ba5a832e&stationId=%s&format=json&units=e" % pws
     
     # Check the rate limiter
-    _rl.clearToSend()
+    _rl.clear_to_send()
     
     try:
-        uh = urllib2.urlopen(url, None, timeout)
+        uh = urlopen(url, None, timeout)
     except Exception as e:
         raise RuntimeError("Failed to connect to WUnderground for three-day history: %s" % str(e))
     else:
@@ -132,7 +132,7 @@ def getThreeDayHistory(pws, timeout=30):
 
 
 @expiring_cache(maxage=1800)
-def getCurrentTemperature(pws, timeout=30):
+def get_current_temperature(pws, timeout=30):
     """
     Get the current temperature in degrees Fahrenheit using the WUnderground 
     API.
@@ -152,7 +152,7 @@ def getCurrentTemperature(pws, timeout=30):
 
 
 @expiring_cache(maxage=1800)
-def getWeatherAdjustment(pws, adj_min=0.0, adj_max=200.0, timeout=30):
+def get_weather_adjustment(pws, adj_min=0.0, adj_max=200.0, timeout=30):
     """
     Compute a watering time scale factor using the WUnderground conditions.
     """
@@ -183,7 +183,7 @@ def getWeatherAdjustment(pws, adj_min=0.0, adj_max=200.0, timeout=30):
             
         ## Convert the total rainfall to Delta_{rain}
         dp = [0.0,]
-        for i in xrange(1, len(p)):
+        for i in range(1, len(p)):
             dp.append( p[i]-p[i-1] )
             if dp[-1] < 0:
                 dp[-1] = 0.0

@@ -8,19 +8,16 @@ import os
 import sys
 import time
 import uuid
-import Queue
+import queue
 import logging
 import sqlite3
 import threading
 import traceback
-from ConfigParser import NoSectionError
-try:
-	import cStringIO as StringIO
-except ImportError:
-	import StringIO
-	
-__version__ = "0.2"
-__all__ = ["Archive", "__version__", "__all__"]
+from configparser import NoSectionError
+from io import StringIO
+
+__version__ = '0.3'
+__all__ = ['Archive',]
 
 
 # Logger instance
@@ -35,8 +32,8 @@ class DatabaseProcessor(threading.Thread):
 	def __init__(self, dbName):
 		self._dbName = dbName
 		self.running = False
-		self.input = Queue.Queue()
-		self.output = Queue.Queue()
+		self.input = queue.Queue()
+		self.output = queue.Queue()
 		
 		self.thread = None
 		self.alive = threading.Event()
@@ -59,13 +56,13 @@ class DatabaseProcessor(threading.Thread):
 			
 		dbLogger.info('Stopped the DatabaseProcessor background thread')
 			
-	def appendRequest(self, cmd):
+	def append_request(self, cmd):
 		rid = str(uuid.uuid4())
 		self.input.put( (rid,cmd) )
 		
 		return rid
 		
-	def getResponse(self, rid):
+	def get_response(self, rid):
 		qid, qresp = self.output.get()
 		while qid != rid:
 			self.output.put( (qid,qresp) )
@@ -95,17 +92,17 @@ class DatabaseProcessor(threading.Thread):
 					self._dbConn.commit()
 				self.output.put( (rid,output) )
 				
-			except Exception, e:
+			except Exception as e:
 				exc_type, exc_value, exc_traceback = sys.exc_info()
 				dbLogger.error("DatabaseProcessor: %s at line %i", e, traceback.tb_lineno(exc_traceback))
 				## Grab the full traceback and save it to a string via StringIO
-                fileObject = StringIO.StringIO()
-                traceback.print_tb(exc_traceback, file=fileObject)
-                tbString = fileObject.getvalue()
-                fileObject.close()
-                ## Print the traceback to the logger as a series of DEBUG messages
-                for line in tbString.split('\n'):
-                	dbLogger.debug("%s", line)
+				fileObject = StringIO()
+				traceback.print_tb(exc_traceback, file=fileObject)
+				tbString = fileObject.getvalue()
+				fileObject.close()
+				## Print the traceback to the logger as a series of DEBUG messages
+				for line in tbString.split('\n'):
+					dbLogger.debug("%s", line)
 					
 		self._dbConn.close()
 
@@ -162,35 +159,35 @@ class Archive(object):
 		if self._backend is not None:
 			self._backend.cancel()
 			
-	def getData(self, age=0, scheduledOnly=False):
+	def get_data(self, age=0, scheduled_only=False):
 		"""
 		Return a collection of data a certain number of seconds into the past.
 		"""
 	
 		# Fetch the entries that match
 		if age <= 0:
-			if scheduledOnly:
+			if scheduled_only:
 				sqlCmd = 'SELECT * FROM pi2o WHERE wxAdjust >= 0.0 OR wxAdjust <= -1.5 ORDER BY dateTimeStart DESC LIMIT %i' % self.nZones
 			else:
 				sqlCmd = 'SELECT * FROM pi2o GROUP BY zone ORDER BY dateTimeStart DESC LIMIT %i' % self.nZones
-			rid = self._backend.appendRequest(sqlCmd)
+			rid = self._backend.append_request(sqlCmd)
 		else:
 			# Figure out how far to look back into the database
 			tNow = time.time()
 			tLookback = tNow - age
-			if scheduledOnly:
+			if scheduled_only:
 				sqlCmd = 'SELECT * FROM pi2o WHERE dateTimeStart >= %i AND (wxAdjust >= 0.0 OR wxAdjust <= -1.5) ORDER BY dateTimeStart DESC' % tLookback
 			else:
 				sqlCmd = 'SELECT * FROM pi2o WHERE dateTimeStart >= %i ORDER BY dateTimeStart DESC' % tLookback
-			rid = self._backend.appendRequest(sqlCmd)
+			rid = self._backend.append_request(sqlCmd)
 			
 		# Fetch the output
-		output = self._backend.getResponse(rid)
+		output = self._backend.get_response(rid)
 		
 		# Done
 		return output
 			
-	def writeData(self, timestamp, zone, status, wxAdjustment=None):
+	def write_data(self, timestamp, zone, status, wx_adjustment=None):
 		"""
 		Write a collection of data to the database.
 		"""
@@ -198,18 +195,18 @@ class Archive(object):
 		# Validate
 		if status not in ('on', 'off'):
 			raise ValueError("Invalid status code '%s'" % status)
-		if wxAdjustment is None:
-			wxAdjustment = 1.0
+		if wx_adjustment is None:
+			wx_adjustment = 1.0
 			
 		# Add the entry to the database
 		if status == 'on':
-			rid = self._backend.appendRequest('INSERT INTO pi2o (dateTimeStart,dateTimeStop,zone,wxAdjust) VALUES (%i,%i,%i,%f)' % (timestamp, 0, zone, wxAdjustment))
-			output = self._backend.getResponse(rid)
+			rid = self._backend.append_request('INSERT INTO pi2o (dateTimeStart,dateTimeStop,zone,wxAdjust) VALUES (%i,%i,%i,%f)' % (timestamp, 0, zone, wx_adjustment))
+			output = self._backend.get_response(rid)
 		else:
-			rid = self._backend.appendRequest('SELECT dateTimeStart FROM pi2o WHERE zone == %i AND dateTimeStop == 0 ORDER BY dateTimeStart DESC' % zone)
-			output = self._backend.getResponse(rid)
+			rid = self._backend.append_request('SELECT dateTimeStart FROM pi2o WHERE zone == %i AND dateTimeStop == 0 ORDER BY dateTimeStart DESC' % zone)
+			output = self._backend.get_response(rid)
 			row = output[0]
-			rid = self._backend.appendRequest('UPDATE pi2o SET dateTimeStop = %i WHERE dateTimeStart == %i AND zone == %i' % (timestamp, row['dateTimeStart'], zone))
-			output = self._backend.getResponse(rid)
+			rid = self._backend.append_request('UPDATE pi2o SET dateTimeStop = %i WHERE dateTimeStart == %i AND zone == %i' % (timestamp, row['dateTimeStart'], zone))
+			output = self._backend.get_response(rid)
 			
 		return True

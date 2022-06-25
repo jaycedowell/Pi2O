@@ -8,15 +8,12 @@ import time
 import logging
 import threading
 import traceback
-try:
-    import cStringIO as StringIO
-except ImportError:
-    import StringIO
-    
-from weather import getCurrentConditions
+ 
+from weather import get_current_conditions
 
-__version__ = '0.1'
-__all__ = ['GPIORelay', 'GPIORainSensor', 'NullRainSensor', 'SoftRainSensor', 'SprinklerZone', '__version__', '__all__']
+__version__ = '0.2'
+__all__ = ['GPIORelay', 'GPIORainSensor', 'NullRainSensor', 'SoftRainSensor',
+           'SprinklerZone']
 
 
 # Logger instance
@@ -42,17 +39,15 @@ class GPIORelay(object):
         if self.pin > 0:
             try:    
                 # Export
-                fh = open('/sys/class/gpio/export', 'w')
-                fh.write(str(self.pin))
-                fh.flush()
-                fh.close()
-                
+                with open('/sys/class/gpio/export', 'w') as fh:
+                    fh.write(str(self.pin))
+                    fh.flush()
+                    
                 # Direction
-                fh = open('/sys/class/gpio/gpio%i/direction' % self.pin, 'w')
-                fh.write('out')
-                fh.flush()
-                fh.close()
-                
+                with open('/sys/class/gpio/gpio%i/direction' % self.pin, 'w') as fh:
+                    fh.write('out')
+                    fh.flush()
+                    
                 # Off
                 self.off()
                 
@@ -65,21 +60,19 @@ class GPIORelay(object):
         """
         
         if self.pin > 0:
-            fh = open('/sys/class/gpio/gpio%i/value' % self.pin, 'w')
-            fh.write('1')
-            fh.flush()
-            fh.close()
-            
+            with open('/sys/class/gpio/gpio%i/value' % self.pin, 'w') as fh:
+                fh.write('1')
+                fh.flush()
+                
     def off(self):
         """
         Turn the relay off.
         """
     
         if self.pin > 0:
-            fh = open('/sys/class/gpio/gpio%i/value' % self.pin, 'w')
-            fh.write('0')
-            fh.flush()
-            fh.close()
+            with open('/sys/class/gpio/gpio%i/value' % self.pin, 'w') as fh:
+                fh.write('0')
+                fh.flush()
 
 
 class GPIORainSensor(object):
@@ -102,17 +95,15 @@ class GPIORainSensor(object):
         if self.pin > 0:
             try:    
                 # Export
-                fh = open('/sys/class/gpio/export', 'w')
-                fh.write(str(self.pin))
-                fh.flush()
-                fh.close()
-                
+                with open('/sys/class/gpio/export', 'w') as fh: 
+                    fh.write(str(self.pin))
+                    fh.flush()
+                    
                 # Direction
-                fh = open('/sys/class/gpio/gpio%i/direction' % self.pin, 'w')
-                fh.write('in')
-                fh.flush()
-                fh.close()
-                
+                with open('/sys/class/gpio/gpio%i/direction' % self.pin, 'w') as fh:
+                    fh.write('in')
+                    fh.flush()
+                    
             except IOError:
                 pass
                 
@@ -122,15 +113,15 @@ class GPIORainSensor(object):
         """
         
         if self.pin > 0:
-            fh = open('/sys/class/gpio/gpio%i/value' % self.pin, 'r')
-            value = int(fh.read(), 10)
-            fh.close()
-            
+            with open('/sys/class/gpio/gpio%i/value' % self.pin, 'r') as fh:
+                value = int(fh.read(), 10)
+                
             return value
         else:
             return -1
             
-    def isActive(self):
+    @property
+    def is_active(self):
         """
         Read the sensor and return a boolean of whether or not the sensor 
         is active.  Is it raining or not?
@@ -161,8 +152,9 @@ class NullRainSensor(object):
         """
         
         return 0
-            
-    def isActive(self):
+        
+    @property
+    def is_active(self):
         """
         Read the sensor and return a boolean of whether or not the sensor 
         is active.  Is it raining or not?
@@ -209,7 +201,7 @@ class SoftRainSensor(object):
             pws = self.config.get('Weather', 'pws')
             try:
                 assert(pws != '')
-                data = getCurrentConditions(pws)
+                data = get_current_conditions(pws)
                 current = data['observations'][0]
                 
                 self.rainfall = float(current['imperial']['precipTotal'])
@@ -222,7 +214,8 @@ class SoftRainSensor(object):
         else:
             return 0
             
-    def isActive(self):
+    @property
+    def is_active(self):
         """
         Read the sensor and return a boolean of whether or not the sensor 
         is active.  Is it raining or not?
@@ -256,7 +249,7 @@ class SprinklerZone(object):
         if self.state == 0:
             rain = False
             if self.rainSensor is not None:
-                rain = self.rainSensor.isActive()
+                rain = self.rainSensor.is_active
                 
             if not rain:
                 self.relay.on()
@@ -275,8 +268,9 @@ class SprinklerZone(object):
             self.state = 0
             self.lastStop = time.time()
             
-    def isActive(self):
+    @property
+    def is_active(self):
         return True if self.state else False
         
-    def getLastRun(self):
+    def get_last_run(self):
         return self.lastStart
