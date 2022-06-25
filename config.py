@@ -165,13 +165,13 @@ def load_config(filename):
     ##  2) pin - RPi GPIO pin
     ##  3) enabled - whether or not the zone is active
     for zone in range(1, MAX_ZONES+1):
-        config.add_section('Zone%i' % zone)
+        config.add_section(f"Zone{zone}")
         for keyword in ('name', 'pin', 'rate', 'enabled', 'current_et_value'):
-            config.set('Zone%i' % zone, keyword, '')
+            config.set(f"Zone{zone}", keyword, '')
             if keyword == 'enabled':
-                config.set('Zone%i' % zone, keyword, 'off')
+                config.set(f"Zone{zone}", keyword, 'off')
             elif keyword in ('rate', 'current_et_value'):
-                config.set('Zone%i' % zone, keyword, '0.0')
+                config.set(f"Zone{zone}", keyword, '0.0')
                 
     ## Dummy schedule information - one for each month
     ##  1) start - start time as HH:MM, 24-hour format
@@ -179,16 +179,16 @@ def load_config(filename):
     ##  3) enabled - whether or not the schedule is active
     ##  4) zones_to_skip - list of zones to skip
     for month in range(1, 13):
-        config.add_section('Schedule%i' % month)
+        config.add_section(f"Schedule{month}")
         for keyword in ('start', 'threshold', 'enabled'):
             if keyword == 'threshold':
-                config.set('Schedule%i' % month, keyword, '0.5')
+                config.set(f"Schedule{month}", keyword, '0.5')
             elif keyword == 'enabled':
-                config.set('Schedule%i' % month, keyword, 'off')
+                config.set(f"Schedule{month}", keyword, 'off')
             elif keyword == 'zones_to_skip':
                 config.set('Schedule%i', month, keyword, '')
             else:
-                config.set('Schedule%i' % month, keyword, '')
+                config.set(f"Schedule{month}", keyword, '')
                 
     ## Dummy schedule limiter
     ##  1) limiter - whehter or not the limiter is active
@@ -237,18 +237,18 @@ def init_zones(config):
     while True:
         try:
             ## Is the zone enabled?
-            zoneEnabled = config.get('Zone%i' % zone, 'enabled')
+            zoneEnabled = config.get(f"Zone{zone}", 'enabled')
             if zoneEnabled == 'on':
                 ### If so, use the real GPIO pin
-                zonePin = config.getint('Zone%i' % zone, 'pin')
+                zonePin = config.getint(f"Zone{zone}", 'pin')
             else:
                 ### If not, use a dummy pin
                 zonePin = -1
                 
             ## Create the SprinklerZone instance
             zones.append( SprinklerZone(zonePin, 
-                                        rate=config.getfloat('Zone%i' % zone, 'rate'), 
-                                        current_et_value=config.getfloat('Zone%i' % zone, 'current_et_value'))
+                                        rate=config.getfloat(f"Zone{zone}", 'rate'), 
+                                        current_et_value=config.getfloat(f"Zone{zone}", 'current_et_value'))
                         )
             
             ## Update the counter
@@ -270,4 +270,4 @@ def save_config(filename, config):
     with open(filename, 'w') as fh:
         config.write(fh)
         
-    confLogger.info('Saved configuration to \'%s\'', os.path.basename(filename))
+    _LOGGER.info(f"Saved configuration to '{os.path.basename(filename)}'")
