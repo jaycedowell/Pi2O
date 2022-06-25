@@ -11,8 +11,8 @@ Requirements
  * jinja2
  * sqlite3
  * a relay board that activates on high
- * a WUnderground API key if you want to use a software rain sensor or automatic
-   runtime adjustment
+ * the name of a WUnderground PWS if you want to use a software rain sensor or
+   automatic runtime adjustment
 
 Usage
 -----
