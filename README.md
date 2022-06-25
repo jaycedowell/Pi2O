@@ -6,7 +6,7 @@ via the WUnderground API and both software and hardware rain sensors.
 
 Requirements
 ------------
- * Python >=2.7 and <3.0
+ * Python >= 3.6
  * cherrypy >= 3.0
  * jinja2
  * sqlite3
