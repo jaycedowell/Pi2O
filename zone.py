@@ -44,7 +44,7 @@ class GPIORelay(object):
                     fh.flush()
                     
                 # Direction
-                with open('/sys/class/gpio/gpio%i/direction' % self.pin, 'w') as fh:
+                with open(f"/sys/class/gpio/gpio{self.pin}/direction", 'w') as fh:
                     fh.write('out')
                     fh.flush()
                     
@@ -60,7 +60,7 @@ class GPIORelay(object):
         """
         
         if self.pin > 0:
-            with open('/sys/class/gpio/gpio%i/value' % self.pin, 'w') as fh:
+            with open(f"/sys/class/gpio/gpio{self.pin}/value", 'w') as fh:
                 fh.write('1')
                 fh.flush()
                 
@@ -70,7 +70,7 @@ class GPIORelay(object):
         """
     
         if self.pin > 0:
-            with open('/sys/class/gpio/gpio%i/value' % self.pin, 'w') as fh:
+            with open(f"/sys/class/gpio/gpio{self.pin}/value", 'w') as fh:
                 fh.write('0')
                 fh.flush()
 
@@ -100,7 +100,7 @@ class GPIORainSensor(object):
                     fh.flush()
                     
                 # Direction
-                with open('/sys/class/gpio/gpio%i/direction' % self.pin, 'w') as fh:
+                with open(f"/sys/class/gpio/gpio{self.pin}/direction", 'w') as fh:
                     fh.write('in')
                     fh.flush()
                     
@@ -113,7 +113,7 @@ class GPIORainSensor(object):
         """
         
         if self.pin > 0:
-            with open('/sys/class/gpio/gpio%i/value' % self.pin, 'r') as fh:
+            with open(f"/sys/class/gpio/gpio{self.pin}/value", 'r') as fh:
                 value = int(fh.read(), 10)
                 
             return value
