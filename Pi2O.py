@@ -21,7 +21,7 @@ except ImportError:
 from config import *
 from database import Archive
 from scheduler import ScheduleProcessor
-from weather import getCurrentTemperature, getWeatherAdjustment
+from weather import get_current_temperature, get_weather_adjustment
 
 
 # Path configuration
@@ -124,10 +124,10 @@ class AJAX(object):
         output['zones'] = []
         for i,zone in enumerate(self.hardwareZones):
             i += 1
-            output['status%i' % i] = 'on' if zone.isActive() else 'off'
+            output['status%i' % i] = 'on' if zone.is_active else 'off'
             output['name%i' % i] = self.config.get('Zone%i' % i, 'name')
             output['zones'].append(i)
-        for entry in self.history.getData():
+        for entry in self.history.get_data():
             try:
                 output['start%i' % entry['zone']]
                 output['run%i' % entry['zone']]
@@ -151,8 +151,8 @@ class AJAX(object):
         
         try:
             id = int(id)
-            output['status'] = 'on' if self.hardwareZones[id-1].isActive() else 'off'
-            for entry in self.history.getData():
+            output['status'] = 'on' if self.hardwareZones[id-1].is_active else 'off'
+            for entry in self.history.get_data():
                 if entry['zone'] == id:
                     output['lastStart'] = self.serialize(datetime.fromtimestamp(entry['dateTimeStart']))
                     output['lastStop'] = self.serialize(datetime.fromtimestamp(entry['dateTimeStop']))
@@ -170,18 +170,18 @@ class AJAX(object):
             for keyword,value in kwds.iteritems():
                 if keyword[:4] == 'zone' and keyword.find('-') == -1:
                     i = int(keyword[4:])
-                    if value == 'on' and not self.hardwareZones[i-1].isActive():
+                    if value == 'on' and not self.hardwareZones[i-1].is_active:
                         self.hardwareZones[i-1].on()
-                        self.history.writeData(time.time(), i, 'on', wxAdjustment=-1.0)
-                    if value == 'off' and self.hardwareZones[i-1].isActive():
+                        self.history.write_data(time.time(), i, 'on', wx_adjustment=-1.0)
+                    if value == 'off' and self.hardwareZones[i-1].is_active:
                         self.hardwareZones[i-1].off()
-                        self.history.writeData(time.time(), i, 'off')
+                        self.history.write_data(time.time(), i, 'off')
                                     
         output = {}
         output['zones'] = []
         for i,zone in enumerate(self.hardwareZones):
             i += 1
-            output['status%i' % i] = 'on' if zone.isActive() else 'off'
+            output['status%i' % i] = 'on' if zone.is_active else 'off'
             output['name%i' % i] = self.config.get('Zone%i' % i, 'name')
             output['zones'].append(i)
             
@@ -193,7 +193,7 @@ class AJAX(object):
         output = {}
         
         tNow = datetime.now()
-        history = self.history.getData(age=14*24*3600)[:25]
+        history = self.history.get_data(age=14*24*3600)[:25]
         
         output['tNow'] = self.serialize(tNow)
         output['entries'] = []
@@ -230,13 +230,13 @@ class Interface(object):
         
     @cherrypy.expose
     def index(self):
-        kwds = self.config.asDict()
+        kwds = self.config.dict
         kwds['tNow'] = datetime.now()
         kwds['tzOffset'] = int(datetime.now().strftime("%s")) - int(datetime.utcnow().strftime("%s"))
         for i,zone in enumerate(self.hardwareZones):
             i += 1
-            kwds['zone%i-status' % i] = 'on' if zone.isActive() else 'off'
-        for entry in self.history.getData():
+            kwds['zone%i-status' % i] = 'on' if zone.is_active else 'off'
+        for entry in self.history.get_data():
             try:
                 kwds['zone%i-lastStart' % entry['zone']]
                 kwds['zone%i-lastStop' % entry['zone']]
@@ -252,10 +252,10 @@ class Interface(object):
     @cherrypy.expose
     def zones(self, **kwds):
         if len(kwds) == 0:
-            kwds = self.config.asDict()
+            kwds = self.config.dict
         else:
-            self.config.fromDict(kwds)
-            saveConfig(CONFIG_FILE, self.config)
+            self.config.dict = kwds
+            save_config(CONFIG_FILE, self.config)
             
         template = jinjaEnv.get_template('zones.html')
         return template.render({'kwds':kwds})
@@ -263,10 +263,10 @@ class Interface(object):
     @cherrypy.expose
     def schedules(self, **kwds):
         if len(kwds) == 0:
-            kwds = self.config.asDict()
+            kwds = self.config.dict
         else:
-            self.config.fromDict(kwds)
-            saveConfig(CONFIG_FILE, self.config)
+            self.config.dict = kwds
+            save_config(CONFIG_FILE, self.config)
         kwds['tNow'] = datetime.now()
         
         mname = {1:'January', 2:'February', 3:'March', 4:'April', 5:'May', 6:'June', 
@@ -278,17 +278,17 @@ class Interface(object):
     @cherrypy.expose
     def weather(self, **kwds):
         if len(kwds) == 0:
-            kwds = self.config.asDict()
+            kwds = self.config.dict
         else:
-            self.config.fromDict(kwds)
-            saveConfig(CONFIG_FILE, self.config)
+            self.config.dict = kwds
+            save_config(CONFIG_FILE, self.config)
             
         if 'test-config' in kwds.keys():
             if kwds['weather-pws'] == '':
                 kwds['weather-info'] = 'Error: No PWS ID provided'
             else:
-                kwds['weather-info'] = "Current temperature: %.0f F" % (getCurrentTemperature(kwds['weather-pws']),)
-                kwds['weather-info'] += "<br />Current weather correction: %i%%" % (100.0*getWeatherAdjustment(kwds['weather-pws'], adj_max=kwds['weather-max-adjust']),)
+                kwds['weather-info'] = "Current temperature: %.0f F" % (get_current_temperature(kwds['weather-pws']),)
+                kwds['weather-info'] += "<br />Current weather correction: %i%%" % (100.0*get_weather_adjustment(kwds['weather-pws'], adj_max=kwds['weather-max-adjust']),)
                 
         else:
             kwds['weather-info'] = ''
@@ -299,9 +299,9 @@ class Interface(object):
     @cherrypy.expose
     def manual(self, **kwds):
         if len(kwds) == 0:
-            kwds = self.config.asDict()
+            kwds = self.config.dict
         else:
-            configDict = self.config.asDict()
+            configDict = self.config.dict
             for keyword,value in configDict.iteritems():
                 if keyword not in kwds.keys():
                     kwds[keyword] = value
@@ -309,18 +309,18 @@ class Interface(object):
         for keyword,value in kwds.iteritems():
             if keyword[:4] == 'zone' and keyword.find('-') == -1:
                 i = int(keyword[4:])
-                if value == 'on' and not self.hardwareZones[i-1].isActive():
+                if value == 'on' and not self.hardwareZones[i-1].is_active:
                     self.hardwareZones[i-1].on()
-                    self.history.writeData(time.time(), i, 'on', wxAdjustment=-1.0)
-                if value == 'off' and self.hardwareZones[i-1].isActive():
+                    self.history.write_data(time.time(), i, 'on', wx_adjustment=-1.0)
+                if value == 'off' and self.hardwareZones[i-1].is_active:
                     self.hardwareZones[i-1].off()
-                    self.history.writeData(time.time(), i, 'off')
+                    self.history.write_data(time.time(), i, 'off')
                     
         kwds['manual-info'] = ''
         for i,zone in enumerate(self.hardwareZones):
             i = i + 1
             if kwds['zone%i-enabled' % i] == 'on':
-                if zone.isActive():
+                if zone.is_active:
                     kwds['zone%i' % i] = 'selected'
                     kwds['manual-info'] += 'Zone %i is turned on<br />' % i
                 else:
@@ -335,7 +335,7 @@ class Interface(object):
         kwds = {}
         kwds['tNow'] = datetime.now()
         kwds['tzOffset'] = int(datetime.now().strftime("%s")) - int(datetime.utcnow().strftime("%s"))
-        kwds['history'] = self.history.getData(age=7*24*3600)[:25]
+        kwds['history'] = self.history.get_data(age=7*24*3600)[:25]
         for i in range(len(kwds['history'])):
             kwds['history'][i]['dateTimeStart'] = datetime.fromtimestamp(kwds['history'][i]['dateTimeStart'])
             kwds['history'][i]['dateTimeStop'] = datetime.fromtimestamp(kwds['history'][i]['dateTimeStop'])
@@ -375,15 +375,15 @@ def main(args):
     logger.info('All dates and times are in UTC except where noted')
      
     # Load in the configuration
-    config = loadConfig(args.config_file)
+    config = load_config(args.config_file)
     
     # Initialize the archive
     history = Archive(config)
     history.start()
     
     # Initialize the hardware
-    hardwareZones = initZones(config)
-    for previousRun in history.getData(scheduledOnly=True):
+    hardwareZones = init_zones(config)
+    for previousRun in history.get_data(scheduled_only=True):
         logger.info('Previous run of zone %i was on %s LT', previousRun['zone'], datetime.fromtimestamp(previousRun['dateTimeStart']))
         
         if hardwareZones[previousRun['zone']-1].lastStart == 0:
@@ -409,15 +409,15 @@ def main(args):
     
     # Make sure the sprinkler zones are off
     for i,zone in enumerate(hardwareZones):
-        if zone.isActive():
+        if zone.is_active:
             zone.off()
-            history.writeData(time.time(), i, 'off')
+            history.write_data(time.time(), i, 'off')
             
     # Shutdown the archive
     history.cancel()
     
     # Save the final configuration
-    saveConfig(args.config_file, config)
+    save_config(args.config_file, config)
 
 
 if __name__ == "__main__":

@@ -12,7 +12,8 @@ from configparser import SafeConfigParser, NoSectionError
 from zone import GPIORelay, GPIORainSensor, NullRainSensor, SoftRainSensor, SprinklerZone
 
 __version__ = '0.5'
-__all__ = ['CONFIG_FILE', 'LockingConfigParser', 'loadConfig', 'initZones', 'saveConfig', '__version__', '__all__']
+__all__ = ['CONFIG_FILE', 'LockingConfigParser', 'load_config', 'init_zones',
+           'save_config']
 
 
 # Logger instance
@@ -35,8 +36,8 @@ class LockingConfigParser(SafeConfigParser):
     """
     Sub-class of ConfigParser.SafeConfigParser that wraps the get, set, and 
     write methods with a semaphore to ensure that only one get/set/read/write 
-    happens at a time.  The sub-class also adds asDict and fromDict methods
-    to make it easier to tie the configuration into webforms.
+    happens at a time.  The sub-class also adds a 'dict' property that makes
+    it easier to tie the configuration into webforms.
     """
     
     _lock = threading.Semaphore()
@@ -90,7 +91,8 @@ class LockingConfigParser(SafeConfigParser):
         
         SafeConfigParser.write(self, *args, **kwds)
         
-    def asDict(self):
+    @property
+    def dict(self):
         """
         Return the configuration as a dictionary with keys structured as
         section-option.
@@ -104,14 +106,16 @@ class LockingConfigParser(SafeConfigParser):
         # Done
         return configDict
         
-    def fromDict(self, configDict):
+    @dict.setter
+    def dict(self, configDict):
         """
-        Given a dictionary created by asDict(), update the configuration 
-        as needed.
+        Given a dictionary returned by the dict attribute, update the
+        configuration as needed.
         """
         
         # Loop over the pairs in the dictionary
-        for key,value in configDict.iteritems():
+        assert(isinstance(configDict, dict))
+        for key,value in configDict.items():
             try:
                 section, keyword = key.split('-', 1)
                 keyword = keyword.replace('-', '_')
@@ -122,12 +126,9 @@ class LockingConfigParser(SafeConfigParser):
             except Exception as e:
                 print(str(e))
                 pass
-                
-        # Done
-        return True
 
 
-def loadConfig(filename):
+def load_config(filename):
     """
     Read in the configuration file and return a LockingConfigParser instance.
     """
@@ -196,7 +197,7 @@ def loadConfig(filename):
     return config
 
 
-def initZones(config):
+def init_zones(config):
     """
     Given a LockingConfigParser configuration instance, create a list of 
     SprinklerZone instances to control the various zones.
@@ -237,7 +238,7 @@ def initZones(config):
     return zones
 
 
-def saveConfig(filename, config):
+def save_config(filename, config):
     """
     Given a filename and a LockingConfigParser, write the configuration to 
     disk.
