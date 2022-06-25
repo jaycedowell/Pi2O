@@ -13,11 +13,8 @@ import cherrypy
 from cherrypy.process.plugins import Daemonizer
 
 import logging
-try:
-    from logging.handlers import WatchedFileHandler
-except ImportError:
-    from logging import FileHandler as WatchedFileHandler
-    
+from logging.handlers import WatchedFileHandler
+
 from config import *
 from database import Archive
 from scheduler import ScheduleProcessor
@@ -349,7 +346,10 @@ def main(args):
     logger = logging.getLogger(__name__)
     logFormat = logging.Formatter('%(asctime)s [%(levelname)-8s] %(message)s', datefmt='%Y-%m-%d %H:%M:%S')
     logFormat.converter = time.gmtime
-    logHandler = WatchedFileHandler(args.log_file)
+    if args.log_file == 'stdout':
+        logHandler = logging.StreamHandler()
+    else:
+        logHandler = WatchedFileHandler(args.log_file)
     logHandler.setFormatter(logFormat)
     logger.addHandler(logHandler)
     if args.debug:
@@ -432,7 +432,7 @@ if __name__ == "__main__":
     parser.add_argument('-d', '--debug', action='store_true',
                         help='set the logging to \'debug\' level')
     parser.add_argument('-l', '--log-file', type=str, default='/var/log/pi2o',
-                        help='set the logfile')
+                        help="set the logfile; use 'stdout' to write to the screen")
     parser.add_argument('-f', '--foreground', action='store_true',
                         help='run in the foreground instead of daemonizing')
     args = parser.parse_args()
