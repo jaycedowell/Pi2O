@@ -14,7 +14,7 @@ import cherrypy
 from cherrypy.process.plugins import Daemonizer
 
 import logging
-from logging.handlers import StreamHandler, WatchedFileHandler
+from logging.handlers import WatchedFileHandler
 
 from config import *
 from database import Archive
@@ -368,7 +368,7 @@ def main(args):
     logFormat = logging.Formatter('%(asctime)s [%(levelname)-8s] %(message)s', datefmt='%Y-%m-%d %H:%M:%S')
     logFormat.converter = time.gmtime
     if args.log_file == 'stdout':
-        logHandler = StreamHandler()
+        logHandler = logging.StreamHandler()
     else:
         logHandler = WatchedFileHandler(args.log_file)
     logHandler.setFormatter(logFormat)
