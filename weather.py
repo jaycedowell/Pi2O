@@ -7,12 +7,12 @@ Module for reading in weather conditions from Weather Underground.
 import json
 import time
 import logging
-import urllib2
+from urllib.request import urlopen
 from datetime import datetime, timedelta
 
 from expiring_cache import expiring_cache
 
-__version__ = "0.5"
+__version__ = "0.6"
 __all__ = ["getCurrentConditions", "getThreeDayHistory", "getCurrentTemperature", 
            "getWeatherAdjustment", "__version__", "__all__"]
 
@@ -98,7 +98,7 @@ def getCurrentConditions(pws, timeout=30):
     _rl.clearToSend()
     
     try:
-        uh = urllib2.urlopen(url, None, timeout)
+        uh = urlopen(url, None, timeout)
     except Exception as e:
         raise RuntimeError("Failed to connect to WUnderground for current conditions: %s" % str(e))
     else:
@@ -121,7 +121,7 @@ def getThreeDayHistory(pws, timeout=30):
     _rl.clearToSend()
     
     try:
-        uh = urllib2.urlopen(url, None, timeout)
+        uh = urlopen(url, None, timeout)
     except Exception as e:
         raise RuntimeError("Failed to connect to WUnderground for three-day history: %s" % str(e))
     else:
@@ -183,7 +183,7 @@ def getWeatherAdjustment(pws, adj_min=0.0, adj_max=200.0, timeout=30):
             
         ## Convert the total rainfall to Delta_{rain}
         dp = [0.0,]
-        for i in xrange(1, len(p)):
+        for i in range(1, len(p)):
             dp.append( p[i]-p[i-1] )
             if dp[-1] < 0:
                 dp[-1] = 0.0

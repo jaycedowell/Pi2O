@@ -1,4 +1,4 @@
-#!/usr/bin/env python
+#!/usr/bin/env python3
 
 import os
 import sys
@@ -73,7 +73,7 @@ def daemonize(stdin='/dev/null', stdout='/dev/null', stderr='/dev/null'):
         pid = os.fork()
         if pid > 0:
             sys.exit(0) # Exit first parent.
-    except OSError, e:
+    except OSError as e:
         sys.stderr.write("fork #1 failed: (%d) %s\n" % (e.errno, e.strerror))
         sys.exit(1)
         
@@ -87,23 +87,23 @@ def daemonize(stdin='/dev/null', stdout='/dev/null', stderr='/dev/null'):
         pid = os.fork()
         if pid > 0:
             sys.exit(0) # Exit second parent.
-    except OSError, e:
+    except OSError as e:
         sys.stderr.write("fork #2 failed: (%d) %s\n" % (e.errno, e.strerror))
         sys.exit(1)
         
     # Now I am a daemon!
     
     # Redirect standard file descriptors.
-    si = file(stdin, 'r')
-    so = file(stdout, 'a+')
-    se = file(stderr, 'a+', 0)
+    si = open(stdin, 'r')
+    so = open(stdout, 'a+')
+    se = open(stderr, 'a+')
     os.dup2(si.fileno(), sys.stdin.fileno())
     os.dup2(so.fileno(), sys.stdout.fileno())
     os.dup2(se.fileno(), sys.stderr.fileno())
 
 
 def usage(exitCode=None):
-    print """Pi2O.py - Control your sprinklers with a Raspberry Pi
+    print("""Pi2O.py - Control your sprinklers with a Raspberry Pi
 
 Usage: Pi2O.py [OPTIONS]
 
@@ -112,7 +112,7 @@ Options:
 -p, --pid-file              File to write the current PID to
 -d, --debug                 Set the logging to 'debug' level
 -l, --logfile               Set the logfile (default = /var/log/pi2o)
-"""
+""")
 
     if exitCode is not None:
         sys.exit(exitCode)
@@ -129,9 +129,9 @@ def parseOptions(args):
 
     try:
         opts, args = getopt.getopt(args, "hp:dl:", ["help", "pid-file=", "debug", "logfile="])
-    except getopt.GetoptError, err:
+    except getopt.GetoptError as err:
         # Print help information and exit:
-        print str(err) # will print something like "option -a not recognized"
+        print(str(err)) # will print something like "option -a not recognized"
         usage(exitCode=2)
     
     # Work through opts
@@ -210,8 +210,8 @@ class AJAX(object):
                     output['lastStop'] = self.serialize(datetime.fromtimestamp(entry['dateTimeStop']))
                     output['adjust'] = entry['wxAdjust']
                     
-        except Exception, e:
-            print str(e)
+        except Exception as e:
+            print(str(e))
             
         return output
         
@@ -388,7 +388,7 @@ class Interface(object):
         kwds['tNow'] = datetime.now()
         kwds['tzOffset'] = int(datetime.now().strftime("%s")) - int(datetime.utcnow().strftime("%s"))
         kwds['history'] = self.history.getData(age=7*24*3600)[:25]
-        for i in xrange(len(kwds['history'])):
+        for i in range(len(kwds['history'])):
             kwds['history'][i]['dateTimeStart'] = datetime.fromtimestamp(kwds['history'][i]['dateTimeStart'])
             kwds['history'][i]['dateTimeStop'] = datetime.fromtimestamp(kwds['history'][i]['dateTimeStop'])
             

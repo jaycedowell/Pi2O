@@ -9,15 +9,12 @@ import time
 import logging
 import threading
 import traceback
-try:
-    import cStringIO as StringIO
-except ImportError:
-    import StringIO
+from io import StringIO
 from datetime import datetime, timedelta
 
 from weather import getCurrentTemperature, getWeatherAdjustment
 
-__version__ = "0.4"
+__version__ = "0.5"
 __all__ = ["ScheduleProcessor", "__version__", "__all__"]
 
 
@@ -217,7 +214,7 @@ class ScheduleProcessor(threading.Thread):
                 exc_type, exc_value, exc_traceback = sys.exc_info()
                 schLogger.error("ScheduleProcessor: %s at line %i", e, traceback.tb_lineno(exc_traceback))
                 ## Grab the full traceback and save it to a string via StringIO
-                fileObject = StringIO.StringIO()
+                fileObject = StringIO()
                 traceback.print_tb(exc_traceback, file=fileObject)
                 tbString = fileObject.getvalue()
                 fileObject.close()

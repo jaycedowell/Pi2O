@@ -8,18 +8,15 @@ import os
 import sys
 import time
 import uuid
-import Queue
+import queue
 import logging
 import sqlite3
 import threading
 import traceback
-from ConfigParser import NoSectionError
-try:
-	import cStringIO as StringIO
-except ImportError:
-	import StringIO
-	
-__version__ = "0.2"
+from configparser import NoSectionError
+from io import StringIO
+
+__version__ = "0.3"
 __all__ = ["Archive", "__version__", "__all__"]
 
 
@@ -35,8 +32,8 @@ class DatabaseProcessor(threading.Thread):
 	def __init__(self, dbName):
 		self._dbName = dbName
 		self.running = False
-		self.input = Queue.Queue()
-		self.output = Queue.Queue()
+		self.input = queue.Queue()
+		self.output = queue.Queue()
 		
 		self.thread = None
 		self.alive = threading.Event()
@@ -95,17 +92,17 @@ class DatabaseProcessor(threading.Thread):
 					self._dbConn.commit()
 				self.output.put( (rid,output) )
 				
-			except Exception, e:
+			except Exception as e:
 				exc_type, exc_value, exc_traceback = sys.exc_info()
 				dbLogger.error("DatabaseProcessor: %s at line %i", e, traceback.tb_lineno(exc_traceback))
 				## Grab the full traceback and save it to a string via StringIO
-                fileObject = StringIO.StringIO()
-                traceback.print_tb(exc_traceback, file=fileObject)
-                tbString = fileObject.getvalue()
-                fileObject.close()
-                ## Print the traceback to the logger as a series of DEBUG messages
-                for line in tbString.split('\n'):
-                	dbLogger.debug("%s", line)
+				fileObject = StringIO()
+				traceback.print_tb(exc_traceback, file=fileObject)
+				tbString = fileObject.getvalue()
+				fileObject.close()
+				## Print the traceback to the logger as a series of DEBUG messages
+				for line in tbString.split('\n'):
+					dbLogger.debug("%s", line)
 					
 		self._dbConn.close()
 

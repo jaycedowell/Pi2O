@@ -8,14 +8,10 @@ import time
 import logging
 import threading
 import traceback
-try:
-    import cStringIO as StringIO
-except ImportError:
-    import StringIO
-    
+ 
 from weather import getCurrentConditions
 
-__version__ = '0.1'
+__version__ = '0.2'
 __all__ = ['GPIORelay', 'GPIORainSensor', 'NullRainSensor', 'SoftRainSensor', 'SprinklerZone', '__version__', '__all__']
 
 

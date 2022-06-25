@@ -7,11 +7,11 @@ File for dealing with the configuration of Pi2O.py.
 import os
 import logging
 import threading
-from ConfigParser import SafeConfigParser, NoSectionError
+from configparser import SafeConfigParser, NoSectionError
 
 from zone import GPIORelay, GPIORainSensor, NullRainSensor, SoftRainSensor, SprinklerZone
 
-__version__ = '0.4'
+__version__ = '0.5'
 __all__ = ['CONFIG_FILE', 'LockingConfigParser', 'loadConfig', 'initZones', 'saveConfig', '__version__', '__all__']
 
 
@@ -119,8 +119,8 @@ class LockingConfigParser(SafeConfigParser):
                 if section == 'Rainsensor':
                     section = 'RainSensor'
                 self.set(section, keyword, value)
-            except Exception, e:
-                print str(e)
+            except Exception as e:
+                print(str(e))
                 pass
                 
         # Done
@@ -139,7 +139,7 @@ def loadConfig(filename):
     ##  1) name - zone nickname
     ##  2) pin - RPi GPIO pin
     ##  3) enabled - whether or not the zone is active
-    for zone in xrange(1, MAX_ZONES+1):
+    for zone in range(1, MAX_ZONES+1):
         config.add_section('Zone%i' % zone)
         for keyword in ('name', 'pin', 'enabled'):
             config.set('Zone%i' % zone, keyword, '')
@@ -161,11 +161,11 @@ def loadConfig(filename):
     ##  3) interval - run interval in days
     ##  4) enabled - whether or not the schedule is active
     ##  5) wxadjust - whether or not weather adjustments should be applied
-    for month in xrange(1, 13):
+    for month in range(1, 13):
         config.add_section('Schedule%i' % month)
         for keyword in ('start', 'duration', 'interval', 'enabled', 'wxadjust'):
             if keyword == 'duration':
-                for zone in xrange(1, MAX_ZONES+1):
+                for zone in range(1, MAX_ZONES+1):
                     config.set('Schedule%i' % month, '%s%i' % (keyword, zone), '')
             else:
                 config.set('Schedule%i' % month, keyword, '')
