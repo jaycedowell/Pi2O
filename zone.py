@@ -8,13 +8,9 @@ import time
 import logging
 import threading
 import traceback
-try:
-    import cStringIO as StringIO
-except ImportError:
-    import StringIO
 
-__version__ = '0.2'
-__all__ = ['GPIORelay', 'SprinklerZone', '__version__']
+__version__ = '0.3'
+__all__ = ['GPIORelay', 'SprinklerZone']
 
 
 # Logger instance
@@ -40,17 +36,15 @@ class GPIORelay(object):
         if self.pin > 0:
             try:    
                 # Export
-                fh = open('/sys/class/gpio/export', 'w')
-                fh.write(str(self.pin))
-                fh.flush()
-                fh.close()
-                
+                with open('/sys/class/gpio/export', 'w') as fh:
+                    fh.write(str(self.pin))
+                    fh.flush()
+                    
                 # Direction
-                fh = open('/sys/class/gpio/gpio%i/direction' % self.pin, 'w')
-                fh.write('out')
-                fh.flush()
-                fh.close()
-                
+                with open('/sys/class/gpio/gpio%i/direction' % self.pin, 'w') as fh:
+                    fh.write('out')
+                    fh.flush()
+                    
                 # Off
                 self.off()
                 
@@ -63,21 +57,19 @@ class GPIORelay(object):
         """
         
         if self.pin > 0:
-            fh = open('/sys/class/gpio/gpio%i/value' % self.pin, 'w')
-            fh.write('1')
-            fh.flush()
-            fh.close()
-            
+            with open('/sys/class/gpio/gpio%i/value' % self.pin, 'w') as fh:
+                fh.write('1')
+                fh.flush()
+                
     def off(self):
         """
         Turn the relay off.
         """
     
         if self.pin > 0:
-            fh = open('/sys/class/gpio/gpio%i/value' % self.pin, 'w')
-            fh.write('0')
-            fh.flush()
-            fh.close()
+            with open('/sys/class/gpio/gpio%i/value' % self.pin, 'w') as fh:
+                fh.write('0')
+                fh.flush()
 
 
 class SprinklerZone(object):
@@ -114,6 +106,7 @@ class SprinklerZone(object):
             self.state = 0
             self.lastStop = time.time()
             
+    @property
     def is_active(self):
         return True if self.state else False
         

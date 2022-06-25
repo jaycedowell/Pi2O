@@ -9,16 +9,13 @@ import time
 import logging
 import threading
 import traceback
-try:
-    import cStringIO as StringIO
-except ImportError:
-    import StringIO
+from io import StringIO
 from datetime import datetime, timedelta
 
 from weather import get_current_temperature, get_daily_et
 
 __version__ = '0.6'
-__all__ = ['ScheduleProcessor', '__version__']
+__all__ = ['ScheduleProcessor',]
 
 
 # Logger instance
@@ -71,7 +68,7 @@ class ScheduleProcessor(object):
         
         self.tDelay = timedelta(0)
         
-        while self.alive.isSet():
+        while self.alive.is_set():
             time.sleep(self.interval)
             if not self.running:
                 return True
@@ -190,7 +187,7 @@ class ScheduleProcessor(object):
                                         tLastUTC = datetime.utcfromtimestamp( entry['dateTimeStart'] )
                                         break
                                         
-                                if self.hardwareZones[zone-1].is_active():
+                                if self.hardwareZones[zone-1].is_active:
                                     #### If the zone is active, check how long it has been on
                                     if tNowUTC-tLastUTC >= duration:
                                         self.hardwareZones[zone-1].off()
@@ -230,7 +227,7 @@ class ScheduleProcessor(object):
                                         
                             #### If this is the last zone to process and it is off, we
                             #### are done with this block
-                            if zone == len(self.hardwareZones) and not self.hardwareZones[zone-1].is_active():
+                            if zone == len(self.hardwareZones) and not self.hardwareZones[zone-1].is_active:
                                 self.blockActive = False
                                 self.processedInBlock = []
                                 
@@ -247,7 +244,7 @@ class ScheduleProcessor(object):
                 exc_type, exc_value, exc_traceback = sys.exc_info()
                 _LOGGER.error("ScheduleProcessor: %s at line %i", e, traceback.tb_lineno(exc_traceback))
                 ## Grab the full traceback and save it to a string via StringIO
-                fileObject = StringIO.StringIO()
+                fileObject = StringIO()
                 traceback.print_tb(exc_traceback, file=fileObject)
                 tbString = fileObject.getvalue()
                 fileObject.close()
