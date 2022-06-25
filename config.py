@@ -141,11 +141,11 @@ def load_config(filename):
     ##  2) pin - RPi GPIO pin
     ##  3) enabled - whether or not the zone is active
     for zone in range(1, MAX_ZONES+1):
-        config.add_section('Zone%i' % zone)
+        config.add_section(f"Zone{zone}")
         for keyword in ('name', 'pin', 'enabled'):
-            config.set('Zone%i' % zone, keyword, '')
+            config.set(f"Zone{zone}", keyword, '')
             if keyword == 'enabled':
-                config.set('Zone%i' % zone, keyword, 'off')
+                config.set(f"Zone{zone}", keyword, 'off')
                 
     ## Dummy rain sensor information
     ##  1) type - off, software, or hardware
@@ -163,15 +163,15 @@ def load_config(filename):
     ##  4) enabled - whether or not the schedule is active
     ##  5) wxadjust - whether or not weather adjustments should be applied
     for month in range(1, 13):
-        config.add_section('Schedule%i' % month)
+        config.add_section(f"Schedule{month}")
         for keyword in ('start', 'duration', 'interval', 'enabled', 'wxadjust'):
             if keyword == 'duration':
                 for zone in range(1, MAX_ZONES+1):
-                    config.set('Schedule%i' % month, '%s%i' % (keyword, zone), '')
+                    config.set(f"Schedule{month}", f"{keyword}{zone}", '')
             else:
-                config.set('Schedule%i' % month, keyword, '')
+                config.set(f"Schedule{month}", keyword, '')
             if keyword in ('enabled', 'wxadjust'):
-                config.set('Schedule%i' % month, keyword, 'off')
+                config.set(f"Schedule{month}", keyword, 'off')
                 
     ## Dummy weather station information
     ##  1) pws - PWS ID to use for weather info
@@ -188,7 +188,7 @@ def load_config(filename):
     # Try to read in the actual configuration file
     try:
         config.read(filename)
-        confLogger.info('Loaded configuration from \'%s\'', os.path.basename(filename))
+        _LOGGER.info('Loaded configuration from \'%s\'', os.path.basename(filename))
         
     except:
         pass
@@ -217,10 +217,10 @@ def init_zones(config):
     while True:
         try:
             ## Is the zone enabled?
-            zoneEnabled = config.get('Zone%i' % zone, 'enabled')
+            zoneEnabled = config.get(f"Zone{zone}", 'enabled')
             if zoneEnabled == 'on':
                 ### If so, use the real GPIO pin
-                zonePin = config.getint('Zone%i' % zone, 'pin')
+                zonePin = config.getint(f"Zone{zone}", 'pin')
                 ### If not, use a dummy pin
             else:
                 zonePin = -1
@@ -247,4 +247,4 @@ def save_config(filename, config):
     with open(filename, 'w') as fh:
         config.write(fh)
         
-    confLogger.info('Saved configuration to \'%s\'', os.path.basename(filename))
+    _LOGGER.info('Saved configuration to \'%s\'', os.path.basename(filename))

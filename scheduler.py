@@ -75,10 +75,10 @@ class ScheduleProcessor(threading.Thread):
                 schLogger.debug('Starting scheduler polling at %s LT', tNow)
                 
                 # Is the current schedule active?
-                if self.config.get('Schedule%i' % tNow.month, 'enabled') == 'on':
+                if self.config.get(f"Schedule{tNow.month}", 'enabled') == 'on':
                     ## If so, query the run interval and start time for this block
-                    interval = int(self.config.get('Schedule%i' % tNow.month, 'interval'))
-                    h,m = [int(i) for i in self.config.get('Schedule%i' % tNow.month, 'start').split(':', 1)]
+                    interval = int(self.config.get(f"Schedule{tNow.month}", 'interval'))
+                    h,m = [int(i) for i in self.config.get(f"Schedule{tNow.month}", 'start').split(':', 1)]
                     s = 0
                     schLogger.debug('Current month of %s is enabled with a start time of %i:%02i:%02i LT', tNow.strftime("%B"), h, m, s)
                     
@@ -148,10 +148,10 @@ class ScheduleProcessor(threading.Thread):
                         ### Loop over the zones and work only on those that are enabled
                         for zone in range(1, len(self.hardwareZones)+1):
                             #### Is the current zone even active?
-                            if self.config.get('Zone%i' % zone, 'enabled') == 'on':
+                            if self.config.get(f"Zone{zone}", 'enabled') == 'on':
                                 #### What duration do we use for this zone?
-                                duration = int(self.config.get('Schedule%i' % tNow.month, 'duration%i' % zone))
-                                if self.config.get('Schedule%i' % tNow.month, 'wxadjust') == 'on':
+                                duration = int(self.config.get(f"Schedule{tNow.month}", f"duration{zone}"))
+                                if self.config.get(f"Schedule{tNow.month}", 'wxadjust') == 'on':
                                     duration = duration*self.wxAdjust
                                     adjustmentUsed = self.wxAdjust*1.0
                                 else:
