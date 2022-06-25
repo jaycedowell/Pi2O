@@ -381,12 +381,12 @@ def get_daily_et(pws, Kc=1.0, Cn=900.0, Cd=0.34, albedo=0.23, inches=True, timeo
                 continue
                 
             try:
-                new_t = _T(float(day['imperial']['tempAvg']))           # F -> C
-                new_h = float(day['humidityAvg']) )                     # %
-                new_w = _u2(float(day['imperial']['windspeedAvg']))     # MPH -> m/s
-                new_p = float(day['imperial']['precipTotal'])*25.4 )    # in -> mm
+                new_t = _T(float(day['imperial']['tempAvg']))       # F -> C
+                new_h = float(day['humidityAvg'])                   # %
+                new_w = _u2(float(day['imperial']['windspeedAvg'])) # MPH -> m/s
+                new_p = float(day['imperial']['precipTotal'])*25.4  # in -> mm
                 try:
-                    new_r = float(day['solarRadiationHigh']) )          # W/m^2
+                    new_r = float(day['solarRadiationHigh'])        # W/m^2
                 except ValueError:
                     new_r = None
                     
