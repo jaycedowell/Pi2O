@@ -18,6 +18,7 @@ Environment=PYTHONUNBUFFERED=1
 
 ExecStart=/bin/bash -ec '\
 python3 /home/pi/Pi2O/Pi2O.py \
+				 --foreground \
          --config-file /home/pi/Pi2O/Pi2O.config \
          --log-file    /var/log/pi2o'
 
