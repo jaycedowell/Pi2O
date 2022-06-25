@@ -8,19 +8,16 @@ import os
 import sys
 import time
 import uuid
-import Queue
+import queue
 import logging
 import sqlite3
 import threading
 import traceback
-from ConfigParser import NoSectionError
-try:
-    import cStringIO as StringIO
-except ImportError:
-    import StringIO
-    
+from configparser import NoSectionError
+from io import StringIO
+
 __version__ = '0.3'
-__all__ = ['Archive', '__version__']
+__all__ = ['Archive',]
 
 
 # Logger instance

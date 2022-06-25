@@ -8,14 +8,14 @@ import json
 import math
 import time
 import logging
-import urllib2
+from urllib.request import urlopen
 from datetime import datetime, timedelta
 
 from expiring_cache import expiring_cache
 
-__version__ = '0.6'
+__version__ = '0.7'
 __all__ = ['get_current_conditions', 'get_three_day_history', 'get_current_temperature', 
-           'get_daily_et', '__version__']
+           'get_daily_et']
 
 
 # Logger instance
@@ -35,7 +35,7 @@ class _RateLimiter(object):
         
         self._requests = []
         
-    def clearToSend(self, block=True):
+    def clear_to_send(self, block=True):
         """
         Find out if sending a request now would be allowable.  Return True
         if it is, False otherwise.  If 'block' is set to True, the function
@@ -71,7 +71,7 @@ class _RateLimiter(object):
                 ## Sleep for a bit and try again
                 _LOGGER.warning('WUnderground rate limiter in effect')
                 time.sleep(5)
-                while not self.clearToSend(block=False):
+                while not self.clear_to_send(block=False):
                     time.sleep(5)
                     
                 _LOGGER.info('WUnderground rate limiter cleared')
@@ -96,10 +96,10 @@ def get_current_conditions(pws, timeout=30):
     url = "https://api.weather.com/v2/pws/observations/current?apiKey=6532d6454b8aa370768e63d6ba5a832e&stationId=%s&format=json&units=e" % pws
     
     # Check the rate limiter
-    _rl.clearToSend()
+    _rl.clear_to_send()
     
     try:
-        uh = urllib2.urlopen(url, None, timeout)
+        uh = urlopen(url, None, timeout)
     except Exception as e:
         raise RuntimeError("Failed to connect to WUnderground for current conditions: %s" % str(e))
     else:
@@ -119,10 +119,10 @@ def get_three_day_history(pws, timeout=30):
     url = "https://api.weather.com/v2/pws/observations/all/3day?apiKey=6532d6454b8aa370768e63d6ba5a832e&stationId=%s&format=json&units=e" % pws
     
     # Check the rate limiter
-    _rl.clearToSend()
+    _rl.clear_to_send()
     
     try:
-        uh = urllib2.urlopen(url, None, timeout)
+        uh = urlopen(url, None, timeout)
     except Exception as e:
         raise RuntimeError("Failed to connect to WUnderground for three-day history: %s" % str(e))
     else:
@@ -393,7 +393,7 @@ def get_daily_et(pws, Kc=1.0, Cn=900.0, Cd=0.34, albedo=0.23, inches=True, timeo
                 
         ## Convert the total rainfall to Delta_{rain}
         dp = [0.0,]
-        for i in xrange(1, len(p)):
+        for i in range(1, len(p)):
             dp.append( p[i]-p[i-1] )
             if dp[-1] < 0:
                 dp[-1] = 0.0

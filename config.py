@@ -7,13 +7,13 @@ File for dealing with the configuration of Pi2O.py.
 import os
 import logging
 import threading
-from ConfigParser import SafeConfigParser, NoSectionError
+from configparser import SafeConfigParser, NoSectionError
 
 from zone import GPIORelay, SprinklerZone
 
-__version__ = '0.4'
-__all__ = ['CONFIG_FILE', 'LockingConfigParser', 'load_config', 'init_zones', 'save_config', 
-           '__version__']
+__version__ = '0.5'
+__all__ = ['CONFIG_FILE', 'LockingConfigParser', 'load_config', 'init_zones',
+           'save_config']
 
 
 # Logger instance
@@ -36,8 +36,8 @@ class LockingConfigParser(SafeConfigParser):
     """
     Sub-class of ConfigParser.SafeConfigParser that wraps the get, set, and 
     write methods with a semaphore to ensure that only one get/set/read/write 
-    happens at a time.  The sub-class also adds as_dict and from_dict methods
-    to make it easier to tie the configuration into webforms.
+    happens at a time.  The sub-class also adds a 'dict' property that makes
+    it easier to tie the configuration into webforms.
     """
     
     _lock = threading.RLock()
@@ -113,8 +113,9 @@ class LockingConfigParser(SafeConfigParser):
         
         with self._lock:
             SafeConfigParser.write(self, *args, **kwds)
-            
-    def as_dict(self):
+        
+    @property
+    def dict(self):
         """
         Return the configuration as a dictionary with keys structured as
         section-option.
@@ -129,25 +130,26 @@ class LockingConfigParser(SafeConfigParser):
         # Done
         return configDict
         
-    def from_dict(self, configDict):
+    @dict.setter
+    def dict(self, configDict):
         """
-        Given a dictionary created by as_dict(), update the configuration 
-        as needed.
+        Given a dictionary returned by the dict attribute, update the
+        configuration as needed.
         """
         
         # Loop over the pairs in the dictionary
+        assert(isinstance(configDict, dict))
         with self._lock:
-            for key,value in configDict.iteritems():
+            for key,value in configDict.items():
                 try:
                     section, keyword = key.split('-', 1)
                     keyword = keyword.replace('-', '_')
                     section = section.capitalize()
+                    if section == 'Rainsensor':
+                        section = 'RainSensor'
                     self.set(section, keyword, value)
                 except Exception as e:
                     _LOGGER.warning("from_dict with key='%s', value='%s': %s", key, value, str(e))
-                    
-        # Done
-        return True
 
 
 def load_config(filename):
@@ -161,10 +163,8 @@ def load_config(filename):
     ## Dummy information about the four zones:
     ##  1) name - zone nickname
     ##  2) pin - RPi GPIO pin
-    ##  3) rate - precipitation rate in inches per hour
-    ##  4) enabled - whether or not the zone is active
-    ##  _) current_et_value - hidden value to record the ET between restarts
-    for zone in xrange(1, MAX_ZONES+1):
+    ##  3) enabled - whether or not the zone is active
+    for zone in range(1, MAX_ZONES+1):
         config.add_section('Zone%i' % zone)
         for keyword in ('name', 'pin', 'rate', 'enabled', 'current_et_value'):
             config.set('Zone%i' % zone, keyword, '')
@@ -178,7 +178,7 @@ def load_config(filename):
     ##  2) threshold - accumulated ET threshold before watering
     ##  3) enabled - whether or not the schedule is active
     ##  4) zones_to_skip - list of zones to skip
-    for month in xrange(1, 13):
+    for month in range(1, 13):
         config.add_section('Schedule%i' % month)
         for keyword in ('start', 'threshold', 'enabled'):
             if keyword == 'threshold':
@@ -267,8 +267,7 @@ def save_config(filename, config):
     disk.
     """
     
-    fh = open(filename, 'w')
-    config.write(fh)
-    fh.close()
-    
-    _LOGGER.info('Saved configuration to \'%s\'', os.path.basename(filename))
+    with open(filename, 'w') as fh:
+        config.write(fh)
+        
+    confLogger.info('Saved configuration to \'%s\'', os.path.basename(filename))
