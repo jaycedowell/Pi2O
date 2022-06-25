@@ -379,17 +379,24 @@ def get_daily_et(pws, Kc=1.0, Cn=900.0, Cd=0.34, albedo=0.23, inches=True, timeo
             dt = datetime.utcfromtimestamp(day['epoch'])
             if dt < dtStart:
                 continue
-            if day['imperial']['tempAvg'] is None:
-                continue
                 
-            t.append( _T(float(day['imperial']['tempAvg'])) )        # F -> C
-            h.append( float(day['humidityAvg']) )                   # %
-            w.append( _u2(float(day['imperial']['windspeedAvg'])) )  # MPH -> m/s
-            p.append( float(day['imperial']['precipTotal'])*25.4 )  # in -> mm
             try:
-                r.append( float(day['solarRadiationHigh']) )        # W/m^2
-            except ValueError:
-                r.append( None )
+                new_t = _T(float(day['imperial']['tempAvg']))           # F -> C
+                new_h = float(day['humidityAvg']) )                     # %
+                new_w = _u2(float(day['imperial']['windspeedAvg']))     # MPH -> m/s
+                new_p = float(day['imperial']['precipTotal'])*25.4 )    # in -> mm
+                try:
+                    new_r = float(day['solarRadiationHigh']) )          # W/m^2
+                except ValueError:
+                    new_r = None
+                    
+                t.append(new_t)
+                h.append(new_h)
+                w.append(new_w)
+                p.append(new_p)
+                r.append(new_r)
+            except ValueError as e:
+                _LOGGER.warn("Failed to parse weather data for %s: %s", str(dt), str(e))
                 
         ## Convert the total rainfall to Delta_{rain}
         dp = [0.0,]
@@ -400,7 +407,7 @@ def get_daily_et(pws, Kc=1.0, Cn=900.0, Cd=0.34, albedo=0.23, inches=True, timeo
         p = dp
         
     except Exception as e:
-        pass
+        _LOGGER.warn("Failed to load weather history: %s", str(e))
         
     # Compute the min, max, and average values (where needed)
     Tmin = min(t)
