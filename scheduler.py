@@ -84,7 +84,7 @@ class ScheduleProcessor(object):
                 # Is the current schedule active?
                 if self.config.get('Schedule%i' % tNow.month, 'enabled') == 'on':
                     ## If so, query the start time for this block
-                    h,m = [int(i) for i in self.config.get('Schedule%i' % tNow.month, 'start').split(':', 1)]
+                    h,m = [int(i) for i in self.config.get(f"Schedule{tNow.month}", 'start').split(':', 1)]
                     s = 0
                     _LOGGER.debug('Current month of %s is enabled with a start time of %i:%02i:%02i LT', tNow.strftime("%B"), h, m, s)
                     
@@ -170,11 +170,11 @@ class ScheduleProcessor(object):
                         ### Loop over the zones and work only on those that are enabled
                         for zone in range(1, len(self.hardwareZones)+1):
                             #### Is the current zone even active?
-                            if self.config.get('Zone%i' % zone, 'enabled') == 'on' \
+                            if self.config.get(f"Zone{zone}", 'enabled') == 'on' \
                                and zone not in zones_to_skip:
                                 #### What duration do we use for this zone?
                                 ##### Get the allowed ET threshold value and convert it to a duration
-                                threshold = self.config.getfloat('Schedule%i' % tNow.month, 'threshold')
+                                threshold = self.config.getfloat(f"Schedule{tNow.month}", 'threshold')
                                 duration = self.hardwareZones[zone-1].get_durations_from_precipitation(threshold)
                                 adjustmentUsed = -2.0
                                     

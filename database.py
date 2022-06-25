@@ -117,108 +117,105 @@ class DatabaseProcessor(object):
 
 
 class Archive(object):
-    _dbConn = None
-    _cursor = None
-    
-    def __init__(self, config):
-        self.config = config
-        self._dbName = os.path.join(os.path.dirname(__file__), 'archive', 'pi2o-data.db')
-        if not os.path.exists(self._dbName):
-            raise RuntimeError("Archive database not found")
-        self._backend = None
-        
-        # Figure out how many zones there are
-        zones = []
-        zone = 1
-        while True:
-            try:
-                ## Is the zone enabled?
-                zoneEnabled = config.get('Zone%i' % zone, 'enabled')
-                if zoneEnabled == 'on':
-                    ### If so, use the real GPIO pin
-                    zonePin = config.getint('Zone%i' % zone, 'pin')
-                    ### If not, use a dummy pin
-                else:
-                    zonePin = -1
-                
-                ## Create the SprinklerZone instance
-                zones.append( zonePin )
-            
-                ## Update the counter
-                zone += 1
-            
-            except NoSectionError:
-                break
-        self.nZones = len(zones)
-        
-    def start(self):
-        """
-        Open the database.
-        """
-        
-        if self._backend is None:
-            self._backend = DatabaseProcessor(self._dbName)
-        self._backend.start()
-        
-    def cancel(self):
-        """
-        Close the database.
-        """
-    
-        if self._backend is not None:
-            self._backend.cancel()
-           
-    def is_alive(self):
-        return self._backend.is_alive()
-        
-    def get_data(self, age=0, scheduled_only=False):
-        """
-        Return a collection of data a certain number of seconds into the past.
-        """
-    
-        # Fetch the entries that match
-        if age <= 0:
-            if scheduled_only:
-                sqlCmd = 'SELECT * FROM pi2o WHERE wxAdjust >= 0.0 OR wxAdjust <= -1.5 GROUP BY zone ORDER BY MAX(dateTimeStart) DESC LIMIT %i' % self.nZones
-            else:
-                sqlCmd = 'SELECT * FROM pi2o GROUP BY zone ORDER BY MAX(dateTimeStart) DESC LIMIT %i' % self.nZones
-            rid = self._backend.append_request(sqlCmd)
-        else:
-            # Figure out how far to look back into the database
-            tNow = time.time()
-            tLookback = tNow - age
-            if scheduled_only:
-                sqlCmd = 'SELECT * FROM pi2o WHERE dateTimeStart >= %i AND (wxAdjust >= 0.0 OR wxAdjust <= -1.5) ORDER BY dateTimeStart DESC' % tLookback
-            else:
-                sqlCmd = 'SELECT * FROM pi2o WHERE dateTimeStart >= %i ORDER BY dateTimeStart DESC' % tLookback
-            rid = self._backend.append_request(sqlCmd)
-            
-        # Fetch the output
-        output = self._backend.get_response(rid)
-        
-        # Done
-        return output
-            
-    def write_data(self, timestamp, zone, status, wx_adjustment=None):
-        """
-        Write a collection of data to the database.
-        """
-        
-        # Validate
-        if status not in ('on', 'off'):
-            raise ValueError("Invalid status code '%s'" % status)
-        if wx_adjustment is None:
-            wx_adjustment = 1.0
-            
-        # Add the entry to the database
-        if status == 'on':
-            rid = self._backend.append_request('INSERT INTO pi2o (dateTimeStart,dateTimeStop,zone,wxAdjust) VALUES (%i,%i,%i,%f)' % (timestamp, 0, zone, wx_adjustment))
-            output = self._backend.get_response(rid)
-        else:
-            rid = self._backend.append_request('SELECT dateTimeStart FROM pi2o WHERE zone == %i AND dateTimeStop == 0 ORDER BY dateTimeStart DESC' % zone)
-            output = self._backend.get_response(rid)
-            row = output[0]
-            rid = self._backend.append_request('UPDATE pi2o SET dateTimeStop = %i WHERE dateTimeStart == %i AND zone == %i' % (timestamp, row['dateTimeStart'], zone))
-            output = self._backend.get_response(rid)
-            
-        return True
+	_dbConn = None
+	_cursor = None
+	
+	def __init__(self, config):
+		self.config = config
+		self._dbName = os.path.join(os.path.dirname(__file__), 'archive', 'pi2o-data.db')
+		if not os.path.exists(self._dbName):
+			raise RuntimeError(f"Archive database '{self._dbName}' not found")
+		self._backend = None
+		
+		# Figure out how many zones there are
+		zones = []
+		zone = 1
+		while True:
+			try:
+				## Is the zone enabled?
+				zoneEnabled = config.get(f"Zone{zone}", 'enabled')
+				if zoneEnabled == 'on':
+					### If so, use the real GPIO pin
+					zonePin = config.getint(f"Zone{zone}", 'pin')
+					### If not, use a dummy pin
+				else:
+					zonePin = -1
+				
+				## Create the SprinklerZone instance
+				zones.append( zonePin )
+			
+				## Update the counter
+				zone += 1
+			
+			except NoSectionError:
+				break
+		self.nZones = len(zones)
+    	
+	def start(self):
+		"""
+		Open the database.
+		"""
+		
+		if self._backend is None:
+			self._backend = DatabaseProcessor(self._dbName)
+		self._backend.start()
+		
+	def cancel(self):
+		"""
+		Close the database.
+		"""
+	
+		if self._backend is not None:
+			self._backend.cancel()
+			
+	def get_data(self, age=0, scheduled_only=False):
+		"""
+		Return a collection of data a certain number of seconds into the past.
+		"""
+	
+		# Fetch the entries that match
+		if age <= 0:
+			if scheduled_only:
+				sqlCmd = 'SELECT * FROM pi2o WHERE wxAdjust >= 0.0 OR wxAdjust <= -1.5 ORDER BY dateTimeStart DESC LIMIT %i' % self.nZones
+			else:
+				sqlCmd = 'SELECT * FROM pi2o GROUP BY zone ORDER BY dateTimeStart DESC LIMIT %i' % self.nZones
+			rid = self._backend.append_request(sqlCmd)
+		else:
+			# Figure out how far to look back into the database
+			tNow = time.time()
+			tLookback = tNow - age
+			if scheduled_only:
+				sqlCmd = 'SELECT * FROM pi2o WHERE dateTimeStart >= %i AND (wxAdjust >= 0.0 OR wxAdjust <= -1.5) ORDER BY dateTimeStart DESC' % tLookback
+			else:
+				sqlCmd = 'SELECT * FROM pi2o WHERE dateTimeStart >= %i ORDER BY dateTimeStart DESC' % tLookback
+			rid = self._backend.append_request(sqlCmd)
+			
+		# Fetch the output
+		output = self._backend.get_response(rid)
+		
+		# Done
+		return output
+			
+	def write_data(self, timestamp, zone, status, wx_adjustment=None):
+		"""
+		Write a collection of data to the database.
+		"""
+		
+		# Validate
+		if status not in ('on', 'off'):
+			raise ValueError("Invalid status code '%s'" % status)
+		if wx_adjustment is None:
+			wx_adjustment = 1.0
+			
+		# Add the entry to the database
+		if status == 'on':
+			rid = self._backend.append_request('INSERT INTO pi2o (dateTimeStart,dateTimeStop,zone,wxAdjust) VALUES (%i,%i,%i,%f)' % (timestamp, 0, zone, wx_adjustment))
+			output = self._backend.get_response(rid)
+		else:
+			rid = self._backend.append_request('SELECT dateTimeStart FROM pi2o WHERE zone == %i AND dateTimeStop == 0 ORDER BY dateTimeStart DESC' % zone)
+			output = self._backend.get_response(rid)
+			row = output[0]
+			rid = self._backend.append_request('UPDATE pi2o SET dateTimeStop = %i WHERE dateTimeStart == %i AND zone == %i' % (timestamp, row['dateTimeStart'], zone))
+			output = self._backend.get_response(rid)
+			
+		return True

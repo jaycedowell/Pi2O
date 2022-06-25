@@ -186,7 +186,7 @@ def load_config(filename):
             elif keyword == 'enabled':
                 config.set(f"Schedule{month}", keyword, 'off')
             elif keyword == 'zones_to_skip':
-                config.set('Schedule%i', month, keyword, '')
+                config.set(f"Schedule{month}", keyword, '')
             else:
                 config.set(f"Schedule{month}", keyword, '')
                 

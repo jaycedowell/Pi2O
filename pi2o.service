@@ -1,0 +1,26 @@
+[Unit]
+Description=Raspberry Pi-based sprinkler controller
+After=network-online.target
+Wants=network-online.target
+
+[Service]
+# Have a safety net to kill off the controller if it gets stuck
+KillSignal=SIGTERM
+TimeoutStopSec=30
+
+# Logging
+StandardOutput=syslog
+StandardError=syslog
+SyslogIdentifier=pi2o
+
+# Setup the environment
+Environment=PYTHONUNBUFFERED=1
+
+ExecStart=/bin/bash -ec '\
+python3 /home/pi/Pi2O/Pi2O.py \
+				 --foreground \
+         --config-file /home/pi/Pi2O/Pi2O.config \
+         --log-file    /var/log/pi2o'
+
+[Install]
+WantedBy=multi-user.target
