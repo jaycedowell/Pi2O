@@ -7,7 +7,6 @@ Module for controlling a particular sprinkler zone.
 import time
 import logging
 import threading
-import traceback
 
 __version__ = '0.3'
 __all__ = ['GPIORelay', 'SprinklerZone']

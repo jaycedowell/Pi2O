@@ -103,7 +103,7 @@ class DatabaseProcessor(object):
                 
             except Exception as e:
                 exc_type, exc_value, exc_traceback = sys.exc_info()
-                _LOGGER.error("DatabaseProcessor: %s at line %i", e, traceback.tb_lineno(exc_traceback))
+                _LOGGER.error("DatabaseProcessor: %s at line %i", e, exc_traceback.tb_lineno)
                 ## Grab the full traceback and save it to a string via StringIO
                 fileObject = StringIO.StringIO()
                 traceback.print_tb(exc_traceback, file=fileObject)
