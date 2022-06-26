@@ -7,7 +7,6 @@ Module for controlling a particular sprinkler zone.
 import time
 import logging
 import threading
-import traceback
  
 from weather import get_current_conditions
 

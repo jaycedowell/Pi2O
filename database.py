@@ -94,7 +94,7 @@ class DatabaseProcessor(threading.Thread):
 				
 			except Exception as e:
 				exc_type, exc_value, exc_traceback = sys.exc_info()
-				dbLogger.error("DatabaseProcessor: %s at line %i", e, traceback.tb_lineno(exc_traceback))
+				dbLogger.error("DatabaseProcessor: %s at line %i", e, exc_traceback.tb_lineno)
 				## Grab the full traceback and save it to a string via StringIO
 				fileObject = StringIO()
 				traceback.print_tb(exc_traceback, file=fileObject)
