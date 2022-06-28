@@ -387,7 +387,7 @@ def get_daily_et(pws, Kc=1.0, Cn=900.0, Cd=0.34, albedo=0.23, inches=True, timeo
                 new_p = float(day['imperial']['precipTotal'])*25.4  # in -> mm
                 try:
                     new_r = float(day['solarRadiationHigh'])        # W/m^2
-                except ValueError:
+                except (TypeError, ValueError):
                     new_r = None
                     
                 t.append(new_t)
@@ -395,7 +395,7 @@ def get_daily_et(pws, Kc=1.0, Cn=900.0, Cd=0.34, albedo=0.23, inches=True, timeo
                 w.append(new_w)
                 p.append(new_p)
                 r.append(new_r)
-            except ValueError as e:
+            except (TypeError, ValueError) as e:
                 _LOGGER.warn("Failed to parse weather data for %s: %s", str(dt), str(e))
                 
         ## Convert the total rainfall to Delta_{rain}
