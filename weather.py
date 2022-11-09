@@ -92,7 +92,7 @@ def get_current_conditions(pws, timeout=30):
     """
     
     # Get the URL
-    url = "https://api.weather.com/v2/pws/observations/current?apiKey=6532d6454b8aa370768e63d6ba5a832e&stationId=%s&format=json&units=e" % pws
+    url = "https://api.weather.com/v2/pws/observations/current?apiKey=e1f10a1e78da46f5b10a1e78da96f525&stationId=%s&format=json&units=e" % pws
     
     # Check the rate limiter
     _rl.clear_to_send()
@@ -115,7 +115,7 @@ def get_three_day_history(pws, timeout=30):
     """
     
     # Get the URL
-    url = "https://api.weather.com/v2/pws/observations/all/3day?apiKey=6532d6454b8aa370768e63d6ba5a832e&stationId=%s&format=json&units=e" % pws
+    url = "https://api.weather.com/v2/pws/observations/all/3day?apiKey=e1f10a1e78da46f5b10a1e78da96f525&stationId=%s&format=json&units=e" % pws
     
     # Check the rate limiter
     _rl.clear_to_send()
