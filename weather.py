@@ -4,6 +4,7 @@
 Module for reading in weather conditions from Weather Underground.
 """
 
+import re
 import json
 import math
 import time
@@ -13,7 +14,7 @@ from datetime import datetime, timedelta
 
 from expiring_cache import expiring_cache
 
-__version__ = '0.7'
+__version__ = '0.8'
 __all__ = ['get_current_conditions', 'get_three_day_history', 'get_current_temperature', 
            'get_daily_et']
 
@@ -87,13 +88,36 @@ class _RateLimiter(object):
 _rl = _RateLimiter()
 
 
+def _update_access_key():
+    """
+    Get the latest WUnderground data access key.
+    """
+    
+    _KEY_RE = re.compile(r'apiKey=(?P<key>[a-f0-9]*)&')
+    
+    page = ''
+    with urlopen('https://www.wunderground.com', None, 120) as uh:
+        page = uh.read()
+        page = page.decode()
+        
+    mtch = _KEY_RE.search(page)
+    if mtch is not None:
+        return mtch.group('key')
+    else:
+        return 'e1f10a1e78da46f5b10a1e78da96f525'
+
+
+# WUnderground data access key
+_ACCESS_KEY = _update_access_key()
+
+
 def get_current_conditions(pws, timeout=30):
     """
     Get the current conditions of the personal weather station using WUnderground.
     """
     
     # Get the URL
-    url = "https://api.weather.com/v2/pws/observations/current?apiKey=e1f10a1e78da46f5b10a1e78da96f525&stationId=%s&format=json&units=e" % pws
+    url = "https://api.weather.com/v2/pws/observations/current?apiKey=%s&stationId=%s&format=json&units=e" % (_ACCESS_KEY, pws)
     
     # Check the rate limiter
     _rl.clear_to_send()
@@ -116,7 +140,7 @@ def get_three_day_history(pws, timeout=30):
     """
     
     # Get the URL
-    url = "https://api.weather.com/v2/pws/observations/all/3day?apiKey=e1f10a1e78da46f5b10a1e78da96f525&stationId=%s&format=json&units=e" % pws
+    url = "https://api.weather.com/v2/pws/observations/all/3day?apiKey=%s&stationId=%s&format=json&units=e" % (_ACCESS_KEY, pws)
     
     # Check the rate limiter
     _rl.clear_to_send()
