@@ -21,7 +21,7 @@ confLogger = logging.getLogger('__main__')
 
 
 # Maximum number of zones to configure
-MAX_ZONES = 4
+MAX_ZONES = 6
 
 
 # Files
