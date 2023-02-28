@@ -5,3 +5,4 @@
  * Current power switch idea (regulator shutdown) leads to a fast on/off of
    the Raspberry Pi
    * Better to have it interrupt the +5V of the regulator? 
+ * Label the test points 
