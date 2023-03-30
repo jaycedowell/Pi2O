@@ -47,15 +47,6 @@
 				<div class="ui-field-contain">
 					<label for="zone{{ zone }}-name">Name:</label>
 					<input class="name{{ zone }}" type="text" name="zone{{ zone }}-name" value="{{ kwds.get("zone%i-name"|format(zone)) }}"/>
-					<label for="zone{{ zone }}-pin">GPIO Pin:</label>
-					<select class="pin{{ zone }}" id="pin{{ zone }}" name="zone{{ zone }}-pin">
-						<option value="17" {{ 'selected' if kwds.get("zone%i-pin"|format(zone)) == '17' else '' }}>17</option>
-						<option value="27" {{ 'selected' if kwds.get("zone%i-pin"|format(zone)) == '27' else '' }}>27</option>
-						<option value="22" {{ 'selected' if kwds.get("zone%i-pin"|format(zone)) == '22' else '' }}>22</option>
-						<option value="10" {{ 'selected' if kwds.get("zone%i-pin"|format(zone)) == '10' else '' }}>10</option>
-						<option value="9"  {{ 'selected' if kwds.get("zone%i-pin"|format(zone)) == '9'  else '' }}> 9</option>
-						<option value="11" {{ 'selected' if kwds.get("zone%i-pin"|format(zone)) == '11' else '' }}>11</option>
-					</select>
 					<label for="zone{{ zone }}-enabled">Enabled:</label>
 					<select class="enabled{{ zone }}" name="zone{{ zone }}-enabled" data-role="slider">
 						<option value="off">Off</option>
@@ -74,18 +65,7 @@
 						<label for="rainsensor-choice-1">Not Installed</label>
 						<input class="rtype" type="radio" name="rainsensor-type" id="rainsensor-choice-2" value="software" {{ 'checked' if kwds.get('rainsensor-type') == 'software' else '' }}>
 						<label for="rainsensor-choice-2">Software</label>
-						<input class="rtype" type="radio" name="rainsensor-type" id="rainsensor-choice-3" value="hardware" {{ 'checked' if kwds.get('rainsensor-type') == 'hardware' else '' }}>
-						<label for="rainsensor-choice-3">Hardware</label>
 					</fieldset>
-					<label for="rainsensor-pin">GPIO Pin:</label>
-					<select class="pinr" id="pinr" name="rainsensor-pin">
-						<option value="17" {{ 'selected' if kwds.get("rainsensor-pin") == '17' else '' }}>17</option>
-						<option value="27" {{ 'selected' if kwds.get("rainsensor-pin") == '27' else '' }}>27</option>
-						<option value="22" {{ 'selected' if kwds.get("rainsensor-pin") == '22' else '' }}>22</option>
-						<option value="10" {{ 'selected' if kwds.get("rainsensor-pin") == '10' else '' }}>10</option>
-						<option value="9"  {{ 'selected' if kwds.get("rainsensor-pin") == '9'  else '' }}> 9</option>
-						<option value="11" {{ 'selected' if kwds.get("rainsensor-pin") == '11' else '' }}>11</option>
-					</select>
 					<label for="rainsensor-precip">Rainfall:</label>
 					<input class="precip" type="range" name="rainsensor-precip" value="{{ kwds.get("rainsensor-precip") }}" min="0.04" max="0.52" step="0.04" data-highlight="true"/>
 				</div>
@@ -101,17 +81,14 @@
 				
 				{% if kwds.get("zone%i-enabled"|format(zone)) != 'on' %}
 				$('.name{{ zone }}').textinput('disable');
-				$('#pin{{ zone }}').selectmenu('disable');
 				{% endif %}
 			
 				$('.enabled{{ zone }}').trigger('create');
 				$('.enabled{{ zone }}').bind('slidestop', function (e) {
 					if (this.value == 'on') {
 						$('.name{{ zone }}').textinput('enable');
-						$('#pin{{ zone }}').selectmenu('enable');
 					} else {
 						$('.name{{ zone }}').textinput('disable');
-						$('#pin{{ zone }}').selectmenu('disable');
 					}
 				});
 				{% endfor %}
@@ -119,29 +96,20 @@
 				
 				{% if kwds.get('rainsensor-type') == 'off' %}
 				$('.precip').slider('disable');
-				$('#pinr').selectmenu('disable');
 				{% endif %}
 				{% if kwds.get('rainsensor-type') == 'software' %}
 				$('.precip').slider('enable');
-				$('#pinr').selectmenu('disable');
-				{% endif %}
-				{% if kwds.get('rainsensor-type') == 'hardware' %}
-				$('.precip').slider('disable');
-				$('#pinr').selectmenu('enable');
 				{% endif %}
 				
 				$('.rtype').trigger('create');
 				$('.rtype').on('click', function(e) {
 					if (this.value == 'off') {
 						$('.precip').slider('disable');
-						$('#pinr').selectmenu('disable');
 					} else {
 						if (this.value == 'software') {
 							$('.precip').slider('enable');
-							$('#pinr').selectmenu('disable');
 						} else {
 							$('.precip').slider('disable');
-							$('#pinr').selectmenu('enable');
 						}
 					}
 				});

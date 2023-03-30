@@ -9,9 +9,9 @@ import logging
 import threading
 from configparser import SafeConfigParser, NoSectionError
 
-from zone import GPIORelay, GPIORainSensor, NullRainSensor, SoftRainSensor, SprinklerZone
+from zone import NullRainSensor, SoftRainSensor, SprinklerZone
 
-__version__ = '0.5'
+__version__ = '0.6'
 __all__ = ['CONFIG_FILE', 'LockingConfigParser', 'load_config', 'init_zones',
            'save_config']
 
@@ -22,6 +22,15 @@ confLogger = logging.getLogger('__main__')
 
 # Maximum number of zones to configure
 MAX_ZONES = 6
+
+
+# Zone -> GPIO pin mapping
+ZONE_PIN_MAPPING = {1: 17,
+                    2: 27,
+                    3: 22,
+                    4: 10,
+                    5:  9,
+                    6: 11}
 
 
 # Files
@@ -142,18 +151,16 @@ def load_config(filename):
     ##  3) enabled - whether or not the zone is active
     for zone in range(1, MAX_ZONES+1):
         config.add_section(f"Zone{zone}")
-        for keyword in ('name', 'pin', 'enabled'):
+        for keyword in ('name', 'enabled'):
             config.set(f"Zone{zone}", keyword, '')
             if keyword == 'enabled':
                 config.set(f"Zone{zone}", keyword, 'off')
                 
     ## Dummy rain sensor information
     ##  1) type - off, software, or hardware
-    ##  2) pin - RPi GPIO pin for the hardware rain sensor
-    ##  3) precip - precipitation cutoff for the software rain sensor
+    ##  2) precip - precipitation cutoff for the software rain sensor
     config.add_section('RainSensor')
     config.set('RainSensor', 'type', 'off')
-    config.set('RainSensor', 'pin', '')
     config.set('RainSensor', 'precip', '')
     
     ## Dummy schedule information - one for each month
@@ -206,10 +213,8 @@ def init_zones(config):
     # Initialize the rain sensor
     if config.get('RainSensor', 'type') == 'off':
         rainSensor = NullRainSensor()
-    elif config.get('RainSensor', 'type') == 'software':
-        rainSensor = SoftRainSensor( config.getfloat('RainSensor', 'precip'), config )
     else:
-        rainSensor = GPIORainSensor( config.getint('RainSensor', 'pin') )
+        rainSensor = SoftRainSensor( config.getfloat('RainSensor', 'precip'), config )
         
     # Create the list of SprinklerZone instances
     zones = []
@@ -220,7 +225,7 @@ def init_zones(config):
             zoneEnabled = config.get(f"Zone{zone}", 'enabled')
             if zoneEnabled == 'on':
                 ### If so, use the real GPIO pin
-                zonePin = config.getint(f"Zone{zone}", 'pin')
+                zonePin = ZONE_PIN_MAPPING[zone]
                 ### If not, use a dummy pin
             else:
                 zonePin = -1
