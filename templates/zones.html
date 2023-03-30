@@ -47,15 +47,6 @@
 				<div class="ui-field-contain">
 					<label for="zone{{ zone }}-name">Name:</label>
 					<input class="name{{ zone }}" type="text" name="zone{{ zone }}-name" value="{{ kwds.get("zone%i-name"|format(zone)) }}"/>
-					<label for="zone{{ zone }}-pin">GPIO Pin:</label>
-					<select class="pin{{ zone }}" id="pin{{ zone }}" name="zone{{ zone }}-pin">
-						<option value="17" {{ 'selected' if kwds.get("zone%i-pin"|format(zone)) == '17' else '' }}>17</option>
-						<option value="27" {{ 'selected' if kwds.get("zone%i-pin"|format(zone)) == '27' else '' }}>27</option>
-						<option value="22" {{ 'selected' if kwds.get("zone%i-pin"|format(zone)) == '22' else '' }}>22</option>
-						<option value="10" {{ 'selected' if kwds.get("zone%i-pin"|format(zone)) == '10' else '' }}>10</option>
-						<option value="9"  {{ 'selected' if kwds.get("zone%i-pin"|format(zone)) == '9'  else '' }}> 9</option>
-						<option value="11" {{ 'selected' if kwds.get("zone%i-pin"|format(zone)) == '11' else '' }}>11</option>
-					</select>
 					<label for="zone{{ zone }}-rate">Water Rate (inches/hour):</label>
 					<input class="rate{{ zone }}" type="text" name="zone{{ zone }}-rate" value="{{ kwds.get("zone%i-rate"|format(zone)) }}"/>
 					<label for="zone{{ zone }}-enabled">Enabled:</label>
@@ -73,12 +64,10 @@
 				{% if not kwds.get("zone%i-enabled"|format(zone)) %}
 				{% break %}
 				{% endif %}
-				$('#pin{{ zone }}').selectmenu('refresh', true);
 				
 				{% if kwds.get("zone%i-enabled"|format(zone)) != 'on' %}
 				$('.name{{ zone }}').textinput('disable');
 				$('.rate{{ zone}}').textinput('disable');
-				$('#pin{{ zone }}').selectmenu('disable');
 				{% endif %}
 			
 				$('.enabled{{ zone }}').trigger('create');
@@ -86,11 +75,9 @@
 					if (this.value == 'on') {
 						$('.name{{ zone }}').textinput('enable');
 						$('.rate{{ zone}}').textinput('enable');
-						$('#pin{{ zone }}').selectmenu('enable');
 					} else {
 						$('.name{{ zone }}').textinput('disable');
 						$('.rate{{ zone}}').textinput('disable');
-						$('#pin{{ zone }}').selectmenu('disable');
 					}
 				});
 				{% endfor %}
