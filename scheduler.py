@@ -136,34 +136,34 @@ class ScheduleProcessor(object):
                     if (tNow >= tSchedule and tNow-tSchedule < timedelta(seconds=60)) or self.blockActive:
                         _LOGGER.debug('Scheduling block appears to be starting or active')
                         
-                        ### Load in the WUnderground API information
-                        pws = self.config.get('Weather', 'pws')
-                        
-                        ### Check the temperature to see if it is safe to run
-                        try:
-                            temp = get_current_temperature(pws)
-                        except RuntimeError:
-                            _LOGGER.warning('Cannot connect to WUnderground for temperature information, skipping check')
-                        else:
-                            if temp > 35.0:
-                                #### Everything is good to go, reset the delay
-                                if self.tDelay > timedelta(0):
-                                    _LOGGER.info('Resuming schedule after %i hour delay', self.tDelay.seconds/3600)
-                                    
-                                self.tDelay = timedelta(0)
-                                
-                            else:
-                                #### Wait for an hour an try again...
-                                self.tDelay += timedelta(seconds=3600)
-                                if self.tDelay >= timedelta(seconds=86400):
+                        if not self.blockActive:
+                            ### Load in the WUnderground API information
+                            pws = self.config.get('Weather', 'pws')
+                            
+                            ### Check the temperature to see if it is safe to run
+                            try:
+                                temp = get_current_temperature(pws)
+                                if temp > 35.0:
+                                    #### Everything is good to go, reset the delay
+                                    if self.tDelay > timedelta(0):
+                                        _LOGGER.info('Resuming schedule after %i hour delay', self.tDelay.seconds/3600)
+                                        
                                     self.tDelay = timedelta(0)
                                     
-                                _LOGGER.info('Temperature of %.1f F is below 35 F, delaying schedule for one hour', temp)
-                                _LOGGER.info('New schedule start time will be %s LT', tSchedule+self.tDelay)
+                                else:
+                                    #### Wait for an hour an try again...
+                                    self.tDelay += timedelta(seconds=3600)
+                                    if self.tDelay >= timedelta(seconds=86400):
+                                        self.tDelay = timedelta(0)
+                                        
+                                    _LOGGER.info('Temperature of %.1f F is below 35 F, delaying schedule for one hour', temp)
+                                    _LOGGER.info('New schedule start time will be %s LT', tSchedule+self.tDelay)
+                                    
+                                    continue
+                                _LOGGER.debug('Cleared all weather constraints')
+                            except RuntimeError:
+                                _LOGGER.warning('Cannot connect to WUnderground for temperature information, skipping check')
                                 
-                                continue
-                            _LOGGER.debug('Cleared all weather constraints')
-                            
                         ### Load in the last schedule run times
                         previousRuns = self.history.get_data(scheduled_only=True)
                         
