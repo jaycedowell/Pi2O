@@ -93,7 +93,7 @@ def _update_access_key():
     Get the latest WUnderground data access key.
     """
     
-    _KEY_RE = re.compile(r'apiKey=(?P<key>[a-f0-9]*)&')
+    _KEY_RE = re.compile(r'SUN_API_KEY&q;:&q;(?P<key>[a-f0-9]*)&q;')
     
     page = ''
     with urlopen('https://www.wunderground.com', None, 120) as uh:
@@ -117,7 +117,7 @@ def get_current_conditions(pws, timeout=30):
     """
     
     # Get the URL
-    url = "https://api.weather.com/v2/pws/observations/current?apiKey=%s&stationId=%s&format=json&units=e" % (_ACCESS_KEY, pws)
+    url = "https://api.weather.com/v2/pws/observations/current?apiKey=%s&stationId=%s&numericPrecision=decimal&format=json&units=e" % (_ACCESS_KEY, pws)
     
     # Check the rate limiter
     _rl.clear_to_send()
@@ -140,7 +140,7 @@ def get_three_day_history(pws, timeout=30):
     """
     
     # Get the URL
-    url = "https://api.weather.com/v2/pws/observations/all/3day?apiKey=%s&stationId=%s&format=json&units=e" % (_ACCESS_KEY, pws)
+    url = "https://api.weather.com/v2/pws/observations/all/3day?apiKey=%s&stationId=%s&numericPrecision=decimal&format=json&units=e" % (_ACCESS_KEY, pws)
     
     # Check the rate limiter
     _rl.clear_to_send()
