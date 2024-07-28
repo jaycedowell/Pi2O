@@ -74,7 +74,7 @@ class ScheduleProcessor(object):
         Cd = self.config.getfloat('Weather', 'cd')
         
         rc_ip = self.config.get('RainCache', 'ip')
-        rc_mv = self.config.get('RainCache', 'min_vol')
+        rc_mv = self.config.getfloat('RainCache', 'min_vol')
         
         try:
             self.tank_vol = get_current_volume(rc_ip)
@@ -144,7 +144,7 @@ class ScheduleProcessor(object):
                         if tNow - self.updatedRC >= timedelta(days=1):
                             ### Load in the RainCache information
                             rc_ip = self.config.get('RainCache', 'ip')
-                            rc_mv = self.config.get('RainCache', 'min_vol')
+                            rc_mv = self.config.getfloat('RainCache', 'min_vol')
                             
                             try:
                                 self.tank_vol = get_current_volume(rc_ip)
