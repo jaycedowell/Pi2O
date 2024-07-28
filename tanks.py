@@ -43,42 +43,45 @@ def _poll_raincache(ip, timeout=30):
     If the values cannot be determined all values returned are zero.
     """
     
-    with urlopen("http://%s" % ip, timeout=timeout) as uh:
-        page = uh.read()
-        page = page.decode()
-        
     t0, s, t, d, de, v, ve = 0, 0, 0, 0, 0, 0, 0
-    for line in page.split('\n'):
-        if line.startswith('SoC'):
-            fields = line.split()
-            try:
-                s = float(fields[3])
-            except:
-                pass
-        elif line.startswith('Air'):
-            fields = line.split()
-            try:
-                t = float(fields[3])
-            except:
-                pass
-        elif line.startswith('Distance'):
-            fields = line.split()
-            try:
-                d = float(fields[4])
-                de = float(fields[6])
-            except:
-                pass
-        elif line.startswith('Current'):
-            fields = line.split()
-            try:
-                v = float(fields[3])
-                ve = float(fields[5])
-            except:
-                pass
-        elif line.find(':') != -1:
-            t0 = datetime.strptime(line.strip().rstrip().replace('<br>', ''), '%Y/%m/%d %H:%M:%S')
-            t0 = pytz.utc.localize(t0).timestamp()
+    try:
+        with urlopen("http://%s" % ip, timeout=timeout) as uh:
+            page = uh.read()
+            page = page.decode()
             
+        for line in page.split('\n'):
+            if line.startswith('SoC'):
+                fields = line.split()
+                try:
+                    s = float(fields[3])
+                except:
+                    pass
+            elif line.startswith('Air'):
+                fields = line.split()
+                try:
+                    t = float(fields[3])
+                except:
+                    pass
+            elif line.startswith('Distance'):
+                fields = line.split()
+                try:
+                    d = float(fields[4])
+                    de = float(fields[6])
+                except:
+                    pass
+            elif line.startswith('Current'):
+                fields = line.split()
+                try:
+                    v = float(fields[3])
+                    ve = float(fields[5])
+                except:
+                    pass
+            elif line.find(':') != -1:
+                t0 = datetime.strptime(line.strip().rstrip().replace('<br>', ''), '%Y/%m/%d %H:%M:%S')
+                t0 = pytz.utc.localize(t0).timestamp()
+    except:
+        pass
+        
     return t0, s, t, d, de, v, ve
 
 
