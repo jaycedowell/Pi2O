@@ -130,6 +130,7 @@ class AJAX(object):
         output = {}
         output['history'] = 'active' if self.history.is_alive() else 'failed'
         output['scheduler'] = 'active' if self.scheduler.is_alive() else 'failed'
+        output['tanks']= 'active' if self.tanks.is_alive() else 'failed'
         
         output['zones'] = []
         for i,zone in enumerate(self.hardwareZones):
@@ -153,6 +154,14 @@ class AJAX(object):
                 output['run%i' % entry['zone']] = self.serialize(lStop)-self.serialize(lStart)
                 output['adjust%i' % entry['zone']] = entry['wxAdjust']
                 
+        try:
+            last_tank_entry = self.tanks.last_entry()
+            t_now = time.time()
+            t_age = (last_tank_entry[0] - t_now) / 3600
+            output['current_tank_vol'] = "%.0f gallons as of %.1f hours ago" % (last_tank_entry[-2], t_age)
+        except Exception as e:
+            output['current_tank_vol'] = "unknown"
+            
         return output
     
     @cherrypy.expose

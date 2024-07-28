@@ -156,6 +156,8 @@ class LockingConfigParser(SafeConfigParser):
                     section = section.capitalize()
                     if section == 'Rainsensor':
                         section = 'RainSensor'
+                    if section == 'Raincache':
+                        section = 'RainCache'
                     self.set(section, keyword, value)
                 except Exception as e:
                     _LOGGER.warning("from_dict with key='%s', value='%s': %s", key, value, str(e))
