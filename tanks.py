@@ -142,6 +142,7 @@ class TankLogger(object):
         
         self.thread = None
         self.alive = threading.Event()
+        self.lock = threading.Lock()
         
     def start(self):
         if self.thread is not None:
@@ -173,14 +174,15 @@ class TankLogger(object):
         while self.alive.is_set():
             t0, s, t, d, de, v, ve = _poll_raincache(self.config.get('RainCache', 'ip'), timeout=30)
             
-            if t0 > 0 and d >= MIN_VALID_DISTANCE:
-                with open(self.logname, 'a') as fh:
-                    fh.write(f"{t0},{s},{t},{d},{de},{v},{ve}\n")
+            with self.lock:
+                if t0 > 0 and d >= MIN_VALID_DISTANCE:
+                    with open(self.logname, 'a') as fh:
+                        fh.write(f"{t0},{s},{t},{d},{de},{v},{ve}\n")
+                        
+                trimmed = subprocess.check_output(['tail', '-n2000', self.logname])
+                with open(self.logname, 'wb') as fh:
+                    fh.write(trimmed)
                     
-            trimmed = subprocess.check_output(['tail', '-n2000', self.logname])
-            with open(self.logname, 'wb') as fh:
-                fh.write(trimmed)
-                
             time.sleep(self.interval)
             
     def last_entry(self):
@@ -189,9 +191,10 @@ class TankLogger(object):
         _poll_raincache() provides.
         """
         
-        last_line = subprocess.check_output(['tail', '-n1', self.logname])
-        last_line = last_line.decode().strip().rstrip()
-        fields = [float(v) for v in last_line.split(',')]
+        with self.lock:
+            last_line = subprocess.check_output(['tail', '-n1', self.logname])
+            last_line = last_line.decode().strip().rstrip()
+            fields = [float(v) for v in last_line.split(',')]
         return fields
 
 
