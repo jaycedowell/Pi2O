@@ -168,7 +168,7 @@ class TankLogger(object):
         self.running = True
         
         while self.alive.is_set():
-            t0, s, t, de, de, v, ve = _poll_raincache(self.config.get('RainCache', 'ip', timeout=30))
+            t0, s, t, de, de, v, ve = _poll_raincache(self.config.get('RainCache', 'ip'), timeout=30)
             
             if t0 > 0 and d >= MIN_VALID_DISTANCE:
                 with open(self.logname, 'a') as fh:
