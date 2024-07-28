@@ -223,6 +223,13 @@ def load_config(filename):
         else:
             config.set('Weather', keyword, '')
             
+    ## Dummy tank information
+    ##  1) ip - RainCache IP address
+    ##  2) min_vol - Minimum tank volume in gallons
+    config.add_section('RainCache')
+    config.set('RainCache', 'ip', '0.0.0.0')
+    config.set('RainCache', 'min_vol', 0.0)
+    
     # Try to read in the actual configuration file
     try:
         config.read(filename)

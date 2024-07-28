@@ -20,6 +20,7 @@ from config import *
 from database import Archive
 from scheduler import ScheduleProcessor
 from weather import get_current_temperature, get_daily_et
+from tanks import TankLogger, get_current_distance, get_current_volume
 
 
 # Path configuration
@@ -109,11 +110,12 @@ def daemonize(stdin='/dev/null', stdout='/dev/null', stderr='/dev/null'):
 
 # AJAX interface
 class AJAX(object):
-    def __init__(self, config, hardwareZones, history, scheduler):
+    def __init__(self, config, hardwareZones, history, scheduler, tanks):
         self.config = config
         self.hardwareZones = hardwareZones
         self.history = history
         self.scheduler = scheduler
+        self.tanks = tanks
         
     def serialize(self, dt):
         if isinstance(dt, datetime):
@@ -230,13 +232,14 @@ class AJAX(object):
 
 # Main web interface
 class Interface(object):
-    def __init__(self, config, hardwareZones, history, scheduler):
+    def __init__(self, config, hardwareZones, history, scheduler, tanks):
         self.config = config
         self.hardwareZones = hardwareZones
         self.history = history
         self.scheduler = scheduler
+        self.tanks = tanks
         
-        self.query = AJAX(config, hardwareZones, history, scheduler)
+        self.query = AJAX(config, hardwareZones, history, scheduler, tanks)
         
     @cherrypy.expose
     def index(self):
@@ -246,6 +249,7 @@ class Interface(object):
         
         kwds['history'] = 'active' if self.history.is_alive() else 'failed'
         kwds['scheduler'] = 'active' if self.scheduler.is_alive() else 'failed'
+        kwds['tanks'] = 'active' if self.tanks.is_alive() else 'failed'
         
         for i,zone in enumerate(self.hardwareZones):
             i += 1
@@ -261,6 +265,11 @@ class Interface(object):
                 kwds['zone%i-lastStop' % entry['zone']] = pytz.utc.localize(datetime.utcfromtimestamp(entry['dateTimeStop'])).astimezone(_LOCAL_TZ)
                 kwds['zone%i-adjust' % entry['zone']] = entry['wxAdjust']
                 
+        last_tank_entry = self.tanks.last_entry()
+        t_now = time.time()
+        t_age = (last_tank_entry[0] - t_now) / 3600
+        kwds['current_tank_vol'] = "%.0f gallons as of %.1f hours ago" % (last_tank_entry[-2], t_age)
+        
         template = jinjaEnv.get_template('index.html')
         return template.render({'kwds':kwds})
         
@@ -416,8 +425,12 @@ def main(args):
     scheduler = ScheduleProcessor(config, hardwareZones, history)
     scheduler.start()
     
+    # Initialize the RainCache tanks interface
+    tanks = TankLogger(config)
+    tanks.start()
+    
     # Initialize the web interface
-    ws = Interface(config, hardwareZones, history, scheduler)
+    ws = Interface(config, hardwareZones, history, scheduler, tanks)
     #cherrypy.quickstart(ws, config=cpConfig)
     cherrypy.engine.signal_handler.subscribe()
     cherrypy.tree.mount(ws, "/", config=cpConfig)
@@ -426,6 +439,9 @@ def main(args):
     
     # Shutdown process
     logger.info('Shutting down Pi2O, please wait...')
+    
+    # Stop the tank logger
+    tanks.cancel()
     
     # Stop the scheduler thread
     scheduler.cancel()

@@ -13,6 +13,7 @@ from io import StringIO
 from datetime import datetime, timedelta
 
 from weather import get_current_temperature, get_daily_et
+from tanks import get_current_volume
 
 __version__ = '0.6'
 __all__ = ['ScheduleProcessor',]
@@ -64,7 +65,21 @@ class ScheduleProcessor(object):
         self.running = True
         self.blockActive = False
         self.updatedET = datetime.now().replace(year=2000)
+        self.uddatedRC = datetime.now().replace(year=2000)
         self.processedInBlock = []
+        
+        pws = self.config.get('Weather', 'pws')
+        Kc = self.config.getfloat('Weather', 'kc')
+        Cn = self.config.getfloat('Weather', 'cn')
+        Cd = self.config.getfloat('Weather', 'cd')
+        
+        rc_ip = self.config.get('RainCache', 'ip')
+        rc_mv = self.config.get('RainCache', 'min_vol')
+        
+        try:
+            self.tank_vol = get_current_volume(rc_ip)
+        except:
+            self.tank_vol = 0.0
         
         self.tDelay = timedelta(0)
         
@@ -126,6 +141,21 @@ class ScheduleProcessor(object):
                             except RuntimeError:
                                 _LOGGER.warning('Cannot connect to WUnderground for ET estimate, skipping')
                                 
+                        if tNow - self.updatedRC >= timedelta(days=1):
+                            ### Load in the RainCache information
+                            rc_ip = self.config.get('RainCache', 'ip')
+                            rc_mv = self.config.get('RainCache', 'min_vol')
+                            
+                            try:
+                                self.tank_vol = get_current_volume(rc_ip)
+                                _LOGGER.info('RainCache tank volume: %.0f gal', self.tank_vol)
+                                
+                                self.updatedRC = tNow
+                                
+                            except RuntimeError:
+                                self.tank_vol = 0.0
+                                _LOGGER.warning('Cannot connect to RainCache for tank volume, skipping')
+                                
                     ## Figure out if it is the start time or if we are inside a schedule 
                     ## block.  If so, we need to turn things on.
                     ##
@@ -143,7 +173,7 @@ class ScheduleProcessor(object):
                             ### Check the temperature to see if it is safe to run
                             try:
                                 temp = get_current_temperature(pws)
-                                if temp > 35.0:
+                                if temp > 35.0 and self.tank_vol > rc_mv:
                                     #### Everything is good to go, reset the delay
                                     if self.tDelay > timedelta(0):
                                         _LOGGER.info('Resuming schedule after %i hour delay', self.tDelay.seconds/3600)
@@ -156,7 +186,10 @@ class ScheduleProcessor(object):
                                     if self.tDelay >= timedelta(seconds=86400):
                                         self.tDelay = timedelta(0)
                                         
-                                    _LOGGER.info('Temperature of %.1f F is below 35 F, delaying schedule for one hour', temp)
+                                    if temp <= 35.0:
+                                        _LOGGER.info('Temperature of %.1f F is below 35 F, delaying schedule for one hour', temp)
+                                    if self.tank_vol < rc_mv
+                                        _LOGGER.info('RainCache tank volume of %.0f gal is below %.0f gal, delaying schedule for one hour', self.tank_vol, rc_mv)
                                     _LOGGER.info('New schedule start time will be %s LT', tSchedule+self.tDelay)
                                     
                                     continue

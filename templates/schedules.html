@@ -92,6 +92,21 @@
 				</div>
 			</div>
 			
+			<div data-role="collapsible" data-collapsed="false">
+				<h3 class="ui-title" role="heading" aira-level="1">RainCache</h3>
+				
+				<div class="ui-field-contain no-field-separator">
+				  <label for="raincache-ip">IP Address:</label>
+				  <input id="raincache-ip" type="text" name="raincache-ip" value="{{ kwds.get("raincache-ip") }}" >
+			  </div>
+				
+			  <div class="ui-field-contain no-field-separator">
+				  <label for="raincache-min_vol">Minmum Volume (gal):</label>
+				  <input id="raincache-min_vol" type="text" name="raincache-min_vol" value="{{ kwds.get("raincache-min_vol") }}" >
+			  </div>
+			</div>
+		</div>
+			
 			<button type="submit">Save Configuration</button>
 		</div>
 	</form>
