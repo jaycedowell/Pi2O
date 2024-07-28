@@ -157,10 +157,15 @@ class AJAX(object):
         try:
             last_tank_entry = self.tanks.last_entry()
             t_now = time.time()
-            t_age = (last_tank_entry[0] - t_now) / 3600
+            t_age = (t_now - last_tank_entry[0]) / 3600
             output['current_tank_vol'] = "%.0f gallons as of %.1f hours ago" % (last_tank_entry[-2], t_age)
+            if last_tank_entry[-2] < self.config.get('RainCache', 'min_vol'):
+                output['current_tank_vol_flag'] = 'flag'
+            else:
+                output['current_tank_vol_flag'] = ''
         except Exception as e:
             output['current_tank_vol'] = "unknown"
+            output['current_tank_vol_flag'] = 'flag'
             
         return output
     
@@ -277,7 +282,7 @@ class Interface(object):
         try:
             last_tank_entry = self.tanks.last_entry()
             t_now = time.time()
-            t_age = (last_tank_entry[0] - t_now) / 3600
+            t_age = (t_now - last_tank_entry[0]) / 3600
             kwds['current_tank_vol'] = "%.0f gallons as of %.1f hours ago" % (last_tank_entry[-2], t_age)
             if last_tank_entry[-2] < self.config.get('RainCache', 'min_vol'):
                 kwds['current_tank_vol_flag'] = 'flag'
