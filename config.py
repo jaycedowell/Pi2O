@@ -228,7 +228,7 @@ def load_config(filename):
     ##  2) min_vol - Minimum tank volume in gallons
     config.add_section('RainCache')
     config.set('RainCache', 'ip', '0.0.0.0')
-    config.set('RainCache', 'min_vol', 0.0)
+    config.set('RainCache', 'min_vol', '0.0')
     
     # Try to read in the actual configuration file
     try:
