@@ -177,7 +177,7 @@ class TankLogger(object):
                 with open(self.logname, 'a') as fh:
                     fh.write(f"{t0},{s},{t},{d},{de},{v},{ve}\n")
                     
-            trimmed = subprocess.check_call['tail', '-n2000', self.logname]
+            trimmed = subprocess.check_call(['tail', '-n2000', self.logname])
             with open(self.logname, 'wb') as fh:
                 fh.write(trimmed)
                 
