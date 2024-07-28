@@ -78,6 +78,17 @@
 		    } else {
 		        $('#scheduler').html('<font color="red">&cross;</font>');
 		    }
+				if( data['tanks'] == 'active' ) {
+		        $('#tanks').html('<font color="green">&check;</font>');
+		    } else {
+		        $('#tanks').html('<font color="red">&cross;</font>');
+		    }
+				
+				if( data['current_tank_vol_flag'] == 'flag' ) {
+				    $('current_tank_vol').html(<font color="red"> + data['current_tank_vol'] + "</font>");
+				} else {
+					  $('current_tank_vol').html(data['current_tank_vol']);
+				}
 		    
 			for( var zone in data['zones']) {
 				var name = data['name'+zone];

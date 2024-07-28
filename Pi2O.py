@@ -279,8 +279,13 @@ class Interface(object):
             t_now = time.time()
             t_age = (last_tank_entry[0] - t_now) / 3600
             kwds['current_tank_vol'] = "%.0f gallons as of %.1f hours ago" % (last_tank_entry[-2], t_age)
+            if last_tank_entry[-2] < self.config.get('RainCache', 'min_vol'):
+                kwds['current_tank_vol_flag'] = 'flag'
+            else:
+                kwds['current_tank_vol_flag'] = ''
         except Exception as e:
             kwds['current_tank_vol'] = "unknown"
+            kwds['current_tank_vol_flag'] = 'flag'
             
         template = jinjaEnv.get_template('index.html')
         return template.render({'kwds':kwds})
