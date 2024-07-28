@@ -27,6 +27,7 @@ from tanks import TankLogger, get_current_distance, get_current_volume
 _BASE_PATH = os.path.dirname(os.path.abspath(__file__))
 CSS_PATH = os.path.join(_BASE_PATH, 'css')
 JS_PATH = os.path.join(_BASE_PATH, 'js')
+IMG_PATH os.path.join(_BASE_PATH, 'images')
 TEMPLATE_PATH = os.path.join(_BASE_PATH, 'templates')
 
 
@@ -391,20 +392,6 @@ class Interface(object):
             
         template = jinjaEnv.get_template('log.html')
         return template.render({'kwds':kwds})
-        
-    @cherrypy.expose
-    def tanks(self, **kwds):
-        imgname = os.path.abspath(__file__)
-        imgname = os.path.join(os.path.dirname(imgname), 'tanks.png')
-        
-        try:
-            with open(imgname, 'rb') as fh:
-                data = fh.read()
-                
-        except Exception:
-            data = b"none"
-            
-        return data
 
 
 def main(args):
@@ -433,7 +420,9 @@ def main(args):
     cpConfig = {'/css': {'tools.staticdir.on': True,
                          'tools.staticdir.dir': CSS_PATH},
                 '/js':  {'tools.staticdir.on': True,
-                         'tools.staticdir.dir': JS_PATH}
+                         'tools.staticdir.dir': JS_PATH},
+                '/images': {'tools.staticdir.on': True,
+                            'tools.staticdir.dir': IMG_PATH}
                }
                 
     # Report on who we are

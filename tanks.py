@@ -194,7 +194,7 @@ def _make_plot(filename, lock=None):
     plt.draw()
 
     imgname = os.path.abspath(__file__)
-    imgname = os.path.join(os.path.dirname(imgname), 'tanks.png')
+    imgname = os.path.join(os.path.dirname(imgname), 'images', 'tanks.png')
     fig.savefig(imgname)
 
 
