@@ -85,9 +85,9 @@
 		    }
 				
 				if( data['current_tank_vol_flag'] == 'flag' ) {
-				    $('current_tank_vol').html('<font color="red">' + data['current_tank_vol'] + '</font>');
+				    $('#current_tank_vol').html('<font color="red">' + data['current_tank_vol'] + '</font>');
 				} else {
-					  $('current_tank_vol').html(data['current_tank_vol']);
+					  $('#current_tank_vol').html(data['current_tank_vol']);
 				}
 		    
 			for( var zone in data['zones']) {
