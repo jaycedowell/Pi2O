@@ -138,7 +138,7 @@ class TankLogger(object):
         self.config = config
         if logname is None:
             logname = '/home/pi/tanks.log'
-        self.lognname = logname
+        self.logname = logname
         
         self.thread = None
         self.alive = threading.Event()
