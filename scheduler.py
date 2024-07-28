@@ -173,7 +173,7 @@ class ScheduleProcessor(object):
                             ### Check the temperature to see if it is safe to run
                             try:
                                 temp = get_current_temperature(pws)
-                                if temp > 35.0 and self.tank_vol > rc_mv:
+                                if temp > 35.0 and self.tank_vol >= rc_mv:
                                     #### Everything is good to go, reset the delay
                                     if self.tDelay > timedelta(0):
                                         _LOGGER.info('Resuming schedule after %i hour delay', self.tDelay.seconds/3600)
@@ -188,7 +188,7 @@ class ScheduleProcessor(object):
                                         
                                     if temp <= 35.0:
                                         _LOGGER.info('Temperature of %.1f F is below 35 F, delaying schedule for one hour', temp)
-                                    if self.tank_vol < rc_mv
+                                    if self.tank_vol < rc_mv:
                                         _LOGGER.info('RainCache tank volume of %.0f gal is below %.0f gal, delaying schedule for one hour', self.tank_vol, rc_mv)
                                     _LOGGER.info('New schedule start time will be %s LT', tSchedule+self.tDelay)
                                     
