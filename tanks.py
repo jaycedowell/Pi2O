@@ -171,11 +171,11 @@ def _make_plot(filename, lock=None):
 
     # Fit a line to the volume change over the last week
     v_fit = np.polyfit((data[last_week,0]-data[last_week[-1],0])/86400/7, v[last_week], 1)
-    print('V:', v_fit[0], 'gal/wk')
+    _LOGGER.info('Volume change: %.1f gal/wk', v_fit[0])
 
     if v_fit[0] < 0:
         t_empty = (500 - v[-1]) / v_fit[0]
-        print(' Estimated time until empty:', t_empty, 'wk')
+        _LOGGER.info('Estimated time until empty: %.1f wk', t_empty)
         
     # Total volume of water as a function of time
     fig = plt.figure()
@@ -256,10 +256,9 @@ class TankLogger(object):
                 with open(self.logname, 'wb') as fh:
                     fh.write(trimmed)
                     
-            ## Update the ET values within one hour of 1 AM
+            ## Update the tank plot within one hour of 1 AM
             if tNow - tNow.replace(hour=1, minute=0, second=0) < timedelta(hours=1):
                 if tNow - self.updatedPlot >= timedelta(days=1):
-                    
                     try:
                         _make_plot(self.logname, lock=self.lock)
                         

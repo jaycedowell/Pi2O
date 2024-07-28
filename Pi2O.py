@@ -401,8 +401,8 @@ class Interface(object):
             with open(imgname, 'rb') as fh:
                 data = fh.read()
                 
-        except IOError:
-            data = "none"
+        except Exception:
+            data = b"none"
             
         return data
 
