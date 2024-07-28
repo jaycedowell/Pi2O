@@ -191,7 +191,7 @@ class TankLogger(object):
         
         last_line = subprocess.check_output(['tail', '-n1', self.logname])
         last_line = last_line.decode().strip().rstrip()
-        fields = [float(v) for v in last_line.split()]
+        fields = [float(v) for v in last_line.split(',')]
         return fields
 
 
