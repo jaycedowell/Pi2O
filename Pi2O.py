@@ -265,11 +265,14 @@ class Interface(object):
                 kwds['zone%i-lastStop' % entry['zone']] = pytz.utc.localize(datetime.utcfromtimestamp(entry['dateTimeStop'])).astimezone(_LOCAL_TZ)
                 kwds['zone%i-adjust' % entry['zone']] = entry['wxAdjust']
                 
-        last_tank_entry = self.tanks.last_entry()
-        t_now = time.time()
-        t_age = (last_tank_entry[0] - t_now) / 3600
-        kwds['current_tank_vol'] = "%.0f gallons as of %.1f hours ago" % (last_tank_entry[-2], t_age)
-        
+        try:
+            last_tank_entry = self.tanks.last_entry()
+            t_now = time.time()
+            t_age = (last_tank_entry[0] - t_now) / 3600
+            kwds['current_tank_vol'] = "%.0f gallons as of %.1f hours ago" % (last_tank_entry[-2], t_age)
+        except Exception as e:
+            kwds['current_tank_vol'] = "unknown"
+            
         template = jinjaEnv.get_template('index.html')
         return template.render({'kwds':kwds})
         
