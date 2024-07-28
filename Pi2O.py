@@ -391,6 +391,20 @@ class Interface(object):
             
         template = jinjaEnv.get_template('log.html')
         return template.render({'kwds':kwds})
+        
+    @cherrypy.expose
+    def tanks(self, **kwds):
+        imgname = os.path.abspath(__file__)
+        imgname = os.path.join(os.path.dirname(imgname), 'tanks.png')
+        
+        try:
+            with open(imgname, 'rb') as fh:
+                data = fh.read()
+                
+        except IOError:
+            data = "none"
+            
+        return data
 
 
 def main(args):

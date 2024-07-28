@@ -7,12 +7,18 @@ Module for reading in tank conditions from a RainCache device.
 import sys
 import pytz
 import time
+import numpy as np
 import logging
 import threading
 import traceback
 import subprocess
 from urllib.request import urlopen
 from datetime import datetime
+
+import matplotlib
+matplotlib.use('agg')
+from matplotlib import pyplot as plt
+import matplotlib.dates as mdates
 
 from expiring_cache import expiring_cache
 
@@ -128,6 +134,69 @@ def get_current_volume(ip, timeout=30):
     return t0, v, ve
 
 
+def _make_plot(filename, lock=None):
+    """
+    Given a logfile that contains values from _poll_raincache(), generate a plot
+    that shows the level in the tanks over time.
+    """
+    
+    if lock is not None:
+        lock.acquire()
+        
+    data = np.loadtxt(filename, delimiter=',')
+    
+    if lock is not None:
+        lock.release()
+    
+    # Remove obviously bad data points (distance to water < 4")
+    valid = np.where( data[:,3] >= MIN_VALID_DISTANCE )[0]
+    data = data[valid,:]*1.0
+    
+    # Smooth the data over 1 hour windows to reduce the influence of "bad" readings
+    data_smooth = np.zeros_like(data)
+    data_smooth[:,0] = data[:,0]
+    for i in range(data.shape[0]):
+        v = np.where( np.abs(data[:,0]-data[i,0]) < 3600 )[0]
+        data_smooth[i,1:] = np.median(data[v,:], axis=0)[1:]
+    data = data_smooth
+    
+    # Find data for the last week
+    last_week = np.where( np.abs(data[:,0] - data[-1,0]) < 86400*7 )[0]
+    
+    # Pull out the relevant columns
+    t = np.array([datetime.utcfromtimestamp(d) for d in data[:,0]])
+    v = data[:,5]
+    ve = data[:,6]
+
+    # Fit a line to the volume change over the last week
+    v_fit = np.polyfit((data[last_week,0]-data[last_week[-1],0])/86400/7, v[last_week], 1)
+    print('V:', v_fit[0], 'gal/wk')
+
+    if v_fit[0] < 0:
+        t_empty = (500 - v[-1]) / v_fit[0]
+        print(' Estimated time until empty:', t_empty, 'wk')
+        
+    # Total volume of water as a function of time
+    fig = plt.figure()
+    ax = fig.gca()
+    ax.errorbar(t, v, ve, linestyle='', marker='+')
+    ax.plot(t[last_week], np.polyval(v_fit, (data[last_week,0]-data[last_week[-1],0])/86400/7))
+    xlim = ax.get_xlim()
+    ax.hlines(500, t[0], t[-1], linestyle=':', color='orange')
+    ax.set_xlabel('UTC Date')
+    ax.xaxis.set_major_formatter(mdates.DateFormatter('%m/%d %H:%M'))
+    ax.set_xlim(xlim)
+    ax.set_ylabel('Total Water Volume [gal]')
+    ax.set_ylim((0, 4800))
+    ax.set_title('%.1f gal/wk' % v_fit[0])
+    fig.autofmt_xdate()
+    plt.draw()
+
+    imgname = os.path.abspath(__file__)
+    imgname = os.path.join(os.path.dirname(imgname), 'tanks.png')
+    fig.savefig(imgname)
+
+
 class TankLogger(object):
     """
     Class responsible for monitoring the water levels in the tanks.
@@ -169,9 +238,12 @@ class TankLogger(object):
         return status
         
     def run(self):
-        self.running = True
+        self.updatedPlot = datetime.now().replace(year=2000)
         
         while self.alive.is_set():
+            tNow = datetime.now()
+            tNow = tNow.replace(microsecond=0)
+            
             t0, s, t, d, de, v, ve = _poll_raincache(self.config.get('RainCache', 'ip'), timeout=30)
             
             with self.lock:
@@ -183,6 +255,18 @@ class TankLogger(object):
                 with open(self.logname, 'wb') as fh:
                     fh.write(trimmed)
                     
+            ## Update the ET values within one hour of 1 AM
+            if tNow - tNow.replace(hour=1, minute=0, second=0) < timedelta(hours=1):
+                if tNow - self.updatedPlot >= timedelta(days=1):
+                    
+                    try:
+                        _make_plot(self.logname, lock=self.lock)
+                        
+                        self.updatedPlot = tNow
+                        
+                    except Exception as e:
+                        _LOGGER.warning('Cannot update tank plot, skipping')
+                        
             time.sleep(self.interval)
             
     def last_entry(self):
