@@ -4,6 +4,7 @@
 Module for reading in tank conditions from a RainCache device.
 """
 
+import os
 import sys
 import pytz
 import time
