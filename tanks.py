@@ -171,7 +171,7 @@ class TankLogger(object):
         self.running = True
         
         while self.alive.is_set():
-            t0, s, t, de, de, v, ve = _poll_raincache(self.config.get('RainCache', 'ip'), timeout=30)
+            t0, s, t, d, de, v, ve = _poll_raincache(self.config.get('RainCache', 'ip'), timeout=30)
             
             if t0 > 0 and d >= MIN_VALID_DISTANCE:
                 with open(self.logname, 'a') as fh:
@@ -196,7 +196,7 @@ class TankLogger(object):
 
 
 if __name__ == '__main__':
-    t0, s, t, de, de, v, ve = _poll_raincache(sys.argv[1], timeout=30)
+    t0, s, t, d, de, v, ve = _poll_raincache(sys.argv[1], timeout=30)
     
     if t0 > 0 and d >= MIN_VALID_DISTANCE:
         with open('/home/pi/tanks.log', 'a') as fh:
