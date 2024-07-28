@@ -27,7 +27,7 @@ from tanks import TankLogger, get_current_distance, get_current_volume
 _BASE_PATH = os.path.dirname(os.path.abspath(__file__))
 CSS_PATH = os.path.join(_BASE_PATH, 'css')
 JS_PATH = os.path.join(_BASE_PATH, 'js')
-IMG_PATH os.path.join(_BASE_PATH, 'images')
+IMG_PATH = os.path.join(_BASE_PATH, 'images')
 TEMPLATE_PATH = os.path.join(_BASE_PATH, 'templates')
 
 
