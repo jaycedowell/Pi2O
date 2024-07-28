@@ -177,7 +177,7 @@ class TankLogger(object):
                 with open(self.logname, 'a') as fh:
                     fh.write(f"{t0},{s},{t},{d},{de},{v},{ve}\n")
                     
-            trimmed = subprocess.check_call(['tail', '-n2000', self.logname])
+            trimmed = subprocess.check_output(['tail', '-n2000', self.logname])
             with open(self.logname, 'wb') as fh:
                 fh.write(trimmed)
                 
@@ -189,7 +189,7 @@ class TankLogger(object):
         _poll_raincache() provides.
         """
         
-        last_line = subprocess.check_call(['tail', '-n1', self.logname])
+        last_line = subprocess.check_output(['tail', '-n1', self.logname])
         last_line = last_line.decode().strip().rstrip()
         fields = [float(v) for v in last_line.split()]
         return fields
