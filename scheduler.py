@@ -65,7 +65,7 @@ class ScheduleProcessor(object):
         self.running = True
         self.blockActive = False
         self.updatedET = datetime.now().replace(year=2000)
-        self.uddatedRC = datetime.now().replace(year=2000)
+        self.updatedRC = datetime.now().replace(year=2000)
         self.processedInBlock = []
         
         pws = self.config.get('Weather', 'pws')
