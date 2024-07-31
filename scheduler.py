@@ -77,7 +77,7 @@ class ScheduleProcessor(object):
         rc_mv = self.config.getfloat('RainCache', 'min_vol')
         
         try:
-            self.tank_vol = get_current_volume(rc_ip)
+            self.tank_vol = get_current_volume(rc_ip)[1]
         except:
             self.tank_vol = 0.0
         
@@ -147,7 +147,7 @@ class ScheduleProcessor(object):
                             rc_mv = self.config.getfloat('RainCache', 'min_vol')
                             
                             try:
-                                self.tank_vol = get_current_volume(rc_ip)
+                                self.tank_vol = get_current_volume(rc_ip)[1]
                                 _LOGGER.info('RainCache tank volume: %.0f gal', self.tank_vol)
                                 
                                 self.updatedRC = tNow
