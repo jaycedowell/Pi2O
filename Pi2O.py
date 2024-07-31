@@ -20,7 +20,7 @@ from config import *
 from database import Archive
 from scheduler import ScheduleProcessor
 from weather import get_current_temperature, get_daily_et
-from tanks import TankLogger, get_current_distance, get_current_volume
+from tanks import TankLogger
 
 
 # Path configuration
