@@ -116,6 +116,18 @@ class ScheduleProcessor(object):
                         if run_only_N <= 0:
                             run_only_N = 32
                             
+                    ## Order the zones by decreasing ET
+                    try:
+                        zone_order
+                    except NameError:
+                        zone_et = {}
+                        for zone in range(1, len(self.hardwareZones)+1):
+                            #### Is the current zone even active?
+                            if self.config.get(f"Zone{zone}", 'enabled') == 'on' \
+                               and zone not in zones_to_skip:
+                                zone_et[zone] = self.hardwareZones[zone-1].current_et_value*1.0
+                        zone_order = [k for k,v in sorted(zone_et.items(), key=lambda x:x[1], reverse=True)]
+                        
                     ## Update the ET values within one hour of midnight
                     if tNow - tNow.replace(hour=0, minute=0, second=0) < timedelta(hours=1):
                         if tNow - self.updatedET >= timedelta(days=1):
@@ -201,69 +213,70 @@ class ScheduleProcessor(object):
                         previousRuns = self.history.get_data(scheduled_only=True)
                         
                         ### Loop over the zones and work only on those that are enabled
-                        for zone in range(1, len(self.hardwareZones)+1):
-                            #### Is the current zone even active?
-                            if self.config.get(f"Zone{zone}", 'enabled') == 'on' \
-                               and zone not in zones_to_skip:
-                                #### What duration do we use for this zone?
-                                ##### Get the allowed ET threshold value and convert it to a duration
-                                threshold = self.config.getfloat(f"Schedule{tNow.month}", 'threshold')
-                                duration = self.hardwareZones[zone-1].get_durations_from_precipitation(threshold)
-                                adjustmentUsed = -2.0
-                                    
-                                duration = timedelta(minutes=int(duration), seconds=int((duration*60) % 60))
+                        for zone in zone_order:
+                            #### What duration do we use for this zone?
+                            ##### Get the allowed ET threshold value and convert it to a duration
+                            threshold = self.config.getfloat(f"Schedule{tNow.month}", 'threshold')
+                            duration = self.hardwareZones[zone-1].get_durations_from_precipitation(threshold)
+                            adjustmentUsed = -2.0
                                 
-                                #### What is the last run time for this zone?
-                                tLastUTC = datetime.utcfromtimestamp( self.hardwareZones[zone-1].get_last_run() )
-                                for entry in previousRuns:
-                                    if entry['zone'] == zone:
-                                        tLastUTC = datetime.utcfromtimestamp( entry['dateTimeStart'] )
-                                        break
-                                        
-                                if self.hardwareZones[zone-1].is_active:
-                                    #### If the zone is active, check how long it has been on
-                                    if tNowUTC-tLastUTC >= duration:
-                                        self.hardwareZones[zone-1].off()
-                                        self.history.write_data(tNowDB, zone, 'off')
-                                        _LOGGER.info('Zone %i - off', zone)
-                                        _LOGGER.info('  Run Time: %s', (tNowUTC-tLastUTC))
-                                    else:
-                                        self.blockActive = True
-                                        break
-                                        
+                            duration = timedelta(minutes=int(duration), seconds=int((duration*60) % 60))
+                            
+                            #### What is the last run time for this zone?
+                            tLastUTC = datetime.utcfromtimestamp( self.hardwareZones[zone-1].get_last_run() )
+                            for entry in previousRuns:
+                                if entry['zone'] == zone:
+                                    tLastUTC = datetime.utcfromtimestamp( entry['dateTimeStart'] )
+                                    break
+                                    
+                            if self.hardwareZones[zone-1].is_active:
+                                #### If the zone is active, check how long it has been on
+                                if tNowUTC-tLastUTC >= duration:
+                                    self.hardwareZones[zone-1].off()
+                                    self.history.write_data(tNowDB, zone, 'off')
+                                    _LOGGER.info('Zone %i - off', zone)
+                                    _LOGGER.info('  Run Time: %s', (tNowUTC-tLastUTC))
                                 else:
-                                    #### Otherwise, it might be time to turn it on
-                                    if self.blockActive:
-                                        #### Have we already tried?
-                                        if zone in self.processedInBlock:
-                                            continue
-                                            
-                                    if self.hardwareZones[zone-1].current_et_value >= threshold:
-                                        if len(self.processedInBlock) >= run_only_N:
-                                            action_taken = "skipping (%i zones have already ran today)" % run_only_N
-                                        else:
-                                            action_taken = 'on'
-                                            
-                                            self.hardwareZones[zone-1].on()
-                                            self.hardwareZones[zone-1].current_et_value -= threshold
-                                            
-                                            self.history.write_data(tNowDB, zone, 'on', wx_adjustment=adjustmentUsed)
-                                            self.config.set('Zone%i' % zone, 'current_et_value', "%.2f" % self.hardwareZones[zone-1].current_et_value)
-                                            
-                                        _LOGGER.info('Zone %i - %s', zone, action_taken)
-                                        _LOGGER.info('  Last Ran: %s UTC (%s ago)', tLastUTC, tNowUTC-tLastUTC)
-                                        _LOGGER.info('  Duration: %s', duration)
-                                        _LOGGER.info('  Current ET Losses: %.2f"', self.hardwareZones[zone-1].current_et_value)
-                                        self.blockActive = True
-                                        self.processedInBlock.append( zone )
-                                        break
+                                    self.blockActive = True
+                                    break
+                                    
+                            else:
+                                #### Otherwise, it might be time to turn it on
+                                if self.blockActive:
+                                    #### Have we already tried?
+                                    if zone in self.processedInBlock:
+                                        continue
                                         
+                                if self.hardwareZones[zone-1].current_et_value >= threshold:
+                                    if len(self.processedInBlock) >= run_only_N:
+                                        action_taken = "skipping (%i zones have already ran today)" % run_only_N
+                                    else:
+                                        action_taken = 'on'
+                                        
+                                        self.hardwareZones[zone-1].on()
+                                        self.hardwareZones[zone-1].current_et_value -= threshold
+                                        
+                                        self.history.write_data(tNowDB, zone, 'on', wx_adjustment=adjustmentUsed)
+                                        self.config.set('Zone%i' % zone, 'current_et_value', "%.2f" % self.hardwareZones[zone-1].current_et_value)
+                                        
+                                    _LOGGER.info('Zone %i - %s', zone, action_taken)
+                                    _LOGGER.info('  Last Ran: %s UTC (%s ago)', tLastUTC, tNowUTC-tLastUTC)
+                                    _LOGGER.info('  Duration: %s', duration)
+                                    _LOGGER.info('  Current ET Losses: %.2f"', self.hardwareZones[zone-1].current_et_value)
+                                    self.blockActive = True
+                                    self.processedInBlock.append( zone )
+                                    break
+                                    
                             #### If this is the last zone to process and it is off, we
                             #### are done with this block
                             if zone == len(self.hardwareZones) and not self.hardwareZones[zone-1].is_active:
                                 self.blockActive = False
                                 self.processedInBlock = []
-                                
+                                try:
+                                    del zone_order
+                                except NameError:
+                                    pass
+                                    
                     else:
                         pass
                             
