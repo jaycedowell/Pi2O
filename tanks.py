@@ -242,6 +242,7 @@ class TankLogger(object):
         self.updatedPlot = datetime.now().replace(year=2000)
         
         while self.alive.is_set():
+            tPoll = time.time()
             tNow = datetime.now()
             tNow = tNow.replace(microsecond=0)
             
@@ -267,8 +268,11 @@ class TankLogger(object):
                     except Exception as e:
                         _LOGGER.warning('Cannot update tank plot, skipping')
                         
-            time.sleep(self.interval)
-            
+            tSleep = self.interval - (time.time() - tPoll)
+            while tSleep > 0.0:
+                time.sleep(min([tSleep, 1.0]))
+                tSleep = self.interval - (time.time() - tPoll)
+                
     def last_entry(self):
         """
         Return the last line of the log file as the seven-element tuple that
