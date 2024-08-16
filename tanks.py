@@ -254,9 +254,10 @@ class TankLogger(object):
                         fh.write(f"{t0},{s},{t},{d},{de},{v},{ve}\n")
                         
                 trimmed = subprocess.check_output(['tail', '-n2000', self.logname])
-                with open(self.logname, 'wb') as fh:
+                with open(self.logname+'.tmp', 'wb') as fh:
                     fh.write(trimmed)
-                    
+                os.rename(self.logname+'.tmp', self.logname)
+                
             ## Update the tank plot within one hour of 1 AM
             if tNow - tNow.replace(hour=1, minute=0, second=0) < timedelta(hours=1):
                 if tNow - self.updatedPlot >= timedelta(days=1):
