@@ -465,6 +465,9 @@ def main(args):
     # Shutdown process
     logger.info('Shutting down Pi2O, please wait...')
     
+    # Stop the web interface
+    cherrypy.engine.exit()
+    
     # Stop the tank logger
     tanks.cancel()
     
