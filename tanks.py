@@ -249,7 +249,7 @@ class TankLogger(object):
             t0, s, t, d, de, v, ve = _poll_raincache(self.config.get('RainCache', 'ip'), timeout=30)
             
             with self.lock:
-                if t0 > 0 and d >= MIN_VALID_DISTANCE:
+                if t0 > 315360000 and d >= MIN_VALID_DISTANCE:
                     with open(self.logname, 'a') as fh:
                         fh.write(f"{t0},{s},{t},{d},{de},{v},{ve}\n")
                         
