@@ -216,12 +216,12 @@ class Archive(object):
 		if status == 'on':
 			rid = self._backend.append_request('INSERT INTO pi2o (dateTimeStart,dateTimeStop,zone,wxAdjust) VALUES (%i,%i,%i,%f)' % (timestamp, 0, zone, wx_adjustment))
 			output = self._backend.get_response(rid)
-            return True
+			return True
 		else:
 			rid = self._backend.append_request('SELECT dateTimeStart FROM pi2o WHERE zone == %i AND dateTimeStop == 0 ORDER BY dateTimeStart DESC' % zone)
 			output = self._backend.get_response(rid)
 			row = output[0]
-            duration = timestamp - row['dateTimeStart']
+			duration = timestamp - row['dateTimeStart']
 			rid = self._backend.append_request('UPDATE pi2o SET dateTimeStop = %i WHERE dateTimeStart == %i AND zone == %i' % (timestamp, row['dateTimeStart'], zone))
 			output = self._backend.get_response(rid)
 			return duration
