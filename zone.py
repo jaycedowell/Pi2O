@@ -114,3 +114,6 @@ class SprinklerZone(object):
     def get_durations_from_precipitation(self, precip):
         return precip / self.rate * 60.0
         
+    def get_precipitation_from_durations(self, duration_min):
+        return self.rate * duration_min / 60.0
+        
