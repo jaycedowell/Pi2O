@@ -247,12 +247,13 @@ class AJAX(object):
 
 # Main web interface
 class Interface(object):
-    def __init__(self, config, hardwareZones, history, scheduler, tanks):
+    def __init__(self, config, hardwareZones, history, scheduler, tanks, logger=None):
         self.config = config
         self.hardwareZones = hardwareZones
         self.history = history
         self.scheduler = scheduler
         self.tanks = tanks
+        self.logger = logger
         
         self.query = AJAX(config, hardwareZones, history, scheduler, tanks)
         
@@ -369,6 +370,8 @@ class Interface(object):
                     if duration_s >= 300:
                         duration_min = durations_s / 60.0
                         precip = self.hardwareZones[i-1].get_precipitation_from_durations(duration_min)
+                        if logger is not None:
+                            logger.info('  Updating ET losses of zone %i with %.2f in from manual run', i, precip)
                         self.hardwareZones[i-1].current_et_value -= precip
                         self.config.set('Zone%i' % i, 'current_et_value', "%.2f" % self.hardwareZones[i-1].current_et_value)
                         
@@ -461,7 +464,7 @@ def main(args):
     tanks.start()
     
     # Initialize the web interface
-    ws = Interface(config, hardwareZones, history, scheduler, tanks)
+    ws = Interface(config, hardwareZones, history, scheduler, tanks, logger=logger)
     #cherrypy.quickstart(ws, config=cpConfig)
     cherrypy.engine.signal_handler.subscribe()
     cherrypy.tree.mount(ws, "/", config=cpConfig)
