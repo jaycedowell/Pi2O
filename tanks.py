@@ -277,7 +277,8 @@ class TankLogger(object):
     def last_entry(self):
         """
         Return the last line of the log file as the seven-element tuple that
-        _poll_raincache() provides.
+        _poll_raincache() provides.  See _poll_raincache() for the fields and
+        return order.
         """
         
         with self.lock:
