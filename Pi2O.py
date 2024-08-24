@@ -201,8 +201,16 @@ class AJAX(object):
                         self.history.write_data(time.time(), i, 'on', wx_adjustment=-1.0)
                     if value == 'off' and self.hardwareZones[i-1].is_active:
                         self.hardwareZones[i-1].off()
-                        self.history.write_data(time.time(), i, 'off')
-                                    
+                        duration_s = self.history.write_data(time.time(), i, 'off')
+                        
+                        if duration_s >= 300:
+                            duration_min = durations_s / 60.0
+                            precip = self.hardwareZones[i-1].get_precipitation_from_durations(duration_min)
+                            if logger is not None:
+                                logger.info('  Updating ET losses of zone %i with %.2f in from manual run', i, precip)
+                            self.hardwareZones[i-1].current_et_value -= precip
+                            self.config.set('Zone%i' % i, 'current_et_value', "%.2f" % self.hardwareZones[i-1].current_et_value)
+                            
         output = {}
         output['zones'] = []
         for i,zone in enumerate(self.hardwareZones):
