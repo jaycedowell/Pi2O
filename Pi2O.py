@@ -111,12 +111,13 @@ def daemonize(stdin='/dev/null', stdout='/dev/null', stderr='/dev/null'):
 
 # AJAX interface
 class AJAX(object):
-    def __init__(self, config, hardwareZones, history, scheduler, tanks):
+    def __init__(self, config, hardwareZones, history, scheduler, tanks, logger=None):
         self.config = config
         self.hardwareZones = hardwareZones
         self.history = history
         self.scheduler = scheduler
         self.tanks = tanks
+        self.logger = logger
         
     def serialize(self, dt):
         if isinstance(dt, datetime):
@@ -206,8 +207,8 @@ class AJAX(object):
                         if duration_s >= 300:
                             duration_min = durations_s / 60.0
                             precip = self.hardwareZones[i-1].get_precipitation_from_durations(duration_min)
-                            if logger is not None:
-                                logger.info('  Updating ET losses of zone %i with %.2f in from manual run', i, precip)
+                            if self.logger is not None:
+                                self.logger.info('  Updating ET losses of zone %i with %.2f in from manual run', i, precip)
                             self.hardwareZones[i-1].current_et_value -= precip
                             self.config.set('Zone%i' % i, 'current_et_value', "%.2f" % self.hardwareZones[i-1].current_et_value)
                             
@@ -263,7 +264,7 @@ class Interface(object):
         self.tanks = tanks
         self.logger = logger
         
-        self.query = AJAX(config, hardwareZones, history, scheduler, tanks)
+        self.query = AJAX(config, hardwareZones, history, scheduler, tanks, logger=self.logger)
         
     @cherrypy.expose
     def index(self):
@@ -378,8 +379,8 @@ class Interface(object):
                     if duration_s >= 300:
                         duration_min = durations_s / 60.0
                         precip = self.hardwareZones[i-1].get_precipitation_from_durations(duration_min)
-                        if logger is not None:
-                            logger.info('  Updating ET losses of zone %i with %.2f in from manual run', i, precip)
+                        if self.logger is not None:
+                            self.logger.info('  Updating ET losses of zone %i with %.2f in from manual run', i, precip)
                         self.hardwareZones[i-1].current_et_value -= precip
                         self.config.set('Zone%i' % i, 'current_et_value', "%.2f" % self.hardwareZones[i-1].current_et_value)
                         
