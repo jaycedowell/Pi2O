@@ -206,7 +206,7 @@ class AJAX(object):
                         
                         if duration_s >= 300:
                             duration_min = duration_s / 60.0
-                            precip = self.hardwareZones[i-1].get_precipitation_from_durations(duration_min)
+                            precip = self.hardwareZones[i-1].get_precipitation_from_duration(duration_min)
                             if self.logger is not None:
                                 self.logger.info('  Updating ET losses of zone %i with %.2f in from manual run', i, precip)
                             self.hardwareZones[i-1].current_et_value -= precip
@@ -378,7 +378,7 @@ class Interface(object):
                     
                     if duration_s >= 300:
                         duration_min = duration_s / 60.0
-                        precip = self.hardwareZones[i-1].get_precipitation_from_durations(duration_min)
+                        precip = self.hardwareZones[i-1].get_precipitation_from_duration(duration_min)
                         if self.logger is not None:
                             self.logger.info('  Updating ET losses of zone %i with %.2f in from manual run', i, precip)
                         self.hardwareZones[i-1].current_et_value -= precip
