@@ -6,7 +6,7 @@ Wants=network-online.target
 [Service]
 # Have a safety net to kill off the controller if it gets stuck
 KillSignal=SIGTERM
-TimeoutStopSec=30
+TimeoutStopSec=60
 
 # Logging
 StandardOutput=syslog

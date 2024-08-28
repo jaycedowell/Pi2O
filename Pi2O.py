@@ -109,11 +109,12 @@ def daemonize(stdin='/dev/null', stdout='/dev/null', stderr='/dev/null'):
 
 # AJAX interface
 class AJAX(object):
-    def __init__(self, config, hardwareZones, history, scheduler):
+    def __init__(self, config, hardwareZones, history, scheduler, logger=None):
         self.config = config
         self.hardwareZones = hardwareZones
         self.history = history
         self.scheduler = scheduler
+        self.logger = logger
         
     def serialize(self, dt):
         if isinstance(dt, datetime):
@@ -184,8 +185,16 @@ class AJAX(object):
                         self.history.write_data(time.time(), i, 'on', wx_adjustment=-1.0)
                     if value == 'off' and self.hardwareZones[i-1].is_active:
                         self.hardwareZones[i-1].off()
-                        self.history.write_data(time.time(), i, 'off')
-                                    
+                        duration_s = self.history.write_data(time.time(), i, 'off')
+
+                        if duration_s >= 300:
+                            duration_min = duration_s / 60.0
+                            precip = self.hardwareZones[i-1].get_precipitation_from_duration(duration_min)
+                            if self.logger is not None:
+                                self.logger.info('  Updating ET losses of zone %i with %.2f in from manual run', i, precip)
+                            self.hardwareZones[i-1].current_et_value -= precip
+                            self.config.set('Zone%i' % i, 'current_et_value', "%.2f" % self.hardwareZones[i-1].current_et_value)
+                            
         output = {}
         output['zones'] = []
         for i,zone in enumerate(self.hardwareZones):
@@ -230,13 +239,14 @@ class AJAX(object):
 
 # Main web interface
 class Interface(object):
-    def __init__(self, config, hardwareZones, history, scheduler):
+    def __init__(self, config, hardwareZones, history, scheduler, logger=None):
         self.config = config
         self.hardwareZones = hardwareZones
         self.history = history
         self.scheduler = scheduler
+        self.logger = logger
         
-        self.query = AJAX(config, hardwareZones, history, scheduler)
+        self.query = AJAX(config, hardwareZones, history, scheduler, logger=self.logger)
         
     @cherrypy.expose
     def index(self):
@@ -332,8 +342,16 @@ class Interface(object):
                     self.history.write_data(time.time(), i, 'on', wx_adjustment=-1.0)
                 if value == 'off' and self.hardwareZones[i-1].is_active:
                     self.hardwareZones[i-1].off()
-                    self.history.write_data(time.time(), i, 'off')
-                    
+                    duration_s = self.history.write_data(time.time(), i, 'off')
+
+                    if duration_s >= 300:
+                        duration_min = duration_s / 60.0
+                        precip = self.hardwareZones[i-1].get_precipitation_from_duration(duration_min)
+                        if self.logger is not None:
+                            self.logger.info('  Updating ET losses of zone %i with %.2f in from manual run', i, precip)
+                        self.hardwareZones[i-1].current_et_value -= precip
+                        self.config.set('Zone%i' % i, 'current_et_value', "%.2f" % self.hardwareZones[i-1].current_et_value)
+                        
         kwds['manual-info'] = ''
         for i,zone in enumerate(self.hardwareZones):
             i = i + 1
@@ -417,7 +435,7 @@ def main(args):
     scheduler.start()
     
     # Initialize the web interface
-    ws = Interface(config, hardwareZones, history, scheduler)
+    ws = Interface(config, hardwareZones, history, scheduler, logger=logger)
     #cherrypy.quickstart(ws, config=cpConfig)
     cherrypy.engine.signal_handler.subscribe()
     cherrypy.tree.mount(ws, "/", config=cpConfig)
@@ -426,6 +444,9 @@ def main(args):
     
     # Shutdown process
     logger.info('Shutting down Pi2O, please wait...')
+    
+    # Stop the web interface
+    cherrypy.engine.exit()
     
     # Stop the scheduler thread
     scheduler.cancel()
