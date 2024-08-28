@@ -65,6 +65,11 @@ class ScheduleProcessor(object):
         self.blockActive = False
         self.updatedET = datetime.now().replace(year=2000)
         self.processedInBlock = []
+
+        pws = self.config.get('Weather', 'pws')
+        Kc = self.config.getfloat('Weather', 'kc')
+        Cn = self.config.getfloat('Weather', 'cn')
+        Cd = self.config.getfloat('Weather', 'cd')
         
         self.tDelay = timedelta(0)
         
