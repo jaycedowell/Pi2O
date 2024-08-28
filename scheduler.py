@@ -269,7 +269,7 @@ class ScheduleProcessor(object):
                                     
                             #### If this is the last zone to process and it is off, we
                             #### are done with this block
-                            if zone == len(self.hardwareZones) and not self.hardwareZones[zone-1].is_active:
+                            if zone == zone_order[-1] and not self.hardwareZones[zone-1].is_active:
                                 self.blockActive = False
                                 self.processedInBlock = []
                                 try:
