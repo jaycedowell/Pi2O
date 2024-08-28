@@ -217,8 +217,8 @@ def _P(elev):
 
 def _Elevation(P):
     """
-    Effective elevation (in m) as a function of the atmospheric pressure (in kPa)
-    [inverse of P(elev)].
+    Effective elevation (in m) as a function of the atmospheric pressure (in
+    kPa) [inverse of P(elev)].
     """
     
     elev = (P/101.3)**(1.0/5.26)
@@ -228,7 +228,8 @@ def _Elevation(P):
 
 def _gamma(P):
     """
-    Psychrometric constant (in kPa/C) as a function of atmospheric pressure (in kPa).
+    Psychrometric constant (in kPa/C) as a function of atmospheric pressure (in
+    kPa).
     """
     
     return 0.000665*P
@@ -272,8 +273,8 @@ def _eT(T):
 
 def _eS(Tmin, Tmax):
     """
-    Mean saturation vapor pressure (in kPa) of air in the temperture range of Tmin to 
-    Tmax (in C).
+    Mean saturation vapor pressure (in kPa) of air in the temperture range of
+    Tmin to Tmax (in C).
     """
     
     return 0.5*_eT(Tmin) + 0.5*_eT(Tmax)
@@ -281,8 +282,8 @@ def _eS(Tmin, Tmax):
 
 def _eA(Tmin, Tmax, RHmin, RHmax):
     """
-    Actual mean vapor pressure (in kPa) of air at temperature range Tmin to Tmax (in C) 
-    and relative humidity range RHmin to RHmax (as a percentage).
+    Actual mean vapor pressure (in kPa) of air at temperature range Tmin to
+    Tmax (in C) and relative humidity range RHmin to RHmax (as a percentage).
     """
     
     return 0.5*_eT(Tmin)*RHmax/100.0 + 0.5*_eT(Tmax)*RHmin/100.0
@@ -290,7 +291,8 @@ def _eA(Tmin, Tmax, RHmin, RHmax):
 
 def _Ra(lat, J):
     """
-    Solar radiation (in MJ/m^2/d) from the latitude (in deg) and the day-of-the-year.
+    Solar radiation (in MJ/m^2/d) from the latitude (in deg) and the day-of-
+    the-year.
     """
     
     lat = lat*math.pi/180.0
@@ -311,8 +313,8 @@ def _Ra(lat, J):
 
 def _Rso(lat, elev, J):
     """
-    Clear sky solar radiation (in MJ/m^2/d) from latitude (in deg), elevation (in m), and
-    the day-of-the-year.
+    Clear sky solar radiation (in MJ/m^2/d) from latitude (in deg), elevation
+    (in m), and the day-of-the-year.
     """
     
     return (0.75 + 2e-5*elev)*_Ra(lat, J)
@@ -320,7 +322,8 @@ def _Rso(lat, elev, J):
 
 def _Rns(R=None, lat=0.0, elev=0.0, J=0.0, albedo=0.23):
     """
-    Net solar radiation (in MJ/m^2/d) from the mean daily solar radiation in (W/m^2/d).
+    Net solar radiation (in MJ/m^2/d) from the mean daily solar radiation in
+    (W/m^2/d).
     """
     
     if R is None:
@@ -333,9 +336,9 @@ def _Rns(R=None, lat=0.0, elev=0.0, J=0.0, albedo=0.23):
 
 def _Rnl(Tmin, Tmax, RHmin, RHmax, lat, elev, J, R=None):
     """
-    Net outgoing long wave solar radiation (in MJ/m^2/d) from the tempereture range (in C), 
-    latitude (in deg), elevation (in m), day-of-the-year, and the mean daily solar radiation
-    (in W/m^2/d).
+    Net outgoing long wave solar radiation (in MJ/m^2/d) from the tempereture
+    range (in C), latitude (in deg), elevation (in m), day-of-the-year, and the
+    mean daily solar radiation (in W/m^2/d).
     """
     
     e = _eA(Tmin, Tmax, RHmin, RHmax)
@@ -353,9 +356,9 @@ def _Rnl(Tmin, Tmax, RHmin, RHmax, lat, elev, J, R=None):
 
 def _Rn(Tmin, Tmax, RHmin, RHmax, lat, elev, J, R=None, albedo=0.23):
     """
-    Net radiation (in mm equivalent evaporation) from the tempereture range (in C), 
-    latitude (in deg), elevation (in m), day-of-the-year, and the mean daily solar 
-    radiation (in W/m^2/d).
+    Net radiation (in mm equivalent evaporation) from the tempereture range
+    (in C), latitude (in deg), elevation (in m), day-of-the-year, and the mean
+    daily solar radiation (in W/m^2/d).
     """
     
     return 0.408*(_Rns(R=R, lat=lat, elev=elev, J=J, albedo=albedo) - _Rnl(Tmin, Tmax, RHmin, RHmax, lat, elev, J, R))
@@ -363,10 +366,10 @@ def _Rn(Tmin, Tmax, RHmin, RHmax, lat, elev, J, R=None, albedo=0.23):
 
 def _ET(Tmin, Tmax, u2, RHmin, RHmax, lat, elev, J, R=None, Kc=1.0, Cn=900.0, Cd=0.34, albedo=0.23):
     """
-    Evapotransperation value (in mm/d) as a function of the temperature range Tmin to Tmax
-    (in C), the wind speed (in m/s), the relative humidity range RHmin ot RHmax (as a
-    percentage), the latitude (in deg), the elevation (in m), the day-of-the-year, and
-    the mean daily solar radiation (in W/m^2/d).
+    Evapotranspiration value (in mm/d) as a function of the temperature range
+    Tmin to Tmax (in C), the wind speed (in m/s), the relative humidity range
+    RHmin ot RHmax (as a percentage), the latitude (in deg), the elevation
+    (in m), the day-of-the-year, and the mean daily solar radiation (in W/m^2/d).
     """
     
     Tmean = 0.5*Tmin + 0.5*Tmax
@@ -379,9 +382,9 @@ def _ET(Tmin, Tmax, u2, RHmin, RHmax, lat, elev, J, R=None, Kc=1.0, Cn=900.0, Cd
 
 def get_daily_et(pws, Kc=1.0, Cn=900.0, Cd=0.34, albedo=0.23, inches=True, timeout=30):
     """
-    Estimate the evapotranpsersion loss (in mm or inches) for the last 24 hours using data
-    from the specified WUnderground weather station.  If the loss is wanted in mm, set
-    the `inches` keyword to False.
+    Estimate the evapotranspiration loss (in mm or inches) for the last 24
+    hours using data from the specified WUnderground weather station.  If the
+    loss is wanted in mm, set the `inches` keyword to False.
     """
     
     # Weather station latitude and elevation above sea level (in m) via the current 

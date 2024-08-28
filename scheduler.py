@@ -175,7 +175,7 @@ class ScheduleProcessor(object):
                                 #### What duration do we use for this zone?
                                 ##### Get the allowed ET threshold value and convert it to a duration
                                 threshold = self.config.getfloat(f"Schedule{tNow.month}", 'threshold')
-                                duration = self.hardwareZones[zone-1].get_durations_from_precipitation(threshold)
+                                duration = self.hardwareZones[zone-1].get_duration_from_precipitation(threshold)
                                 adjustmentUsed = -2.0
                                     
                                 duration = timedelta(minutes=int(duration), seconds=int((duration*60) % 60))
