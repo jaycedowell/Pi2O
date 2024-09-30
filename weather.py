@@ -96,9 +96,12 @@ def _update_access_key():
     _KEY_RE = re.compile(r'SUN_API_KEY&q;:&q;(?P<key>[a-f0-9]*)&q;')
     
     page = ''
-    with urlopen('https://www.wunderground.com', None, 120) as uh:
-        page = uh.read()
-        page = page.decode()
+    try:
+        with urlopen('https://www.wunderground.com', None, 120) as uh:
+            page = uh.read()
+            page = page.decode()
+    except Exception as e:
+        pass
         
     mtch = _KEY_RE.search(page)
     if mtch is not None:
