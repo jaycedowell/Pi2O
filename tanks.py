@@ -69,7 +69,7 @@ def _poll_raincache(ip, timeout=30):
                     t = float(fields[3])
                 except:
                     pass
-            elif line.startswith('Distance'):
+            elif line.startswith('Depth'):
                 fields = line.split()
                 try:
                     d = float(fields[4])
