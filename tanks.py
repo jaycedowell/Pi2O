@@ -23,11 +23,11 @@ import matplotlib.dates as mdates
 
 from expiring_cache import expiring_cache
 
-__version__ = '0.1'
-__all__ = ['MIN_VALID_DISTANCE', 'get_current_temperature', 'get_current_distance', 'get_current_volume']
+__version__ = '0.2'
+__all__ = ['MIN_VALID_DEPTH', 'get_current_temperature', 'get_current_depth', 'get_current_volume']
 
 
-MIN_VALID_DISTANCE = 4.0    # Inches
+MIN_VALID_DEPTH = 0.0    # Inches
 
 
 # Logger instance
@@ -42,8 +42,8 @@ def _poll_raincache(ip, timeout=30):
      * the timestamp corresponding to the measurements
      * the system-on-chip temperature in degrees C
      * the tank air temperature in degrees C
-     * the distance to the water surface in inches
-     * the uncertainity in the distance to the water surface in inches
+     * the depth of the water in inches
+     * the uncertainity in the water depth in inches
      * the total water volume in gallons
      * the uncertainity in the total volume in gallons.
     
@@ -106,17 +106,16 @@ def get_current_temperature(ip, timeout=30):
     return t0, t
 
 
-def get_current_distance(ip, timeout=30):
+def get_current_depth(ip, timeout=30):
     """
-    Get the current distance from the gauge to the water's surface.  Returns a
-    three-element tuple of the timestamp when the measurement was made, the
-    distance to the water's surface in inches, and the uncertainity of the
-    distance in inches.
+    Get the current depths of the water.  Returns a three-element tuple of the
+    timestamp when the measurement was made, the depth of the water in inches,
+    and the uncertainity of the depth in inches.
     """
     
     t0, s, t, d, de, v, ve = _poll_raincache(ip, timeout=timeout)
-    if t0 == 0 or d < MIN_VALID_DISTANCE:
-        raise RuntimeError("Failed to get current water surface distance")
+    if t0 == 0 or d < MIN_VALID_DEPTH:
+        raise RuntimeError("Failed to get current water depth")
         
     return t0, d, de
 
@@ -129,7 +128,7 @@ def get_current_volume(ip, timeout=30):
     """
     
     t0, s, t, d, de, v, ve = _poll_raincache(ip, timeout=timeout)
-    if t0 == 0 or d < MIN_VALID_DISTANCE:
+    if t0 == 0 or d < MIN_VALID_DEPTH:
         raise RuntimeError("Failed to get current water volume")
         
     return t0, v, ve
@@ -149,8 +148,8 @@ def _make_plot(filename, lock=None):
     if lock is not None:
         lock.release()
     
-    # Remove obviously bad data points (distance to water < 4")
-    valid = np.where( data[:,3] >= MIN_VALID_DISTANCE )[0]
+    # Remove obviously bad data points (depth < 0")
+    valid = np.where( data[:,3] >= MIN_VALID_DEPTH )[0]
     data = data[valid,:]*1.0
     
     # Smooth the data over 1 hour windows to reduce the influence of "bad" readings
@@ -203,12 +202,13 @@ class TankLogger(object):
     Class responsible for monitoring the water levels in the tanks.
     """
 
-    def __init__(self, config, logname=None):
+    def __init__(self, config, logname=None, scheduler=None):
         self.interval = 600
         self.config = config
         if logname is None:
             logname = '/home/pi/tanks.log'
         self.logname = logname
+        self.scheduler = scheduler
         
         self.thread = None
         self.alive = threading.Event()
@@ -241,6 +241,8 @@ class TankLogger(object):
     def run(self):
         self.updatedPlot = datetime.now().replace(year=2000)
         
+        last_depth = self.last_entry()[3]
+        
         while self.alive.is_set():
             tPoll = time.time()
             tNow = datetime.now()
@@ -248,12 +250,21 @@ class TankLogger(object):
             
             t0, s, t, d, de, v, ve = _poll_raincache(self.config.get('RainCache', 'ip'), timeout=30)
             
+            next_sleep = self.interval
             with self.lock:
-                if t0 > 315360000 and d >= MIN_VALID_DISTANCE:
+                if t0 > 315360000 and d >= MIN_VALID_DEPTH:
                     with open(self.logname, 'a') as fh:
                         fh.write(f"{t0},{s},{t},{d},{de},{v},{ve}\n")
                         
-                trimmed = subprocess.check_output(['tail', '-n2000', self.logname])
+                    if self.scheduler is not None:
+                        if self.scheduler.is_watering():
+                            next_sleep = 60
+                    if abs(last_depth - d) > 0.1 and last_depth >= MIN_VALID_DEPTH:
+                        next_sleep = min(next_sleep, 120)
+                        
+                    last_depth = d
+                    
+                trimmed = subprocess.check_output(['tail', '-n3000', self.logname])
                 with open(self.logname+'.tmp', 'wb') as fh:
                     fh.write(trimmed)
                 os.rename(self.logname+'.tmp', self.logname)
@@ -269,7 +280,8 @@ class TankLogger(object):
                     except Exception as e:
                         _LOGGER.warning('Cannot update tank plot, skipping')
                         
-            tSleep = self.interval - (time.time() - tPoll)
+            if abs(v - )
+            tSleep = next_sleep - (time.time() - tPoll)
             while self.alive.is_set() and tSleep > 0.0:
                 time.sleep(min([tSleep, 1.0]))
                 tSleep = self.interval - (time.time() - tPoll)
@@ -291,6 +303,6 @@ class TankLogger(object):
 if __name__ == '__main__':
     t0, s, t, d, de, v, ve = _poll_raincache(sys.argv[1], timeout=30)
     
-    if t0 > 315360000 and d >= MIN_VALID_DISTANCE:
+    if t0 > 315360000 and d >= MIN_VALID_DEPTH:
         with open('/home/pi/tanks.log', 'a') as fh:
             fh.write(f"{t0},{s},{t},{d},{de},{v},{ve}\n")
