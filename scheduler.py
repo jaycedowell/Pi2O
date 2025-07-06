@@ -61,6 +61,14 @@ class ScheduleProcessor(object):
             status = self.thread.is_alive()
         return status
         
+    def is_watering(self):
+        status = False
+        try:
+            status = self.blockActive
+        except AttributeError:
+            pass
+        return status
+        
     def run(self):
         self.running = True
         self.blockActive = False
