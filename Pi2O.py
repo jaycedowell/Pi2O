@@ -469,7 +469,7 @@ def main(args):
     scheduler.start()
     
     # Initialize the RainCache tanks interface
-    tanks = TankLogger(config)
+    tanks = TankLogger(config, scheduler=scheduler)
     tanks.start()
     
     # Initialize the web interface
