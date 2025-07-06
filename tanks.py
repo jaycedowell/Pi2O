@@ -280,11 +280,10 @@ class TankLogger(object):
                     except Exception as e:
                         _LOGGER.warning('Cannot update tank plot, skipping')
                         
-            if abs(v - )
             tSleep = next_sleep - (time.time() - tPoll)
             while self.alive.is_set() and tSleep > 0.0:
                 time.sleep(min([tSleep, 1.0]))
-                tSleep = self.interval - (time.time() - tPoll)
+                tSleep = next_sleep - (time.time() - tPoll)
                 
     def last_entry(self):
         """
