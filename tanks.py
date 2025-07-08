@@ -22,9 +22,10 @@ from matplotlib import pyplot as plt
 import matplotlib.dates as mdates
 
 from expiring_cache import expiring_cache
+from database import DatabaseProcessor
 
-__version__ = '0.2'
-__all__ = ['MIN_VALID_DEPTH', 'get_current_temperature', 'get_current_depth', 'get_current_volume']
+__version__ = '0.3'
+__all__ = ['MIN_VALID_DEPTH', 'get_current_temperature', 'get_current_depth', 'get_current_volume', 'TankLogger']
 
 
 MIN_VALID_DEPTH = 0.0    # Inches
@@ -134,19 +135,16 @@ def get_current_volume(ip, timeout=30):
     return t0, v, ve
 
 
-def _make_plot(filename, lock=None):
+def _make_plot(db_data):
     """
-    Given a logfile that contains values from _poll_raincache(), generate a plot
-    that shows the level in the tanks over time.
+    Given collection of data that contains values from _poll_raincache(), generate
+    a plot that shows the level in the tanks over time.
     """
     
-    if lock is not None:
-        lock.acquire()
-        
-    data = np.loadtxt(filename, delimiter=',')
-    
-    if lock is not None:
-        lock.release()
+    data = []
+    for entry in db_data:
+        data.append([entry[key] for key in ('dateTime', 'socTemp', 'airTemp', 'depth', 'depthErr', 'volume', 'volumeErr')])
+    data = np.ndarray(data)
     
     # Remove obviously bad data points (depth < 0")
     valid = np.where( data[:,3] >= MIN_VALID_DEPTH )[0]
@@ -210,14 +208,22 @@ class TankLogger(object):
         self.logname = logname
         self.scheduler = scheduler
         
+        self._dbName = os.path.join(os.path.dirname(__file__), 'archive', 'pi2o-tanks.db')
+        if not os.path.exists(self._dbName):
+            raise RuntimeError(f"TankLogger database '{self._dbName}' not found")
+        self._backend = None
+        
         self.thread = None
         self.alive = threading.Event()
-        self.lock = threading.Lock()
         
     def start(self):
         if self.thread is not None:
             self.cancel()
-                   
+            
+        if self._backend is None:
+            self._backend = DatabaseProcessor(self._dbName)
+        self._backend.start()
+        
         self.thread = threading.Thread(target=self.run, name='tanks')
         self.thread.setDaemon(1)
         self.alive.set()
@@ -229,6 +235,9 @@ class TankLogger(object):
         if self.thread is not None:
             self.alive.clear()          # clear alive event for thread
             self.thread.join()
+            
+        if self._backend is not None:
+            self._backend.cancel()
             
         _LOGGER.info('Stopped the TankLogger background thread')
         
@@ -251,29 +260,27 @@ class TankLogger(object):
             t0, s, t, d, de, v, ve = _poll_raincache(self.config.get('RainCache', 'ip'), timeout=30)
             
             next_sleep = self.interval
-            with self.lock:
-                if t0 > 315360000 and d >= MIN_VALID_DEPTH:
-                    with open(self.logname, 'a') as fh:
-                        fh.write(f"{t0},{s},{t},{d},{de},{v},{ve}\n")
-                        
-                    if self.scheduler is not None:
-                        if self.scheduler.is_watering():
-                            next_sleep = 60
-                    if abs(last_depth - d) > 0.1 and last_depth >= MIN_VALID_DEPTH:
-                        next_sleep = min(next_sleep, 120)
-                        
-                    last_depth = d
+            if t0 > 315360000 and d >= MIN_VALID_DEPTH:
+                sqlCmd = 'NSERT INTO tanks (dateTime,usUnit,socTemp,airTemp,depth,depthErr,volume,volumeErr) VALUES (%f,1,%f,%f,%f,%f,%f,%f)' % (t0, s, t, d, de, v, ve))
+                self._backend.append_request()
+                
+                if self.scheduler is not None:
+                    if self.scheduler.is_watering():
+                        next_sleep = 60
+                if abs(last_depth - d) > 0.1 and last_depth >= MIN_VALID_DEPTH:
+                    next_sleep = min(next_sleep, 120)
                     
-                trimmed = subprocess.check_output(['tail', '-n3000', self.logname])
-                with open(self.logname+'.tmp', 'wb') as fh:
-                    fh.write(trimmed)
-                os.rename(self.logname+'.tmp', self.logname)
+                last_depth = d
                 
             ## Update the tank plot within one hour of 1 AM
             if tNow - tNow.replace(hour=1, minute=0, second=0) < timedelta(hours=1):
                 if tNow - self.updatedPlot >= timedelta(days=1):
                     try:
-                        _make_plot(self.logname, lock=self.lock)
+                        sqlCommand = "SELECT * FROM tanks WHERE dateTime >= %f ORDER BY dateTime DESC" % (time.time()-30*86400)
+                        rid = self._backend.append_request(sqlCmd)
+                        
+                        db_data = self._backend.get_response(rid)
+                        _make_plot(db_data)
                         
                         self.updatedPlot = tNow
                         
@@ -292,11 +299,11 @@ class TankLogger(object):
         return order.
         """
         
-        with self.lock:
-            last_line = subprocess.check_output(['tail', '-n1', self.logname])
-            last_line = last_line.decode().strip().rstrip()
-            fields = [float(v) for v in last_line.split(',')]
-        return fields
+        sqlCmd = 'SELECT * FROM tanks ORDER BY dateTime DESC LIMIT 1'
+        rid = self._backend.append_request(sqlCmd)
+        
+        fields = self._backend.get_response(rid)
+        return [fields[-1][key] for key in ('dateTime', 'socTemp', 'airTemp', 'depth', 'depthErr', 'volume', 'volumeErr')]
 
 
 if __name__ == '__main__':

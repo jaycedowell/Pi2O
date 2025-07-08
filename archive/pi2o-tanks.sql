@@ -1,0 +1,11 @@
+BEGIN TRANSACTION;
+CREATE TABLE tanks (
+	dateTime INTEGER NOT NULL UNIQUE PRIMARY KEY,
+	usUnits INTEGER DEFAULT 1,
+	socTemp REAL,
+	airTemp REAL,
+	depth REAL,
+	depthErr REAL,
+	volume REAL,
+	volumeErr REAL);
+COMMIT;
