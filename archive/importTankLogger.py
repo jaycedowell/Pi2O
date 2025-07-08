@@ -30,7 +30,7 @@ def main(args):
         cursor.execute("SELECT * FROM tanks WHERE dateTime == %f" % entry[0])
         row = cursor.fetchone()
         if row is None:
-            cursor.execute("INSERT INTO tanks (dateTime,usUnit,socTemp,airTemp,depth,depthErr,volume,volumeErr) VALUES (%f,1,%f,%f,%f,%f,%f,%f)" % *entry)
+            cursor.execute("INSERT INTO tanks (dateTime,usUnit,socTemp,airTemp,depth,depthErr,volume,volumeErr) VALUES (%f,1,%f,%f,%f,%f,%f,%f)" % entry)
             
     # Close it out
     conn.commit()
