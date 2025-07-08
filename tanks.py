@@ -261,7 +261,7 @@ class TankLogger(object):
             
             next_sleep = self.interval
             if t0 > 315360000 and d >= MIN_VALID_DEPTH:
-                sqlCmd = "INSERT INTO tanks (dateTime,usUnit,socTemp,airTemp,depth,depthErr,volume,volumeErr) VALUES (%f,1,%f,%f,%f,%f,%f,%f)" % (t0, s, t, d, de, v, ve))
+                sqlCmd = "INSERT INTO tanks (dateTime,usUnits,socTemp,airTemp,depth,depthErr,volume,volumeErr) VALUES (%f,1,%f,%f,%f,%f,%f,%f)" % (t0, s, t, d, de, v, ve))
                 self._backend.append_request(sqlCmd)
                 
                 if self.scheduler is not None:
