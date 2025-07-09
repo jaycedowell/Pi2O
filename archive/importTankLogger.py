@@ -27,10 +27,10 @@ def main(args):
     
     # Insert the data if it doesn't already exist
     for entry in data:
-        cursor.execute("SELECT * FROM tanks WHERE dateTime == %f" % entry[0])
+        cursor.execute("SELECT * FROM tanks WHERE dateTime == %.0f" % entry[0])
         row = cursor.fetchone()
         if row is None:
-            cursor.execute("INSERT INTO tanks (dateTime,usUnits,socTemp,airTemp,depth,depthErr,volume,volumeErr) VALUES (%f,1,%f,%f,%f,%f,%f,%f)" % tuple(entry))
+            cursor.execute("INSERT INTO tanks (dateTime,usUnits,socTemp,airTemp,depth,depthErr,volume,volumeErr) VALUES (%.0f,1,%f,%f,%f,%f,%f,%f)" % tuple(entry))
             
     # Close it out
     conn.commit()

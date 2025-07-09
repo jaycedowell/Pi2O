@@ -144,7 +144,7 @@ def _make_plot(db_data):
     data = []
     for entry in db_data:
         data.append([entry[key] for key in ('dateTime', 'socTemp', 'airTemp', 'depth', 'depthErr', 'volume', 'volumeErr')])
-    data = np.ndarray(data)
+    data = np.array(data)
     
     # Remove obviously bad data points (depth < 0")
     valid = np.where( data[:,3] >= MIN_VALID_DEPTH )[0]
@@ -261,7 +261,7 @@ class TankLogger(object):
             
             next_sleep = self.interval
             if t0 > 315360000 and d >= MIN_VALID_DEPTH:
-                sqlCmd = "INSERT INTO tanks (dateTime,usUnits,socTemp,airTemp,depth,depthErr,volume,volumeErr) VALUES (%f,1,%f,%f,%f,%f,%f,%f)" % (t0, s, t, d, de, v, ve)
+                sqlCmd = "INSERT INTO tanks (dateTime,usUnits,socTemp,airTemp,depth,depthErr,volume,volumeErr) VALUES (%.0f,1,%f,%f,%f,%f,%f,%f)" % (t0, s, t, d, de, v, ve)
                 self._backend.append_request(sqlCmd)
                 
                 if self.scheduler is not None:
@@ -276,7 +276,7 @@ class TankLogger(object):
             if tNow - tNow.replace(hour=1, minute=0, second=0) < timedelta(hours=1):
                 if tNow - self.updatedPlot >= timedelta(days=1):
                     try:
-                        sqlCommand = "SELECT * FROM tanks WHERE dateTime >= %f ORDER BY dateTime DESC" % (time.time()-30*86400)
+                        sqlCmd = "SELECT * FROM tanks WHERE dateTime >= %f ORDER BY dateTime ASC" % (time.time()-30*86400)
                         rid = self._backend.append_request(sqlCmd)
                         
                         db_data = self._backend.get_response(rid)
