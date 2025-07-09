@@ -288,6 +288,7 @@ class TankLogger(object):
                         _LOGGER.warning('Cannot update tank plot, skipping')
                         
             tSleep = next_sleep - (time.time() - tPoll)
+            tSleep = max(tSleep, 1.0)
             while self.alive.is_set() and tSleep > 0.0:
                 time.sleep(min([tSleep, 1.0]))
                 tSleep = next_sleep - (time.time() - tPoll)
