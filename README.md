@@ -10,18 +10,18 @@ Requirements
  * cherrypy >= 3.0
  * jinja2
  * sqlite3
- * a relay board that activates on high
+ * a relay board hat
  * the name of a WUnderground PWS with a solar radiation sensor to use
+ * access to a RainCache device that monitors the tanks that feed the sprinkler system
 
 Usage
 -----
-  1) Wire up the relay board to the RPi's GPIO pins such that the relay is activated when
-  then pin goes high.
+  1) Install the relay board hat on the RPi
   
   2) Optionally wire up a rain sensor via another GPIO pin such that the pin goes high 
   when the sensor is active.
   
-  3) Create the sqlite3 database using the 'archive/initDB.sh' script
+  3) Create the sqlite3 databases using the 'archive/initDB.sh' and 'archive/initTanksDB.sh' scripts
   
   4) Install the pi2o logrotate configuration file in /etc/logrotate.d/
   
