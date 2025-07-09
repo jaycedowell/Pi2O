@@ -42,7 +42,7 @@ class DatabaseProcessor(object):
         if self.thread is not None:
             self.cancel()
                    
-        self.thread = threading.Thread(target=self.run, name="dbAccess@" % os.path.basename(self._dbName))
+        self.thread = threading.Thread(target=self.run, name="dbAccess@%s" % os.path.basename(self._dbName))
         self.thread.setDaemon(1)
         self.alive.set()
         self.thread.start()
