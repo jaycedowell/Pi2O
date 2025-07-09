@@ -16,7 +16,7 @@ import traceback
 from configparser import NoSectionError
 from io import StringIO
 
-__version__ = '0.3'
+__version__ = '0.4'
 __all__ = ['Archive',]
 
 
@@ -42,19 +42,19 @@ class DatabaseProcessor(object):
         if self.thread is not None:
             self.cancel()
                    
-        self.thread = threading.Thread(target=self.run, name='dbAccess')
+        self.thread = threading.Thread(target=self.run, name="dbAccess@" % os.path.basename(self._dbName))
         self.thread.setDaemon(1)
         self.alive.set()
         self.thread.start()
         
-        _LOGGER.info('Started the DatabaseProcessor background thread')
+        _LOGGER.info('Started the DatabaseProcessor(%s) background thread', os.path.basename(self._dbName))
         
     def cancel(self):
         if self.thread is not None:
             self.alive.clear()          # clear alive event for thread
             self.thread.join()
             
-        _LOGGER.info('Stopped the DatabaseProcessor background thread')
+        _LOGGER.info('Stopped the DatabaseProcessor(%s) background thread', os.path.basename(self._dbName))
         
     def is_alive(self):
         status = False
@@ -103,7 +103,7 @@ class DatabaseProcessor(object):
                 
             except Exception as e:
                 exc_type, exc_value, exc_traceback = sys.exc_info()
-                _LOGGER.error("DatabaseProcessor: %s at line %i", e, exc_traceback.tb_lineno)
+                _LOGGER.error("DatabaseProcessor(%s): %s at line %i", os.path.basename(self._dbName), e, exc_traceback.tb_lineno)
                 ## Grab the full traceback and save it to a string via StringIO
                 fileObject = StringIO()
                 traceback.print_tb(exc_traceback, file=fileObject)
