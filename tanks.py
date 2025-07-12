@@ -35,7 +35,7 @@ MIN_VALID_DEPTH = 0.0    # Inches
 _LOGGER = logging.getLogger('__main__')
 
 
-@expiring_cache(maxage=300)
+@expiring_cache(maxage=90)
 def _poll_raincache(ip, timeout=30):
     """
     Poll a rain cache device at the specified IP address and return a seven-
@@ -266,7 +266,7 @@ class TankLogger(object):
                 
                 if self.scheduler is not None:
                     if self.scheduler.is_watering():
-                        next_sleep = 60
+                        next_sleep = 120
                 if abs(last_depth - d) > 0.1 and last_depth >= MIN_VALID_DEPTH:
                     next_sleep = min(next_sleep, 120)
                     
@@ -288,7 +288,6 @@ class TankLogger(object):
                         _LOGGER.warning('Cannot update tank plot, skipping')
                         
             tSleep = next_sleep - (time.time() - tPoll)
-            tSleep = max(tSleep, 1.0)
             while self.alive.is_set() and tSleep > 0.0:
                 time.sleep(min([tSleep, 1.0]))
                 tSleep = next_sleep - (time.time() - tPoll)
