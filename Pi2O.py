@@ -116,7 +116,7 @@ class AJAX(object):
         self.hardwareZones = hardwareZones
         self.history = history
         self.scheduler = scheduler
-        self.tanks = tanks
+        self._tanks = tanks
         self.logger = logger
         
     def serialize(self, dt):
@@ -132,7 +132,7 @@ class AJAX(object):
         output = {}
         output['history'] = 'active' if self.history.is_alive() else 'failed'
         output['scheduler'] = 'active' if self.scheduler.is_alive() else 'failed'
-        output['tanks']= 'active' if self.tanks.is_alive() else 'failed'
+        output['tanks']= 'active' if self._tanks.is_alive() else 'failed'
         
         output['zones'] = []
         for i,zone in enumerate(self.hardwareZones):
@@ -157,7 +157,7 @@ class AJAX(object):
                 output['adjust%i' % entry['zone']] = entry['wxAdjust']
                 
         try:
-            last_tank_entry = self.tanks.last_entry()
+            last_tank_entry = self._tanks.last_entry()
             t_now = time.time()
             t_age = (t_now - last_tank_entry[0]) / 60
             output['current_tank_vol'] = "%.0f gallons as of %.1f minutes ago" % (last_tank_entry[-2], t_age)
@@ -258,7 +258,7 @@ class AJAX(object):
     def tanks(self):
         output = {}
         
-        data = self.tanks.last_n_days(30)
+        data = self._tanks.last_n_days(30)
         if data:
             output['timestamp'] = [d[0] for d in data]
             output['volume'] = [d[1] for d in data]
@@ -274,7 +274,7 @@ class Interface(object):
         self.hardwareZones = hardwareZones
         self.history = history
         self.scheduler = scheduler
-        self.tanks = tanks
+        self._tanks = tanks
         self.logger = logger
         
         self.query = AJAX(config, hardwareZones, history, scheduler, tanks, logger=self.logger)
@@ -287,7 +287,7 @@ class Interface(object):
         
         kwds['history'] = 'active' if self.history.is_alive() else 'failed'
         kwds['scheduler'] = 'active' if self.scheduler.is_alive() else 'failed'
-        kwds['tanks'] = 'active' if self.tanks.is_alive() else 'failed'
+        kwds['tanks'] = 'active' if self._tanks.is_alive() else 'failed'
         
         for i,zone in enumerate(self.hardwareZones):
             i += 1
@@ -304,7 +304,7 @@ class Interface(object):
                 kwds['zone%i-adjust' % entry['zone']] = entry['wxAdjust']
                 
         try:
-            last_tank_entry = self.tanks.last_entry()
+            last_tank_entry = self._tanks.last_entry()
             t_now = time.time()
             t_age = (t_now - last_tank_entry[0]) / 60
             kwds['current_tank_vol'] = "%.0f gallons as of %.1f minutes ago" % (last_tank_entry[-2], t_age)
