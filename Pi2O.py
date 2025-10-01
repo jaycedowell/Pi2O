@@ -320,6 +320,11 @@ class Interface(object):
         return template.render({'kwds':kwds})
         
     @cherrypy.expose
+    def tanks(self, **kwds):
+        template = jinjaEnv.get_template('tanks.html')
+        return template.render({'kwds':kwds})
+        
+    @cherrypy.expose
     def zones(self, **kwds):
         if len(kwds) == 0:
             kwds = self.config.dict

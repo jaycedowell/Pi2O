@@ -2,10 +2,10 @@
 <html>
 <head>
 	<meta name="viewport" content="width=device-width, initial-scale=1">
-	<link rel="stylesheet" href="/css/jquery.mobile-1.4.5.min.css">
+	<link rel="stylesheet" href="https://code.jquery.com/mobile/1.4.5/jquery.mobile-1.4.5.min.css">
 	<link rel="stylesheet" href="/css/themes/Pi2O.css" />
 	<link rel="stylesheet" href="/css/themes/jquery.mobile.icons.min.css" />
-	<link href="/css/images/favicon.ico" rel="shortcut icon" type="image/x-icon" />
+	<link href="/images/favicon.ico" rel="shortcut icon" type="image/x-icon" />
 	<script src="https://code.jquery.com/jquery-2.2.4.min.js" integrity="sha256-BbhdlvQf/xTY9gja0Dq3HiwQF8LaCRTXxZKRutelT44=" crossorigin="anonymous"></script>
 	<script src="https://code.jquery.com/mobile/1.4.5/jquery.mobile-1.4.5.min.js" integrity="sha256-Lsk+CDPOzTapLoAzWW0G/WeQeViS3FMzywpzPZV8SXk=" crossorigin="anonymous"></script>
 	<style>
@@ -19,6 +19,11 @@
 	.sixcol {
 		/* Based on https://stackoverflow.com/questions/6161377/more-than-5-items-per-line-in-jquery-mobile-navbar */
 		width: 16.66% !important;  /* 16.66% for 6 tabs wide */
+		clear: none !important;  /* Prevent line break caused by ui-block-a */
+	}
+	.sevencol {
+		/* Based on https://stackoverflow.com/questions/6161377/more-than-5-items-per-line-in-jquery-mobile-navbar */
+		width: 14.285% !important;  /* 14.2856% for 7 tabs wide */
 		clear: none !important;  /* Prevent line break caused by ui-block-a */
 	}
 	</style>
@@ -150,12 +155,13 @@
 	<div data-role="footer" role="banner" class="ui-header ui-bar-inherit">
 		<div data-role="navbar">
 			<ul>
-				<li class="sixcol"><a href="/">Home</a></li>
-				<li class="sixcol"><a href="/zones">Zones</a></li>
-				<li class="sixcol"><a href="/schedules">Schedules</a></li>
-				<li class="sixcol"><a href="/weather">Weather</a></li>
-				<li class="sixcol"><a href="/manual">Manual Control</a></li>
-				<li class="sixcol"><a class="ui-btn-active" href="/logs">Logs</a></li>
+				<li class="sevencol"><a href="/">Home</a></li>
+				<li class="sevencol"><a href="/tanks">Tanks</a></li>
+				<li class="sevencol"><a href="/zones">Zones</a></li>
+				<li class="sevencol"><a href="/schedules">Schedules</a></li>
+				<li class="sevencol"><a href="/weather">Weather</a></li>
+				<li class="sevencol"><a href="/manual">Manual Control</a></li>
+				<li class="sevencol"><a class="ui-btn-active" href="/logs">Logs</a></li>
 			</ul>
 		</div>
 	</div>
