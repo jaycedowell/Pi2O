@@ -252,6 +252,19 @@ class AJAX(object):
             output['entries'].append(i)
             
         return output
+        
+    @cherrypy.expose
+    @cherrypy.tools.json_out()
+    def tanks(self):
+        output = {}
+        
+        data = self.tanks.last_n_days(30)
+        if data:
+            output['timestamp'] = [d[0] for d in data]
+            output['volume'] = [d[1] for d in data]
+            output['volume_error'] = [d[2] for d in data]
+            
+        return output
 
 
 # Main web interface

@@ -304,6 +304,26 @@ class TankLogger(object):
         
         fields = self._backend.get_response(rid)
         return [fields[-1][key] for key in ('dateTime', 'socTemp', 'airTemp', 'depth', 'depthErr', 'volume', 'volumeErr')]
+        
+    def last_n_days(self, n):
+        """
+        Return tank volume data for the last N days as a list of lists.  Each
+        entry contains an ISO timestamp, a volume in gallons, and a volume error
+        in gallons.
+        """
+        
+        sqlCmd = "SELECT * FROM tanks WHERE dateTime >= %f ORDER BY dateTime ASC" % (time.time()-n*86400)
+        rid = self._backend.append_request(sqlCmd)
+        
+        db_data = self._backend.get_response(rid)
+        
+        data = []
+        for entry in db_data:
+            dt = datetime.utcfromtimestamp(entry['dateTime'])
+            v = entry['volume']
+            e = entry['volumeErr']
+            data.append([dt.isoformat(), v, e])
+        return data
 
 
 if __name__ == '__main__':
