@@ -6,8 +6,8 @@
 	<link rel="stylesheet" href="/css/themes/Pi2O.css" />
 	<link rel="stylesheet" href="/css/themes/jquery.mobile.icons.min.css" />
 	<link href="/css/images/favicon.ico" rel="shortcut icon" type="image/x-icon" />
-	<script src="/js/jquery-2.2.4.min.js"></script>
-	<script src="/js/jquery.mobile-1.4.5.min.js"></script>
+	<script src="https://code.jquery.com/jquery-2.2.4.min.js" integrity="sha256-BbhdlvQf/xTY9gja0Dq3HiwQF8LaCRTXxZKRutelT44=" crossorigin="anonymous"></script>
+	<script src="https://code.jquery.com/mobile/1.4.5/jquery.mobile-1.4.5.min.js" integrity="sha256-Lsk+CDPOzTapLoAzWW0G/WeQeViS3FMzywpzPZV8SXk=" crossorigin="anonymous"></script>
 	<style>
 	.ui-hide-label.ui-br, .no-field-separator {
 		border-bottom-width: 0;
@@ -26,6 +26,8 @@
 <body>
 	<div id="manual" data-role="page">
 	<script type="text/javascript">
+	  jQuery.htmlPrefilter = function( html ) { return html;};
+		
 		var request = null;
 		
 		function setControl(data) {
