@@ -383,11 +383,15 @@ def _ET(Tmin, Tmax, u2, RHmin, RHmax, lat, elev, J, R=None, Kc=1.0, Cn=900.0, Cd
     return Kc*(r + w)
 
 
-def get_daily_et(pws, Kc=1.0, Cn=900.0, Cd=0.34, albedo=0.23, inches=True, timeout=30):
+def get_daily_et(pws, Kc=1.0, Cn=900.0, Cd=0.34, albedo=0.23, inches=True, derate_rainfall=True, timeout=30):
     """
     Estimate the evapotranspiration loss (in mm or inches) for the last 24
     hours using data from the specified WUnderground weather station.  If the
     loss is wanted in mm, set the `inches` keyword to False.
+    
+    .. note:: By default this function derates rainfall over 0.75 inches using:
+               derated = 1 - exp(-1.85*rainfall)
+              To avoid this set `derate_rainfall` to False.
     """
     
     # Weather station latitude and elevation above sea level (in m) via the current 
@@ -465,7 +469,13 @@ def get_daily_et(pws, Kc=1.0, Cn=900.0, Cd=0.34, albedo=0.23, inches=True, timeo
     loss = _ET(Tmin, Tmax, w, RHmin, RHmax, lat, elev, dtStart, R=r, Kc=Kc, Cn=Cn, Cd=Cd, albedo=albedo)
     _LOGGER.info("ET loss: %.2f mm", loss)
     # ... and correct for the amount of rainfall received.
-    loss -= sum(p)
+    p = sum(p)
+    if derate_rainfall:
+        if p > 19.05:
+            p_derated = 1 - math.exp(-46.99*p)
+            _LOGGER.info("NOTE: Derating rainfall from %.2f mm to %.2f mm", p, p_derated)
+            p = p_derated
+    loss -= p
     _LOGGER.info("ET loss, less rainfall received: %.2f mm", loss)
         
     # Convert, if needed, and return
