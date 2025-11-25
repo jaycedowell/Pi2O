@@ -472,7 +472,7 @@ def get_daily_et(pws, Kc=1.0, Cn=900.0, Cd=0.34, albedo=0.23, inches=True, derat
     p = sum(p)
     if derate_rainfall:
         if p > 19.05:
-            p_derated = 1 - math.exp(-46.99*p)
+            p_derated = (1 - math.exp(-0.07283*p))*25.4
             _LOGGER.info("NOTE: Derating rainfall from %.2f mm to %.2f mm", p, p_derated)
             p = p_derated
     loss -= p
