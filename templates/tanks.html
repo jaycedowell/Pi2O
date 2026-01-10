@@ -31,10 +31,32 @@
 </head>
 <body>
 	<div id="tanks" data-role="page">
+	<style>
+	#loading-indicator {
+		text-align: center;
+		padding: 3em;
+	}
+	#loading-indicator .spinner {
+		display: inline-block;
+		width: 24px;
+		height: 24px;
+		border: 3px solid #ccc;
+		border-top-color: #333;
+		border-radius: 50%;
+		animation: spin 1s linear infinite;
+		margin-right: 10px;
+		vertical-align: middle;
+	}
+	@keyframes spin {
+		to { transform: rotate(360deg); }
+	}
+	</style>
 	<script type="text/javascript">
 	  jQuery.htmlPrefilter = function( html ) { return html;};
 		
 		function plotTanks(json_data) {
+      $("#loading-indicator").hide();
+      $("#volume-plot").show();
       var data = [{x: json_data['timestamp'],
                    y: json_data['volume'],
                    error_y: {type: 'data',
@@ -50,17 +72,27 @@
                    };
       Plotly.newPlot('volume-plot', data, layout);
 		}
-		
+
+		function onLoadError(jqXHR, textStatus, errorThrown) {
+      var msg = "Failed to load tank data";
+      if (textStatus === "timeout") {
+        msg = "Request timed out - the tank data server may be unavailable";
+      }
+      $("#loading-indicator").html('<p style="color:#c00; font-weight:bold;">' + msg + '</p>' +
+        '<a href="#" class="ui-btn ui-corner-all ui-shadow" onclick="location.reload();">Retry</a>');
+		}
+
 		function onload() {
       $.ajax({url: "/query/tanks",
 				      type: "GET",
 					    success: plotTanks,
+					    error: onLoadError,
 					    dataType: "json",
 					    timeout: 45000
 			       });
 		}
-		
-		$(document).on("pagecreate", "#tanks", onload);
+
+		$(document).ready(onload);
 	</script>
 	
 	<div id="tanksPage"></div>
@@ -70,7 +102,10 @@
 	</div>
 	
 	<div data-role="main" class="ui-content">
-		<div id="volume-plot" class="ui-field-contain"></div>
+		<div id="loading-indicator">
+			<span class="spinner"></span>Loading data...
+		</div>
+		<div id="volume-plot" class="ui-field-contain" style="display:none;"></div>
 	</div>
 	
 	<br />
